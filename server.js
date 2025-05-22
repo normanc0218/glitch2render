@@ -1,24 +1,23 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 
 const app = express();
-app.post('/slack/events', async(req, res) => {
-  switch (req.body.type) {
-    case 'url_verification': {
-      // verify Events API endpoint by returning challenge if present
-      res.send({ challenge: req.body.challenge });
-      break;
-    }
-    case 'event_callback': {
-      // Verify the signing secret
-      if (!signature.isVerified(req)) {
-        res.sendStatus(404);
-        return;
-      } 
-      // Request is verified --
-      else {
-        const {type, user, channel, tab, text, subtype} = req.body.event;
-        // Triggered when the App Home is opened by a user
-        if(type === 'app_home_opened') {
-          // Display App Home
-          appHome.displayHome(user);
-        }
+app.use(bodyParser.json()); // Very important!
+
+app.post('/slack/events', (req, res) => {
+  const { type, challenge } = req.body;
+
+  if (type === 'url_verification') {
+    console.log('✅ Challenge received');
+    return res.status(200).json({ challenge });
+  }
+
+  res.sendStatus(200);
+});
+
+app.get('/', (req, res) => {
+  res.send('Slack app is live!');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`App is listening on port ${PORT}`));
