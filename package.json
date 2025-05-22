@@ -7,11 +7,16 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/static": "^6.10.2",
+    "@fastify/view": "^8.0.0",
+    "axios": "^1.9.0",
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
     "fastify": "^4.21.0",
     "handlebars": "^4.7.8",
-    "@fastify/view": "^8.0.0",
-    "@fastify/static": "^6.10.2",
-    "@fastify/formbody": "^7.4.0"
+    "json-db": "0.0.2",
+    "qs": "^6.14.0"
   },
   "engines": {
     "node": "14.x"
