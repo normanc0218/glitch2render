@@ -1,54 +1,81 @@
-const path = require("path");
+// index.js
+const express = require('express');
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+const axios = require('axios');
+const qs = require('qs');
+const crypto = require('crypto');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Require the fastify framework and instantiate it
-const fastify = require("fastify")({
-  // set this to true for detailed logging:
-  logger: false,
-});
+// Load environment variables
+dotenv.config();
 
-// Setup our static files
-fastify.register(require("@fastify/static"), {
-  root: path.join(__dirname, "public"),
-  prefix: "/", // optional: default '/'
-});
+// Custom modules
+const appHome = require('./appHome');
 
-// fastify-formbody lets us parse incoming forms
-fastify.register(require("@fastify/formbody"));
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-// point-of-view is a templating manager for fastify
-fastify.register(require("@fastify/view"), {
-  engine: {
-    handlebars: require("handlebars"),
-  },
-});
+// Signature verification
+function isVerified(req) {
+  const slackSignature = req.headers['x-slack-signature'];
+  const requestBody = JSON.stringify(req.body);
+  const timestamp = req.headers['x-slack-request-timestamp'];
 
-// Our main GET home page route, pulls from src/pages/index.hbs
-fastify.get("/", function (request, reply) {
-  // params is an object we'll pass to our handlebars template
-  let params = {
-    greeting: "Hello Node!",
-  };
-  // request.query.paramName <-- a querystring example
-  return reply.view("/src/pages/index.hbs", params);
-});
+  const time = Math.floor(new Date().getTime() / 1000);
+  if (Math.abs(time - timestamp) > 300) return false;
 
-// A POST route to handle form submissions
-fastify.post("/", function (request, reply) {
-  let params = {
-    greeting: "Hello Form!",
-  };
-  // request.body.paramName <-- a form post example
-  return reply.view("/src/pages/index.hbs", params);
-});
+  const sigBaseString = `v0:${timestamp}:${requestBody}`;
+  const hmac = crypto.createHmac('sha256', process.env.SLACK_SIGNING_SECRET);
+  hmac.update(sigBaseString);
+  const mySignature = `v0=${hmac.digest('hex')}`;
 
-// Run the server and report out to the logs
-fastify.listen(
-  { port: process.env.PORT, host: "0.0.0.0" },
-  function (err, address) {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    console.log(`Your app is listening on ${address}`);
+  return crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature));
+}
+
+// Slack Events endpoint
+app.post('/slack/events', async (req, res) => {
+  const { type, event, challenge } = req.body;
+
+  if (type === 'url_verification') {
+    return res.send({ challenge });
   }
-);
+
+  if (type === 'event_callback') {
+    if (!isVerified(req)) return res.sendStatus(404);
+
+    if (event && event.type === 'app_home_opened') {
+      await appHome.displayHome(event.user);
+    }
+
+    res.sendStatus(200);
+  }
+});
+
+// Slack Interactions endpoint
+app.post('/slack/actions', async (req, res) => {
+  const payload = JSON.parse(req.body.payload);
+  const { trigger_id, user, actions, type, view } = payload;
+
+  if (actions && actions[0].action_id.match(/add_/)) {
+    await appHome.openModal(trigger_id);
+    return res.send('');
+  }
+
+  if (type === 'view_submission') {
+    const ts = new Date();
+    const data = {
+      timestamp: ts.toLocaleString(),
+      note: view.state.values.note01.content.value,
+      color: view.state.values.note02.color.selected_option.value
+    };
+    await appHome.displayHome(user.id, data);
+    return res.send('');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Slack app listening on port ${PORT}`);
+});
