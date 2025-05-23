@@ -1,12 +1,7 @@
 
-const axios = require('axios');
-const qs = require('qs');
-const { db } = require('./db'); // Assumes you have a JSON DB module
-
-const apiUrl = 'https://slack.com/api';
-
-const updateView = async (user) => {
-  let blocks = [
+const updateView = async(user) => {
+  // Intro message - 
+  let blocks = [ 
     {
       type: "section",
       text: {
@@ -15,7 +10,7 @@ const updateView = async (user) => {
       },
       accessory: {
         type: "button",
-        action_id: "add_note",
+        action_id: "add_note", 
         text: {
           type: "plain_text",
           text: "Add sticky note",
@@ -27,24 +22,25 @@ const updateView = async (user) => {
       type: "divider"
     }
   ];
-
+  // Append new data blocks after the intro - 
   let newData = [];
   try {
     const rawData = db.getData(`/${user}/data/`);
-    newData = rawData.slice().reverse().slice(0, 50);
-  } catch (error) {
-    console.log(`No data for user ${user}:`, error.message);
-  }
-
-  if (newData.length > 0) {
+    newData = rawData.slice().reverse(); // Reverse to make the latest first
+    newData = newData.slice(0, 50); // Just display 20. Block Kit display has some limit.
+  } catch(error) {
+    //console.error(error); 
+  };
+  if(newData) {
+    let noteBlocks = [];
     for (const o of newData) {
-      const color = o.color || 'yellow';
+      const color = (o.color) ? o.color : 'yellow';
       let note = o.note;
       if (note.length > 3000) {
-        note = note.substr(0, 2980) + '... _(truncated)_';
+        note = note.substr(0, 2980) + '... _(truncated)_'
+        console.log(note.length);
       }
-
-      blocks.push(
+      noteBlocks = [
         {
           type: "section",
           text: {
@@ -58,129 +54,50 @@ const updateView = async (user) => {
           }
         },
         {
-          type: "context",
-          elements: [
+          "type": "context",
+          "elements": [
             {
-              type: "mrkdwn",
-              text: o.timestamp
+              "type": "mrkdwn",
+              "text": o.timestamp
             }
           ]
         },
         {
           type: "divider"
         }
-      );
+      ];
+      blocks = blocks.concat(noteBlocks);
     }
   }
-
-  return {
+  // The final view -
+  let view = {
     type: 'home',
     title: {
       type: 'plain_text',
       text: 'Keep notes!'
     },
     blocks: blocks
+  }
+  return JSON.stringify(view);
+};
+
+/* Display App Home */
+const displayHome = async(user, data) => {
+  if(data) {     
+    // Store in a local DB
+    db.push(`/${user}/data[]`, data, true);   
+  }
+  const args = {
+    token: process.env.SLACK_BOT_TOKEN,
+    user_id: user,
+    view: await updateView(user)
   };
-};
-
-const displayHome = async (user, data) => {
-  if (data) {
-    db.push(`/${user}/data[]`, data, true);
-  }
-
-  const view = await updateView(user);
-
+  const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
   try {
-    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify({
-      token: process.env.SLACK_BOT_TOKEN,
-      user_id: user,
-      view: JSON.stringify(view)
-    }));
-
-    if (result.data.error) {
-      console.error('Slack API error:', result.data.error);
+    if(result.data.error) {
+      console.log(result.data.error);
     }
-  } catch (error) {
-    console.error('Axios error:', error.message);
+  } catch(e) {
+    console.log(e);
   }
-};
-
-const openModal = async (trigger_id) => {
-  const modal = {
-    type: 'modal',
-    title: {
-      type: 'plain_text',
-      text: 'Create a stickie note'
-    },
-    submit: {
-      type: 'plain_text',
-      text: 'Create'
-    },
-    blocks: [
-      {
-        type: "input",
-        block_id: "note01",
-        label: {
-          type: "plain_text",
-          text: "Note"
-        },
-        element: {
-          action_id: "content",
-          type: "plain_text_input",
-          placeholder: {
-            type: "plain_text",
-            text: "Take a note..."
-          },
-          multiline: true
-        }
-      },
-      {
-        type: "input",
-        block_id: "note02",
-        label: {
-          type: "plain_text",
-          text: "Color"
-        },
-        element: {
-          type: "static_select",
-          action_id: "color",
-          options: [
-            {
-              text: {
-                type: "plain_text",
-                text: "Yellow"
-              },
-              value: "yellow"
-            },
-            {
-              text: {
-                type: "plain_text",
-                text: "Blue"
-              },
-              value: "blue"
-            }
-          ]
-        }
-      }
-    ]
-  };
-
-  try {
-    const result = await axios.post(`${apiUrl}/views.open`, qs.stringify({
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id: trigger_id,
-      view: JSON.stringify(modal)
-    }));
-
-    if (result.data.error) {
-      console.error('Modal open error:', result.data.error);
-    }
-  } catch (error) {
-    console.error('Axios error while opening modal:', error.message);
-  }
-};
-
-module.exports = {
-  displayHome,
-  openModal
 };
