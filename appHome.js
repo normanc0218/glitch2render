@@ -1,4 +1,7 @@
-
+const axios = require('axios');
+const qs = require('qs');
+const db = require('node-json-db').JsonDB;  // Ensure this is your database module
+const apiUrl = 'https://slack.com/api';  // Define Slack API URL
 const updateView = async(user) => {
   // Intro message - 
   let blocks = [ 
@@ -101,3 +104,6 @@ const displayHome = async(user, data) => {
     console.log(e);
   }
 };
+
+module.exports = { displayHome };
+
