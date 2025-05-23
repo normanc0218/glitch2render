@@ -10,12 +10,14 @@ const app = new App({
 });
 
 (async () =>{
-  await app.start(prcoess.env.PORT || 12000);
+  await app.start(process.env.PORT || 12000);
   
-  app.message('quote',async({message.say})=>{
+  app.message('quote',async({message,say})=>{
     let resp =await axios.get('https://api.quotable.io/random');
     console.log(message);
     const quote=resp.data.content;
-    await say('H')
-  })
-})
+    await say(`Hello, <@${message.user}>, ${quote}`);
+  });
+  
+  console.log(`Bolt app is running on 12000!`)
+})();
