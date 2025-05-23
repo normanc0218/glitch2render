@@ -3,6 +3,8 @@ const express = require('express');
 const crypto = require('crypto');
 const bodyParser = require('body-parser'); // Needed to get raw body
 const { displayHome } = require('./appHome'); 
+const { openModal } = require('./openModal'); // Make sure this file and function exist
+
 
 const app = express();
 const port = process.env.PORT || 12000;
@@ -73,6 +75,17 @@ app.post('/slack/events', async (req, res) => {
     default:
       res.sendStatus(400);
   }
+});
+// Slack Actions
+app.post('/slack/actions', async (req, res) => {
+  const payload = JSON.parse(req.body.payload);
+  const { trigger_id, actions } = payload;
+
+  if (actions && actions[0].action_id.match(/add_/)) {
+    await openModal(trigger_id);
+  }
+
+  res.sendStatus(200);
 });
 
 app.listen(port, () => {
