@@ -10,12 +10,15 @@ const app = express();
 const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 
-// Capture raw body before JSON parsing
-app.use(bodyParser.json({
-  verify: (req, res, buf) => {
-    req.rawBody = buf.toString(); // Store raw body for verification
-  }
-}));
+// // Capture raw body before JSON parsing
+// app.use(bodyParser.json({
+//   verify: (req, res, buf) => {
+//     req.rawBody = buf.toString(); // Store raw body for verification
+//   }
+// }));
+// Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // Verify Slack signature
 function isVerified(req) {
@@ -35,8 +38,6 @@ function isVerified(req) {
 
   console.log('timestamp:', timestamp);
   console.log('slackSignature:', slackSignature);
-  console.log('sigBaseString:', sigBaseString);
-  console.log('mySignature:', mySignature);
 
   try {
     return crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature));
