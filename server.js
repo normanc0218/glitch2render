@@ -77,16 +77,28 @@ app.post('/slack/events', async (req, res) => {
   }
 });
 // Slack Actions
-app.post('/slack/actions', async (req, res) => {
-  const payload = JSON.parse(req.body.payload);
-  const { trigger_id, actions } = payload;
-
-  if (actions && actions[0].action_id.match(/add_/)) {
-    await openModal(trigger_id);
+app.post('/slack/actions', async(req, res) => {
+  //console.log(JSON.parse(req.body.payload));
+  const { token, trigger_id, user, actions, type } = JSON.parse(req.body.payload);
+  // Button with "add_" action_id clicked --
+  if(actions && actions[0].action_id.match(/add_/)) {
+    // Open a modal window with forms to be submitted by a user
+    openModal(trigger_id);
+  } 
+  // Modal forms submitted --
+  else if(type === 'view_submission') {
+    res.send(''); // Make sure to respond to the server to avoid an error
+    const ts = new Date();
+    const { user, view } = JSON.parse(req.body.payload);
+    const data = {
+      timestamp: ts.toLocaleString(),
+      note: view.state.values.note01.content.value,
+      color: view.state.values.note02.color.selected_option.value
+    }
+    displayHome(user.id, data);
   }
-
-  res.sendStatus(200);
 });
+
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
