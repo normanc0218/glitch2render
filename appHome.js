@@ -89,39 +89,24 @@ const updateView = async(user) => {
 
 /* Display App Home */
 const displayHome = async(user, data) => {
-  if (data) {
-    db.push(`/${user}/data[]`, data, true);
+  if(data) {     
+    // Store in a local DB
+    db.push(`/${user}/data[]`, data, true);   
   }
-
-  const view = await updateView(user); // Should be a string
-
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     user_id: user,
-    view: view,
+    view: await updateView(user)
   };
-
+  const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
   try {
-    console.log('Sending request to Slack API:', args); // Debugging the payload
-    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      timeout: 5000
-    });
-
-    console.log("Slack API response:", result.data); // Debugging the response
-
-    if (result.data.error) {
-      console.error("Slack API error:", result.data.error);
-    } else {
-      console.log("✅ App home published successfully.");
+    if(result.data.error) {
+      console.log(result.data.error);
     }
-  } catch (e) {
-    console.error("❌ Failed to update view:", e.message);
+  } catch(e) {
+    console.log(e);
   }
 };
-
 
 module.exports = { displayHome };
 

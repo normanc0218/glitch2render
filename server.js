@@ -67,6 +67,7 @@ app.post('/slack/actions', async(req, res) => {
   try{
   //console.log(JSON.parse(req.body.payload));
   const { token, trigger_id, user, actions, type } = JSON.parse(req.body.payload);
+  res.send(); // Responds with 200 OK
   // Button with "add_" action_id clicked --
   if(actions && actions[0].action_id.match(/add_/)) {
     // Open a modal window with forms to be submitted by a user
@@ -74,7 +75,6 @@ app.post('/slack/actions', async(req, res) => {
   } 
   // Modal forms submitted --
   else if(type === 'view_submission') {
-    res.send(''); // Make sure to respond to the server to avoid an error
     const ts = new Date();
     const { user, view } = JSON.parse(req.body.payload);
     const data = {
