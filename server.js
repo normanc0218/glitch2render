@@ -5,6 +5,7 @@ const bodyParser = require('body-parser'); // Needed to get raw body
 const { displayHome } = require('./appHome'); 
 const { openModal } = require('./openModal'); // Make sure this file and function exist
 const qs = require('qs');
+const signVerification = require('./signVerification'); 
 
 const app = express();
 const port = process.env.PORT || 12000;
@@ -15,61 +16,50 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Verify Slack signature
-function isVerified(req) {
-  const timestamp = req.headers['x-slack-request-timestamp'];
-  const slackSignature = req.headers['x-slack-signature'];
-  const requestBody = qs.stringify(req.body,{ format:'RFC1738' });
+// function isVerified(req) {
+//   const timestamp = req.headers['x-slack-request-timestamp'];
+//   const slackSignature = req.headers['x-slack-signature'];
+//   const requestBody = qs.stringify(req.body,{ format:'RFC1738' });
   
-  if (!timestamp || !slackSignature || !requestBody) return false;
+//   if (!timestamp || !slackSignature || !requestBody) return false;
 
-  const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
-  if (timestamp < fiveMinutesAgo) return false;
+//   const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
+//   if (timestamp < fiveMinutesAgo) return false;
 
-  const sigBaseString = `v0:${timestamp}:${requestBody}`;
-  const mySignature = 'v0=' + crypto
-    .createHmac('sha256', SLACK_SIGNING_SECRET)
-    .update(sigBaseString,'utf8')
-    .digest('hex');
+//   const sigBaseString = `v0:${timestamp}:${requestBody}`;
+//   const mySignature = 'v0=' + crypto
+//     .createHmac('sha256', SLACK_SIGNING_SECRET)
+//     .update(sigBaseString,'utf8')
+//     .digest('hex');
 
-  console.log('timestamp:', timestamp);
-  console.log('slackSignature:', slackSignature);
+//   console.log('timestamp:', timestamp);
+//   console.log('slackSignature:', slackSignature);
 
-  try {
-    return crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature));
-  } catch (err) {
-    return false;
-  }
-}
+//   try {
+//     return crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature));
+//   } catch (err) {
+//     return false;
+//   }
+// }
 
-app.post('/slack/events', async (req, res) => {
-  const { type } = req.body;
+app.post('/slack/events', signVerification, async (req, res) => {
+  const { type, challenge, event } = req.body;
 
   switch (type) {
-    case 'url_verification': {
+    case 'url_verification': 
       // Step 1: Respond to Slack URL Verification
-      res.send({ challenge: req.body.challenge });
-      break;
-    }
+      return res.send({challenge});
 
     case 'event_callback': {
-      if (!isVerified(req)) {
-        console.log('❌ Slack signature verification failed');
-        res.sendStatus(403);
-        return;
-      }
-
       console.log('✅ Slack request verified');
-      const { event } = req.body;
       if (event.type === 'app_home_opened') {
         await displayHome(event.user);
       }
 
-      res.sendStatus(200); // Always respond 200 to Slack
-      break;
+      return res.sendStatus(200); // Always respond 200 to Slack
     }
-
     default:
-      res.sendStatus(400);
+      return res.sendStatus(400);
   }
 });
 // Slack Actions
