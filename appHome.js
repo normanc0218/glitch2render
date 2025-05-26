@@ -99,7 +99,11 @@ const displayHome = async(user, data) => {
     view: await updateView(user),
   };
   // console.log(args)
-  const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
+  const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args),{
+    headers:{
+    'Content-Type': 'application/x-www-form-urlencoded'
+  }
+});
   try {
     if(result.data.error) {
       console.log(result.data.error);
