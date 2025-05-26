@@ -78,7 +78,7 @@ app.post('/slack/actions', async(req, res) => {
     const ts = new Date();
     const { user, view } = JSON.parse(req.body.payload);
     const data = {
-      timestamp: ts.toLocaleString(),
+      timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
       note: view.state.values.note01.content.value,
       color: view.state.values.note02.color.selected_option.value
     }

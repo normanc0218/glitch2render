@@ -98,6 +98,7 @@ const displayHome = async(user, data) => {
     user_id: user,
     view: await updateView(user)
   };
+  console.log(args)
   const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
   try {
     if(result.data.error) {
