@@ -43,7 +43,7 @@ const updateView = async(user) => {
       const color = (o.color) ? o.color : 'yellow';
       let note = o.note;
       if (note.length > 3000) {
-        note = note.substr(0, 2980) + '... _(truncated)_'
+        note = note.slice(0, 2980) + '... _(truncated)_'
         console.log(note.length);
       }
       noteBlocks = [
