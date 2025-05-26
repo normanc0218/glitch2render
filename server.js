@@ -64,6 +64,7 @@ app.post('/slack/events', signVerification, async (req, res) => {
 });
 // Slack Actions
 app.post('/slack/actions', async(req, res) => {
+  try{
   //console.log(JSON.parse(req.body.payload));
   const { token, trigger_id, user, actions, type } = JSON.parse(req.body.payload);
   // Button with "add_" action_id clicked --
@@ -82,12 +83,13 @@ app.post('/slack/actions', async(req, res) => {
       color: view.state.values.note02.color.selected_option.value
     }
     await displayHome(user.id, data);
-  } \}catch (error) {
-    // Log and respond with an error message if something goes wrong
-    console.error('Error processing Slack action:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+  };
+    } catch (error) {
+        // Log and respond with an error message if something goes wrong
+        console.error('Error processing Slack action:', error);
+        res.status(500).send('Internal Server Error');
+      }
+  });
 
 
 app.listen(port, () => {
