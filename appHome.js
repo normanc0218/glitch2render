@@ -96,9 +96,9 @@ const displayHome = async(user, data) => {
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     user_id: user,
-    view: await updateView(user)
+    view: await updateView(user),
   };
-  console.log(args)
+  // console.log(args)
   const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
   try {
     if(result.data.error) {
