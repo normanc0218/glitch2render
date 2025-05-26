@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const bodyParser = require('body-parser'); // Needed to get raw body
 const { displayHome } = require('./appHome'); 
 const { openModal } = require('./openModal'); // Make sure this file and function exist
-
+const qs = require('qs');
 
 const app = express();
 const port = process.env.PORT || 12000;
@@ -24,13 +24,14 @@ app.use(express.json());
 function isVerified(req) {
   const timestamp = req.headers['x-slack-request-timestamp'];
   const slackSignature = req.headers['x-slack-signature'];
-
-  if (!timestamp || !slackSignature || !req.rawBody) return false;
+  const requestBody = qs.stringify(req.body,{ format:'RFC1738' });
+  
+  if (!timestamp || !slackSignature || !requestBody) return false;
 
   const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
   if (timestamp < fiveMinutesAgo) return false;
 
-  const sigBaseString = `v0:${timestamp}:${req.rawBody}`;
+  const sigBaseString = `v0:${timestamp}:${requestBody}`;
   const mySignature = 'v0=' + crypto
     .createHmac('sha256', SLACK_SIGNING_SECRET)
     .update(sigBaseString)
