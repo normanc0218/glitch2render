@@ -81,7 +81,11 @@ app.post('/slack/actions', async(req, res) => {
       note: view.state.values.note01.content.value,
       color: view.state.values.note02.color.selected_option.value
     }
-    displayHome(user.id, data);
+    await displayHome(user.id, data);
+  } \}catch (error) {
+    // Log and respond with an error message if something goes wrong
+    console.error('Error processing Slack action:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
