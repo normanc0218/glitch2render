@@ -5,11 +5,11 @@ const openModal = async(trigger_id) => {
     type: 'modal',
     title: {
       type: 'plain_text',
-      text: 'Create a stickie note'
+      text: 'Maintenance Order Form'
     },
     submit: {
       type: 'plain_text',
-      text: 'Create'
+      text: 'submit'
     },
     blocks: [
       // Text input
