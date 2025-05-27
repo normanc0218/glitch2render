@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const axios = require('axios');
+const openModal_accept = require('./openModal_accept.js');
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");
@@ -67,46 +67,7 @@ app.post("/slack/actions", async (req, res) => {
 
   if (action.action_id === "accept_task") {
     // Open modal for Accept form
-    await axios.post("https://slack.com/api/views.open", {
-      trigger_id: trigger_id,
-      view: {
-        type: "modal",
-        callback_id: "accept_form",
-        title: {
-          type: "plain_text",
-          text: "Accept Task"
-        },
-        submit: {
-          type: "plain_text",
-          text: "Submit"
-        },
-        close: {
-          type: "plain_text",
-          text: "Cancel"
-        },
-        blocks: [
-          {
-            type: "input",
-            block_id: "remarks_block",
-            label: {
-              type: "plain_text",
-              text: "Remarks"
-            },
-            element: {
-              type: "plain_text_input",
-              action_id: "remarks_input",
-              multiline: true
-            }
-          }
-        ]
-      }
-    }, {
-      headers: {
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-        "Content-Type": "application/json"
-      }
-    });
-
+    await openModal_accept(trigger_id);
   }  else if (action.action_id.match(/add_/)) {
     await openModal(trigger_id);
   }
