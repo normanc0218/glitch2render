@@ -5,9 +5,9 @@ const apiUrl = 'https://slack.com/api';  // Define Slack API URL
 
 const db = new JsonDB(new Config("myDatabase", true, false, '/')); // Adjust name and config as needed
 
-const updateView = async(user) => {
-  // Intro message - 
-  let blocks = [ 
+const updateView = async (user) => {
+  // Intro message
+  let blocks = [
     {
       type: "section",
       text: {
@@ -16,7 +16,7 @@ const updateView = async(user) => {
       },
       accessory: {
         type: "button",
-        action_id: "add_note", 
+        action_id: "add_note",
         text: {
           type: "plain_text",
           text: "Add sticky note",
@@ -28,27 +28,33 @@ const updateView = async(user) => {
       type: "divider"
     }
   ];
-  
-  // Append new data blocks after the intro - 
+
   let newData = [];
   try {
-    const rawData = db.getData(`/${user}/data/`);
-    newData = rawData.slice().reverse(); // Reverse to make the latest first
-    newData = newData.slice(0, 50); // Just display 50 notes (adjust as needed)
-  } catch (error) {
-    console.error('Error fetching data:', error); 
-  };
+    // Await the result of db.getData
+    const rawData = await db.getData(`/${user}/data/`);
 
-  if(newData) {
+    // Check if rawData is an array
+    if (Array.isArray(rawData)) {
+      newData = rawData.slice().reverse(); // Reverse to make the latest first
+      newData = newData.slice(0, 50); // Just display 50 notes (adjust as needed)
+    } else {
+      console.warn('Data for user is not an array:', rawData);
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+
+  if (newData.length > 0) {
     let noteBlocks = [];
     for (const o of newData) {
       const color = (o.color) ? o.color : 'yellow';
       let note = o.note;
       if (note.length > 3000) {
-        note = note.slice(0, 2980) + '... _(truncated)_'
+        note = note.slice(0, 2980) + '... _(truncated)_';
         console.log('Truncated note:', note);
       }
-      
+
       noteBlocks.push({
         type: "section",
         text: {
@@ -76,11 +82,14 @@ const updateView = async(user) => {
         type: "divider"
       });
     }
-    
+
     blocks = blocks.concat(noteBlocks);
+    blocks = blocks.slice(0, 100);
+  } else {
+    console.log('No notes available for user:', user);
   }
 
-  // The final view structure
+  // Final view structure
   const view = {
     type: 'home',
     title: {
@@ -92,6 +101,8 @@ const updateView = async(user) => {
 
   return view;
 };
+
+
 
 /* Display App Home */
 const displayHome = async(user, data) => {
