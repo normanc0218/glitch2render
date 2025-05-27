@@ -2,7 +2,7 @@
 	"type": "modal",
 	"title": {
 		"type": "plain_text",
-		"text": "My App",
+		"text": "Maintenance Order Form",
 		"emoji": true
 	},
 	"submit": {
@@ -113,7 +113,7 @@
 			"type": "input",
 			"element": {
 				"type": "datepicker",
-				"initial_date": "1990-04-28",
+				"initial_date": "2025-05-01",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
