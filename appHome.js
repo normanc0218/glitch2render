@@ -40,7 +40,7 @@ const updateView = async(user) => {
     let noteBlocks = [];
     for (const o of newData) {
       // const color = (o.color) ? o.color : 'yellow';
-      let des = o.Description;
+      let des = o.Description.value;
       if (des.length > 3000) {
         des = des.substr(0, 2980) + '... _(truncated)_'
         console.log(des.length);
