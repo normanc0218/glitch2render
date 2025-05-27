@@ -37,19 +37,14 @@ const openModal = async(trigger_id) => {
 		},
 		{
 			"type": "input",
-			"block_id": "note02",
+			"element": {
+				"type": "rich_text_input",
+				"action_id": "rich_text_input-action"
+			},
 			"label": {
 				"type": "plain_text",
-				"text": "Description of the Issue"
-			},
-			"element": {
-				"type": "plain_text_input",
-				"action_id": "issue_description_input",
-				"multiline": true,
-				"placeholder": {
-					"type": "plain_text",
-					"text": "What is happening?"
-				}
+				"text": "Description of the issue",
+				"emoji": true
 			}
 		},
 		{
