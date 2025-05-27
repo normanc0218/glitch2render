@@ -55,19 +55,12 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Description:*\n${des}`
+          text: `*Description:*${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
-			// accessory: {
-			// 	type: "image",
-			// 	image_url: o.picture,
-			// 	alt_text: "picture"
-			// }
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Assign To:* ${o.maintenanceStaff}`
+        accessory: {
+          type: "image",
+          image_url: o.picture,
+          alt_text: "picture"
         }
       },
       {
