@@ -54,7 +54,9 @@ app.post("/slack/actions", async (req, res) => {
         maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
             (option) => option.text.text
           ),
-        picture:view.state.values.picture.file_input_action_id_1.files[0].url_private,
+        picture:view.state.values.picture.file_input_action_id_1.files.map(
+            (option) => option.url_private
+          ),
         date:view.state.values.date.datepickeraction.selected_date,
         time:view.state.values.time.timepickeraction.selected_time
       };

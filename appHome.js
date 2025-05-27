@@ -59,7 +59,7 @@ const updateView = async(user) => {
         },
         accessory: {
           type: "image",
-          image_url: o.picture,
+          image_url: o.picture[0],
           alt_text: "picture"
         }
       },
