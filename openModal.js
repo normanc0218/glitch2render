@@ -70,7 +70,7 @@ const openModal = async(trigger_id) => {
 					{
 						"text": {
 							"type": "plain_text",
-							"text": "Fai",
+							"text": "*Fai",
 							"emoji": true
 						},
 						"value": "value-0"
@@ -93,6 +93,54 @@ const openModal = async(trigger_id) => {
 					}
 				],
 				"action_id": "multi_static_select-action"
+			}
+		},
+		{
+			"type": "input",
+			"element": {
+				"type": "file_input",
+				"action_id": "file_input-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Picture of the defect",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"element": {
+				"type": "datepicker",
+				"initial_date": "1990-04-28",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepicker-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Start date",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"element": {
+				"type": "timepicker",
+				"initial_time": "13:37",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepicker-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Start time",
+				"emoji": true
 			}
 		}
 	]
