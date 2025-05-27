@@ -28,15 +28,17 @@ const updateView = async(user) => {
       type: "divider"
     }
   ];
+  
   // Append new data blocks after the intro - 
   let newData = [];
   try {
     const rawData = db.getData(`/${user}/data/`);
     newData = rawData.slice().reverse(); // Reverse to make the latest first
-    newData = newData.slice(0, 50); // Just display 20. Block Kit display has some limit.
-  } catch(error) {
-    //console.error(error); 
+    newData = newData.slice(0, 50); // Just display 50 notes (adjust as needed)
+  } catch (error) {
+    console.error('Error fetching data:', error); 
   };
+
   if(newData) {
     let noteBlocks = [];
     for (const o of newData) {
@@ -44,73 +46,76 @@ const updateView = async(user) => {
       let note = o.note;
       if (note.length > 3000) {
         note = note.slice(0, 2980) + '... _(truncated)_'
-        console.log(note.length);
+        console.log('Truncated note:', note);
       }
-      noteBlocks = [
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: note
-          },
-          accessory: {
-            type: "image",
-            image_url: `https://cdn.glitch.com/0d5619da-dfb3-451b-9255-5560cd0da50b%2Fstickie_${color}.png`,
-            alt_text: "stickie note"
-          }
+      
+      noteBlocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: note
         },
-        {
-          "type": "context",
-          "elements": [
-            {
-              "type": "mrkdwn",
-              "text": o.timestamp
-            }
-          ]
-        },
-        {
-          type: "divider"
+        accessory: {
+          type: "image",
+          image_url: `https://cdn.glitch.com/0d5619da-dfb3-451b-9255-5560cd0da50b%2Fstickie_${color}.png`,
+          alt_text: "stickie note"
         }
-      ];
-      blocks = blocks.concat(noteBlocks);
+      });
+
+      noteBlocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: o.timestamp
+          }
+        ]
+      });
+
+      noteBlocks.push({
+        type: "divider"
+      });
     }
+    
+    blocks = blocks.concat(noteBlocks);
   }
-  // The final view -
-  let view = {
+
+  // The final view structure
+  const view = {
     type: 'home',
     title: {
       type: 'plain_text',
       text: 'Keep notes!'
     },
     blocks: blocks
-  }
-  return JSON.stringify(view);
+  };
+
+  return view;
 };
 
 /* Display App Home */
 const displayHome = async(user, data) => {
   if (data) {
-    db.push(`/${user}/data[]`, data, true);
+    db.push(`/${user}/data[]`, data, true); // Save new data to the DB
   }
 
-  const view = await updateView(user); // Should be a string
-
-  const args = {
-    token: process.env.SLACK_BOT_TOKEN,
-    user_id: user,
-    view: view,
-  };
+  const view = await updateView(user); // Get the updated view once
 
   try {
-    console.log('Sending request to Slack API:', args); // Debugging the payload
-    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args), {
+    // Sending updated view to Slack
+    console.log('Sending request to Slack API:', { user_id: user, view: view });
+
+    const result = await axios.post(`${apiUrl}/views.publish`, {
+      user_id: user,
+      view: view // Send the view directly
+    }, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      timeout: 3000
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`
+      }
     });
 
-    console.log("Slack API response:", result.data); // Debugging the response
+    console.log("Slack API response:", result.data);
 
     if (result.data.error) {
       console.error("Slack API error:", result.data.error);
@@ -122,6 +127,4 @@ const displayHome = async(user, data) => {
   }
 };
 
-
 module.exports = { displayHome };
-
