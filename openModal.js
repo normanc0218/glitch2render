@@ -1,7 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
 const openModal = async(trigger_id) => {
-  const modal = {
+  const modal_json = `{
 	"type": "modal",
 	"title": {
 		"type": "plain_text",
@@ -70,7 +70,7 @@ const openModal = async(trigger_id) => {
 					{
 						"text": {
 							"type": "plain_text",
-							"text": "*Fai",
+							"text": "Fai",
 							"emoji": true
 						},
 						"value": "value-0"
@@ -94,16 +94,10 @@ const openModal = async(trigger_id) => {
 				],
 				"action_id": "multi_static_select-action"
 			}
-		},
-		{
-			"type": "image",
-			"slack_file": {
-				"url": "<insert slack file url here>"
-			},
-			"alt_text": "inspiration"
 		}
 	]
-};
+}`;
+  const modal=JSON.parse(modal_json);
 
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
