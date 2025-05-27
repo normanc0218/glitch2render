@@ -72,13 +72,13 @@ app.post('/slack/actions', async (req, res) => {
     res.send(); // Sends 200 OK to Slack
 
     if (type === 'view_submission') {
-      console.log(view.state.values.maintenanceStaff);
+      console.log(view.state.values.maintenanceStaff.pickedGuy.selected_options.map(option => option.text.text));
       const ts = new Date();
       const data = {
         timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
         machineLocation: view.state.values.machineLocation.value,
         Description: view.state.values.Description.value,
-        maintenanceStaff: view.state.values.maintenanceStaff.content.selected_options,
+        maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(option => option.text.text),
         
       };
       await displayHome(user.id, data);
