@@ -1,8 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
 const openModal = async(trigger_id) => {
-  const modal_json = require(`./modal_j.json`);
-  const modal=JSON.parse(modal_json);
+  const modal = require('./modal_j.json');
 
   const args = {
     token: process.env.SLACK_BOT_TOKEN,

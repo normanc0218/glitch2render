@@ -11,14 +11,14 @@ const updateView = async(user) => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "Hello! Make a note of things you don't want to forget."
+        text: "This is the Form for Manager and Supervisors to assign Maintenance job to Maintenance people."
       },
       accessory: {
         type: "button",
         action_id: "add_note", 
         text: {
           type: "plain_text",
-          text: "Add sticky note",
+          text: "Submit an order",
           emoji: true
         }
       }
