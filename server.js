@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const axios = require('axios');
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");
@@ -61,9 +62,55 @@ app.post("/slack/actions", async (req, res) => {
         time:view.state.values.time.timepickeraction.selected_time
       };
       await displayHome(user.id, data);
-    } else if (actions && actions[0].action_id.match(/add_/)) {
-      await openModal(trigger_id);
-    }
+    } else if (actions) {
+  const action = actions[0];
+
+  if (action.action_id === "accept_task") {
+    // Open modal for Accept form
+    await axios.post("https://slack.com/api/views.open", {
+      trigger_id: trigger_id,
+      view: {
+        type: "modal",
+        callback_id: "accept_form",
+        title: {
+          type: "plain_text",
+          text: "Accept Task"
+        },
+        submit: {
+          type: "plain_text",
+          text: "Submit"
+        },
+        close: {
+          type: "plain_text",
+          text: "Cancel"
+        },
+        blocks: [
+          {
+            type: "input",
+            block_id: "remarks_block",
+            label: {
+              type: "plain_text",
+              text: "Remarks"
+            },
+            element: {
+              type: "plain_text_input",
+              action_id: "remarks_input",
+              multiline: true
+            }
+          }
+        ]
+      }
+    }, {
+      headers: {
+        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+  }  else if (action.action_id.match(/add_/)) {
+    await openModal(trigger_id);
+  }
+}
   } catch (error) {
     console.error("Error processing Slack action:", error);
     // Cannot send res.status(500) here because res.send() is already sent above

@@ -73,6 +73,7 @@ const updateView = async(user) => {
 						"emoji": true
 					},
 					"style": "primary",
+          "action_id": "accept_task",
 					"value": "approve"
 				},
 				{
@@ -83,6 +84,7 @@ const updateView = async(user) => {
 						"emoji": true
 					},
 					"style": "danger",
+          "action_id": "decline_task",
 					"value": "decline"
 				},
 				{
