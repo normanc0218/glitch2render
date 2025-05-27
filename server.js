@@ -72,12 +72,12 @@ app.post('/slack/actions', async (req, res) => {
     res.send(); // Sends 200 OK to Slack
 
     if (type === 'view_submission') {
-      console.log(view.state.values.maintenanceStaff.pickedGuy.selected_options.map(option => option.text.text));
       const ts = new Date();
+      console.log()
       const data = {
         timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
-        machineLocation: view.state.values.machineLocation.value,
-        Description: view.state.values.Description.value,
+        machineLocation: view.state.values.machineLocation.machine_location_input.value,
+        Description: view.state.values.Description.issue.value,
         maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(option => option.text.text),
         
       };
@@ -91,34 +91,6 @@ app.post('/slack/actions', async (req, res) => {
     // Cannot send res.status(500) here because res.send() is already sent above
   }
 });
-
-// app.post('/slack/actions', async(req, res) => {
-//   try{
-//   //console.log(JSON.parse(req.body.payload));
-//   const { token, trigger_id, user, actions, type } = JSON.parse(req.body.payload);
-//   res.send(); // Responds with 200 OK
-//   // Button with "add_" action_id clicked --
-//   if(actions && actions[0].action_id.match(/add_/)) {
-//     // Open a modal window with forms to be submitted by a user
-//     openModal(trigger_id);
-//   } 
-//   // Modal forms submitted --
-//   else if(type === 'view_submission') {
-//     const ts = new Date();
-//     const { user, view } = JSON.parse(req.body.payload);
-//     const data = {
-//       timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
-//       note: view.state.values.note01.content.value,
-//       color: view.state.values.note02.color.selected_option.value
-//     }
-//     await displayHome(user.id, data);
-//   };
-//     } catch (error) {
-//         // Log and respond with an error message if something goes wrong
-//         console.error('Error processing Slack action:', error);
-//         res.status(500).send('Internal Server Error');
-//       }
-//   });
 
 
 app.listen(port, () => {

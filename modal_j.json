@@ -41,7 +41,7 @@
 			},
 			"element": {
 				"type": "plain_text_input",
-				"action_id": "machine_location_input",
+				"action_id": "issue",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "What is the issue?"
