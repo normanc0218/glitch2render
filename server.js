@@ -72,12 +72,14 @@ app.post('/slack/actions', async (req, res) => {
     res.send(); // Sends 200 OK to Slack
 
     if (type === 'view_submission') {
-      console.log(view);
+      console.log(view.state.values.machineLocation);
       const ts = new Date();
       const data = {
         timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
-        note: view.state.values.note01.content.value,
-        color: view.state.values.note02.color.selected_option.value
+        machineLocation: view.state.values.machineLocation.content,
+        Description: view.state.values.Description.content,
+        maintenanceStaff: view.state.values.maintenanceStaff.content,
+        
       };
       await displayHome(user.id, data);
     } else if (actions && actions[0].action_id.match(/add_/)) {

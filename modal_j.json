@@ -18,7 +18,7 @@
 	"blocks": [
 		{
 			"type": "input",
-			"block_id": "note01",
+			"block_id": "machineLocation",
 			"label": {
 				"type": "plain_text",
 				"text": "Machine and Location"
@@ -34,7 +34,7 @@
 		},
 		{
 			"type": "input",
-			"block_id": "note02",
+			"block_id": "Description",
 			"label": {
 				"type": "plain_text",
 				"text": "Description of the issue"
@@ -51,7 +51,7 @@
 		},
 		{
 			"type": "input",
-			"block_id": "note03",
+			"block_id": "maintenanceStaff",
 			"label": {
 				"type": "plain_text",
 				"text": "Assign the job to"
@@ -67,7 +67,7 @@
 					{
 						"text": {
 							"type": "plain_text",
-							"text": "*Fai",
+							"text": "Fai",
 							"emoji": true
 						},
 						"value": "value-0"
@@ -94,7 +94,7 @@
 		},
 		{
 			"type": "input",
-			"block_id": "input_block_id",
+			"block_id": "picture",
 			"label": {
 				"type": "plain_text",
 				"text": "Picture of the  defect"
@@ -111,6 +111,7 @@
 		},
 		{
 			"type": "input",
+      "block_id":"date",
 			"element": {
 				"type": "datepicker",
 				"initial_date": "2025-05-01",
@@ -129,6 +130,7 @@
 		},
 		{
 			"type": "input",
+      "block_id":"time",
 			"element": {
 				"type": "timepicker",
 				"initial_time": "13:37",
