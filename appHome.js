@@ -48,7 +48,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Machine:* ${o.Machine || "N/A"}`
+          text: `*Machine:* ${o.machineLocation || "N/A"}`
         }
       },
       {
@@ -56,6 +56,17 @@ const updateView = async(user) => {
         text: {
           type: "mrkdwn",
           text: `*Description:*\n${des}`
+        },
+        accessory: {
+				type: "image",
+				image_url: o.picture,
+				alt_text: "picture"
+			}},
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Assign To:* ${o.maintenanceStaff}`
         }
       },
       {

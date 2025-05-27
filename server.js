@@ -46,7 +46,7 @@ app.post("/slack/actions", async (req, res) => {
 
     if (type === "view_submission") {
       const ts = new Date();
-      console.log(view.state.values.date);
+      console.log(view.state.values.picture.file_input_action_id_1.files);
       const data = {
         timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
         machineLocation:view.state.values.machineLocation.machine_location_input.value,
@@ -54,6 +54,7 @@ app.post("/slack/actions", async (req, res) => {
         maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
             (option) => option.text.text
           ),
+        picture:view.state.values.picture.file_input_action_id_1.files.thumb_1024,
         date:view.state.values.date.datepickeraction.selected_date,
         time:view.state.values.time.timepickeraction.selected_time
       };
