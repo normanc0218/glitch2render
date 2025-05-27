@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const openModal_accept = require('./openModal_accept.js');
+const {openModal_accept} = require('./openModal_accept.js');
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");

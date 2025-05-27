@@ -1,6 +1,6 @@
 const axios = require('axios');
 const qs = require('qs');
-const openModal = async(trigger_id) => {
+const openModal_accept = async(trigger_id) => {
   const modal = {
         type: "modal",
         callback_id: "accept_form",
@@ -35,9 +35,9 @@ const openModal = async(trigger_id) => {
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: trigger_id,
-    view: modal
+    view: JSON.stringify(modal)
   };
   
   const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
 };
-module.exports = { openModal};
+module.exports = { openModal_accept};
