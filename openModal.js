@@ -37,14 +37,18 @@ const openModal = async(trigger_id) => {
 		},
 		{
 			"type": "input",
-			"element": {
-				"type": "rich_text_input",
-				"action_id": "rich_text_input-action"
-			},
+			"block_id": "note01",
 			"label": {
 				"type": "plain_text",
-				"text": "Description of the issue",
-				"emoji": true
+				"text": "Description of the issue"
+			},
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "machine_location_input",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Where is the machine?"
+				}
 			}
 		},
 		{
@@ -92,14 +96,19 @@ const openModal = async(trigger_id) => {
 		},
 		{
 			"type": "input",
-			"element": {
-				"type": "file_input",
-				"action_id": "file_input-action"
-			},
+			"block_id": "input_block_id",
 			"label": {
 				"type": "plain_text",
-				"text": "Picture of the defect",
-				"emoji": true
+				"text": "Picture of the  defect"
+			},
+			"element": {
+				"type": "file_input",
+				"action_id": "file_input_action_id_1",
+				"filetypes": [
+					"jpg",
+					"png"
+				],
+				"max_files": 5
 			}
 		},
 		{
