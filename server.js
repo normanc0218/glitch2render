@@ -72,6 +72,7 @@ app.post('/slack/actions', async (req, res) => {
     res.send(); // Sends 200 OK to Slack
 
     if (type === 'view_submission') {
+      console.log(view);
       const ts = new Date();
       const data = {
         timestamp: ts.toLocaleString('en-US', { timeZone: 'America/New_York' }),
