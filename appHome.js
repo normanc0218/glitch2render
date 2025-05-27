@@ -36,41 +36,45 @@ const updateView = async(user) => {
   } catch(error) {
     //console.error(error); 
   };
-  if(newData) {
-    let noteBlocks = [];
-    for (const o of newData) {
-      // const color = (o.color) ? o.color : 'yellow';
-      let des = o.Description;
-      if (des.length > 3000) {
-        des = des.substr(0, 2980) + '... _(truncated)_'
-        console.log(des.length);
-      }
-      noteBlocks = [
-        			{text: {
-				type: "mrkdwn",
-				text: "Machine number"
-			}},
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: des
-          },
-          "type": "context",
-          "elements": [
-            {
-              "type": "mrkdwn",
-              "text": o.timestamp
-            }
-          ]
-        },
-        {
-          type: "divider"
-        }
-      ];
-      blocks = blocks.concat(noteBlocks);
+  if (newData && newData.length > 0) {
+  for (const o of newData) {
+    let des = o.Description || "(No description provided)";
+    if (des.length > 3000) {
+      des = des.substr(0, 2980) + '... _(truncated)_';
     }
+
+    const noteBlocks = [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Machine:* ${o.Machine || "N/A"}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Description:*\n${des}`
+        }
+      },
+      {
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `🕒 ${o.timestamp || "No timestamp"}`
+          }
+        ]
+      },
+      {
+        type: "divider"
+      }
+    ];
+
+    blocks = blocks.concat(noteBlocks);
   }
+}
   // The final view -
   let view = {
     type: 'home',
