@@ -57,11 +57,12 @@ const updateView = async(user) => {
           type: "mrkdwn",
           text: `*Description:*\n${des}`
         },
-        accessory: {
-				type: "image",
-				image_url: o.picture,
-				alt_text: "picture"
-			}},
+			// accessory: {
+			// 	type: "image",
+			// 	image_url: o.picture,
+			// 	alt_text: "picture"
+			// }
+      },
       {
         type: "section",
         text: {
