@@ -62,7 +62,40 @@ const updateView = async(user) => {
           image_url: o.picture[0],
           alt_text: "picture"
         }
-      },
+      },		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Approve",
+						"emoji": true
+					},
+					"style": "primary",
+					"value": "approve"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Decline",
+						"emoji": true
+					},
+					"style": "danger",
+					"value": "decline"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "View Details",
+						"emoji": true
+					},
+					"value": "details"
+				}
+			]
+		},
       {
         type: "context",
         elements: [
