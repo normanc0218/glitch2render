@@ -42,7 +42,7 @@ const updateView = async(user) => {
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
     }
-
+    console.log(o.picture);
     const noteBlocks = [
       {
         type: "section",
@@ -55,7 +55,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Description:*${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
         accessory: {
           type: "image",
