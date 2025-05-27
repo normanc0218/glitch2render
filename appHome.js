@@ -48,7 +48,7 @@ const updateView = async(user) => {
       noteBlocks = [
         			{text: {
 				type: "mrkdwn",
-				text: "*Team Lunch (Internal)*\nCost: *$85.50USD*\nDate: *10/16/2019*\nService Provider: *Honest Sandwiches*  \nExpense no. *<fakelink.toUrl.com|#1797PD>*"
+				text: "Machine number"
 			}},
         {
           type: "section",
