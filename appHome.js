@@ -62,7 +62,7 @@ const updateView = async(user) => {
   if (newData && newData.length > 0) {
   for (const o of newData) {
     let des = o.Description || "(No description provided)";
-    const JobID = await generateUniqueJobId();
+    
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
     }
@@ -79,7 +79,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Job ID:* ${JobID}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Job ID:* ${o.JobId}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
         accessory: {
           type: "image",
@@ -153,8 +153,11 @@ const updateView = async(user) => {
 
 /* Display App Home */
 const displayHome = async(user, data) => {
+
   if(data) {     
     // Store in a local DB
+  const JobId = await generateUniqueJobId();
+  data.JobId = JobId;
     db.push(`/${user}/data[]`, data, true);   
   }
   const args = {
