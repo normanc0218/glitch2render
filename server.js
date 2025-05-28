@@ -38,6 +38,31 @@ app.post("/slack/events", signVerification, async (req, res) => {
 });
 // Slack Actions
 app.post("/slack/actions", async (req, res) => {
+  // If it's a slash command payload
+  if (!req.body.payload) {
+    const {
+      command,
+      user_id,
+      trigger_id,
+      text,
+      response_url,
+      user_name
+    } = req.body;
+
+    console.log("Slash command received:", command);
+
+    if (command === "/newjob") {
+      // You could open a modal here or respond with a message
+      await openModal(trigger_id); // You must have `openModal` defined for this
+
+      // Respond with 200 OK (Slack expects a response)
+      return res.status(200).send(); // Optionally add a visible message
+    }
+
+    return res.status(200).send("Unknown command");
+  }
+
+  // Otherwise it's an interactive payload (e.g. button, modal, etc.)
   try {
     const payload = JSON.parse(req.body.payload);
     const { token, trigger_id, user, actions, type, view } = payload;
