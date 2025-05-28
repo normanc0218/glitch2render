@@ -89,7 +89,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Job ID:* ${}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Job ID:* ${o.JobID}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
         accessory: {
           type: "image",
@@ -102,7 +102,6 @@ const updateView = async(user) => {
       if (isAssignedToUser) {
         noteBlocks.push({
           type: "actions",
-          primate_meta:o.Job
           elements: [
             {
               type: "button",
@@ -184,6 +183,8 @@ const displayHome = async(user, data) => {
     view: await updateView(user.id)
   };
   const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
+  
+  
   try {
     if(result.data.error) {
       console.log(result.data.error);

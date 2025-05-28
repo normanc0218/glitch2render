@@ -95,7 +95,9 @@ app.post("/slack/actions", async (req, res) => {
           // Open modal for Accept form
           console.log(payload)
           await openModal_accept(trigger_id,jobId);
-        } else if (action.action_id.match(/add_/)) {
+        } 
+        else if (action.action_id.match(/add_/)) 
+        {
           await openModal(trigger_id);
         }
       }
