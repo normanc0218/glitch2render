@@ -107,23 +107,23 @@ const updateView = async(user) => {
               type: "button",
               text: {
                 type: "plain_text",
-                text: "Approve",
+                text: "Accept",
                 emoji: true
               },
               style: "primary",
               action_id: "accept_task",
-              value: "approve"
+              value: "accept"
             },
             {
               type: "button",
               text: {
                 type: "plain_text",
-                text: "Decline",
+                text: "Reject",
                 emoji: true
               },
               style: "danger",
               action_id: "decline_task",
-              value: "decline"
+              value: "reject"
             }
           ]
         });
