@@ -75,7 +75,6 @@ const updateView = async(user) => {
     };
         // Determine if the current user is the one assigned to the job
     const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
-
       // Start building the note blocks
     const noteBlocks = [
       {
@@ -89,7 +88,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Job ID:* ${o.JobID}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Job ID:* ${o.JobId}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
         accessory: {
           type: "image",
