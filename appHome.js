@@ -65,9 +65,10 @@ const updateView = async(user) => {
     
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
-    }
+    };
+    console.log(o)
         // Determine if the current user is the one assigned to the job
-    const isAssignedToUser = o.maintenanceStaff === user.id; // Compare maintenanceStaff with user.id
+    const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
 
       // Start building the note blocks
     const noteBlocks = [
@@ -120,7 +121,8 @@ const updateView = async(user) => {
             }
           ]
         });
-      } else {
+      };
+    
         noteBlocks.push({
           type: "actions",
           elements: [
@@ -167,8 +169,6 @@ const updateView = async(user) => {
 
 /* Display App Home */
 const displayHome = async(user, data) => {
-  console.log(user)
-  const userId = user.id
   if(data) {     
     // Store in a local DB
   const JobId = await generateUniqueJobId();
