@@ -6,9 +6,7 @@ const apiUrl = 'https://slack.com/api';  // Define Slack API URL
 const db = new JsonDB(new Config("myDatabase", true, false, '/')); // Adjust name and config as needed
 
 // generateUUID
-async function generateUniqueJobId() {
-  await db.read(); // Load latest data
-
+function generateUniqueJobId() {
   let jobId;
   let exists = true;
 
@@ -17,7 +15,13 @@ async function generateUniqueJobId() {
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
     jobId = `JOB-${dateStr}-${randomStr}`;
 
-    exists = db.data.jobs.some(job => job.jobId === jobId);
+    try {
+      const jobs = db.getData('/jobs');
+      exists = jobs.some(job => job.jobId === jobId);
+    } catch (error) {
+      // If /jobs doesn't exist yet, that's fine — it means no data yet
+      exists = false;
+    }
   }
 
   return jobId;
@@ -58,6 +62,7 @@ const updateView = async(user) => {
   if (newData && newData.length > 0) {
   for (const o of newData) {
     let des = o.Description || "(No description provided)";
+    const JobID = await generateUniqueJobId();
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
     }
@@ -74,7 +79,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Job ID:* ${JobID}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
         },
         accessory: {
           type: "image",
