@@ -4,6 +4,7 @@ const openModal_accept = async(trigger_id,jobId) => {
   const modal = {
 	"type": "modal",
 	"callback_id": "accept_form",
+	"private_metadata": jobId,
 	"title": {
 		"type": "plain_text",
 		"text": "Accept Task"
