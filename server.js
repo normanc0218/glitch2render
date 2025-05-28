@@ -41,7 +41,7 @@ app.post("/slack/actions", async (req, res) => {
   try {
     const payload = JSON.parse(req.body.payload);
     const { token, trigger_id, user, actions, type, view } = payload;
-
+    console.log(payload);
     // Always respond immediately
     res.send(); // Sends 200 OK to Slack
 
