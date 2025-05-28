@@ -66,7 +66,12 @@ const updateView = async(user) => {
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
     }
-    console.log(o.picture);
+        // Determine if the current user is the one assigned to the job
+    console.log(`o.mainteannce${o.maintenanceStaff}`)
+    console.log(`user.id${user}`)
+    const isAssignedToUser = o.maintenanceStaff === user.id; // Compare maintenanceStaff with user.id
+
+      // Start building the note blocks
     const noteBlocks = [
       {
         type: "section",
@@ -86,43 +91,55 @@ const updateView = async(user) => {
           image_url: o.picture[0],
           alt_text: "picture"
         }
-      },		{
-			"type": "actions",
-			"elements": [
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Approve",
-						"emoji": true
-					},
-					"style": "primary",
-          "action_id": "accept_task",
-					"value": "approve"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "Decline",
-						"emoji": true
-					},
-					"style": "danger",
-          "action_id": "decline_task",
-					"value": "decline"
-				},
-				{
-					"type": "button",
-					"text": {
-						"type": "plain_text",
-						"text": "View Details",
-						"emoji": true
-					},
-					"value": "details"
-				}
-			]
-		},
-      {
+      }];
+    
+        // Conditionally add the action buttons if the user is assigned to this job
+      if (isAssignedToUser) {
+        noteBlocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Approve",
+                emoji: true
+              },
+              style: "primary",
+              action_id: "accept_task",
+              value: "approve"
+            },
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Decline",
+                emoji: true
+              },
+              style: "danger",
+              action_id: "decline_task",
+              value: "decline"
+            }
+          ]
+        });
+      } else {
+        noteBlocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "View Details",
+                emoji: true
+              },
+              value: "details"
+            }
+          ]
+        });
+      }
+
+      noteBlocks.push({
         type: "context",
         elements: [
           {
@@ -130,15 +147,14 @@ const updateView = async(user) => {
             text: `🕒 ${o.timestamp || "No timestamp"}`
           }
         ]
-      },
-      {
-        type: "divider"
-      }
-    ];
+      });
 
+      noteBlocks.push({
+        type: "divider"
+      });
     blocks = blocks.concat(noteBlocks);
   }
-}
+};
   // The final view -
   let view = {
     type: 'home',
