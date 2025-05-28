@@ -14,7 +14,7 @@ function generateUniqueJobId() {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
     jobId = `JOB-${dateStr}-${randomStr}`;
-
+    exists = false;
     try {
           const allUsers = db.getData('/'); // root object: { user1: { data: [...] }, user2: { data: [...] }, ... }
 
@@ -73,7 +73,6 @@ const updateView = async(user) => {
     if (des.length > 3000) {
       des = des.substr(0, 2980) + '... _(truncated)_';
     };
-    console.log(o)
         // Determine if the current user is the one assigned to the job
     const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
 
