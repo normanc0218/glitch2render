@@ -1,14 +1,110 @@
 const axios = require('axios');
-const qs = require('qs');
-const openModal = async(trigger_id) => {
-  const modal = require('./modal_j.json');
+const today = new Date();
+const initialDate = today.toISOString().split("T")[0]; // e.g. "2025-05-28"
+const initialTime =  new Intl.DateTimeFormat("en-US", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "America/New_York"
+}).format(today); // e.g. "14:37"
 
-  const args = {
-    token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: trigger_id,
-    view: JSON.stringify(modal)
+const openModal_reject = async (trigger_id, jobId) => {
+  const modal = {
+    type: "modal",
+    callback_id: "accept_form",
+    private_metadata: jobId,
+    title: {
+      type: "plain_text",
+      text: "Accept Task"
+    },
+    submit: {
+      type: "plain_text",
+      text: "Accept"
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel"
+    },
+    blocks: [
+      {
+        type: "section",
+        text: { type: "mrkdwn", text: "Who are you?" },
+        accessory: {
+          type: "static_select",
+          placeholder: { type: "plain_text", text: "Name", emoji: true },
+          options: [
+            { text: { type: "plain_text", text: "Fai", emoji: true }, value: "value-0" },
+            { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },
+            { text: { type: "plain_text", text: "Sam", emoji: true }, value: "value-2" }
+          ],
+          action_id: "whoaccept"
+        }
+      },
+      {
+        type: "input",
+        block_id: "remarks_block",
+        label: { type: "plain_text", text: "Accept the Job and Sign" },
+        element: {
+          type: "plain_text_input",
+          action_id: "remarks_input"
+        }
+      },
+      {
+        type: "section",
+        text: { type: "plain_text", text: "Date to Start", emoji: true }
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "datepicker",
+            initial_date: initialDate,
+            placeholder: { type: "plain_text", text: "Select a date", emoji: true },
+            action_id: "start date"
+          }
+        ]
+      },
+      {
+        type: "section",
+        text: { type: "plain_text", text: "Time to Start", emoji: true }
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "timepicker",
+            initial_time: initialTime,
+            placeholder: { type: "plain_text", text: "Select time", emoji: true },
+            action_id: "actionId-0"
+          }
+          
+        ]
+      }
+    ]
   };
-  
-  const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
+
+  try {
+    const response = await axios.post(
+      'https://slack.com/api/views.open',
+      {
+        trigger_id: trigger_id,
+        view: modal
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`
+        }
+      }
+    );
+
+    if (!response.data.ok) {
+      console.error("Slack API error:", response.data);
+    }
+
+  } catch (err) {
+    console.error("Modal open error:", err.response?.data || err.message);
+  }
 };
-module.exports = { openModal};
+
+module.exports = { openModal_reject };
