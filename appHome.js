@@ -67,8 +67,6 @@ const updateView = async(user) => {
       des = des.substr(0, 2980) + '... _(truncated)_';
     }
         // Determine if the current user is the one assigned to the job
-    console.log(`o.mainteannce${o.maintenanceStaff}`)
-    console.log(`user.id${user}`)
     const isAssignedToUser = o.maintenanceStaff === user.id; // Compare maintenanceStaff with user.id
 
       // Start building the note blocks
@@ -169,17 +167,18 @@ const updateView = async(user) => {
 
 /* Display App Home */
 const displayHome = async(user, data) => {
-
+  console.log(user)
+  const userId = user.id
   if(data) {     
     // Store in a local DB
   const JobId = await generateUniqueJobId();
   data.JobId = JobId;
-    db.push(`/${user}/data[]`, data, true);   
+    db.push(`/${user.id}/data[]`, data, true);   
   }
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
-    user_id: user,
-    view: await updateView(user)
+    user_id: user.id,
+    view: await updateView(user.id)
   };
   const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
   try {

@@ -76,13 +76,17 @@ app.post("/slack/actions", async (req, res) => {
             view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
               (option) => option.text.text
             ),
+          mStaff_id:
+            view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
+              (option) => option.value
+            ),
           picture: view.state.values.picture.file_input_action_id_1.files.map(
             (option) => option.url_private
           ),
           date: view.state.values.date.datepickeraction.selected_date,
           time: view.state.values.time.timepickeraction.selected_time,
         };
-        await displayHome(user.id, data);
+        await displayHome(user, data);
       } else if (actions) {
         const action = actions[0];
 
