@@ -16,8 +16,15 @@ function generateUniqueJobId() {
     jobId = `JOB-${dateStr}-${randomStr}`;
 
     try {
-      const jobs = db.getData('/jobs');
-      exists = jobs.some(job => job.jobId === jobId);
+          const allUsers = db.getData('/'); // root object: { user1: { data: [...] }, user2: { data: [...] }, ... }
+
+          for (const user in allUsers) {
+            const userJobs = allUsers[user]?.data || [];
+            if (userJobs.some(job => job.JobId === jobId)) {
+              exists = true;
+              break;
+            }
+          }
     } catch (error) {
       // If /jobs doesn't exist yet, that's fine — it means no data yet
       exists = false;
@@ -122,8 +129,8 @@ const updateView = async(user) => {
           ]
         });
       };
-    
-        noteBlocks.push({
+
+      noteBlocks.push({
           type: "actions",
           elements: [
             {
@@ -133,21 +140,17 @@ const updateView = async(user) => {
                 text: "View Details",
                 emoji: true
               },
-              value: "details"
-            }
-          ]
-        });
-      }
-
-      noteBlocks.push({
-        type: "context",
-        elements: [
+              value: "details"}
+            ]},
           {
-            type: "mrkdwn",
-            text: `🕒 ${o.timestamp || "No timestamp"}`
-          }
-        ]
-      });
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: `🕒 ${o.timestamp || "No timestamp"}`
+              }
+            ]
+          });
 
       noteBlocks.push({
         type: "divider"
