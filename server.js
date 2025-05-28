@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const {openModal_accept} = require('./openModal_accept.js');
+const { openModal_accept } = require("./openModal_accept.js");
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");
@@ -40,14 +40,8 @@ app.post("/slack/events", signVerification, async (req, res) => {
 app.post("/slack/actions", async (req, res) => {
   // If it's a slash command payload
   if (!req.body.payload) {
-    const {
-      command,
-      user_id,
-      trigger_id,
-      text,
-      response_url,
-      user_name
-    } = req.body;
+    const { command, user_id, trigger_id, text, response_url, user_name } =
+      req.body;
 
     console.log("Slash command received:", command);
 
@@ -60,46 +54,49 @@ app.post("/slack/actions", async (req, res) => {
     }
 
     return res.status(200).send("Unknown command");
-  }
+  } else {
+    // Otherwise it's an interactive payload (e.g. button, modal, etc.)
+    try {
+      const payload = JSON.parse(req.body.payload);
+      const { token, trigger_id, user, actions, type, view } = payload;
+      // Always respond immediately
+      res.send(); // Sends 200 OK to Slack
 
-  // Otherwise it's an interactive payload (e.g. button, modal, etc.)
-  try {
-    const payload = JSON.parse(req.body.payload);
-    const { token, trigger_id, user, actions, type, view } = payload;
-    console.log(payload);
-    // Always respond immediately
-    res.send(); // Sends 200 OK to Slack
-
-    if (type === "view_submission") {
-      const ts = new Date();
-      // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
-      const data = {
-        timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-        machineLocation:view.state.values.machineLocation.machine_location_input.value,
-        Description: view.state.values.Description.issue.value,
-        maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
-            (option) => option.text.text
-          ),
-        picture:view.state.values.picture.file_input_action_id_1.files.map(
+      if (type === "view_submission") {
+        const ts = new Date();
+        // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
+        const data = {
+          timestamp: ts.toLocaleString("en-US", {
+            timeZone: "America/New_York",
+          }),
+          machineLocation:
+            view.state.values.machineLocation.machine_location_input.value,
+          Description: view.state.values.Description.issue.value,
+          maintenanceStaff:
+            view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
+              (option) => option.text.text
+            ),
+          picture: view.state.values.picture.file_input_action_id_1.files.map(
             (option) => option.url_private
           ),
-        date:view.state.values.date.datepickeraction.selected_date,
-        time:view.state.values.time.timepickeraction.selected_time
-      };
-      await displayHome(user.id, data);
-    } else if (actions) {
-  const action = actions[0];
+          date: view.state.values.date.datepickeraction.selected_date,
+          time: view.state.values.time.timepickeraction.selected_time,
+        };
+        await displayHome(user.id, data);
+      } else if (actions) {
+        const action = actions[0];
 
-  if (action.action_id === "accept_task") {
-    // Open modal for Accept form
-    await openModal_accept(trigger_id);
-  }  else if (action.action_id.match(/add_/)) {
-    await openModal(trigger_id);
-  }
-}
-  } catch (error) {
-    console.error("Error processing Slack action:", error);
-    // Cannot send res.status(500) here because res.send() is already sent above
+        if (action.action_id === "accept_task") {
+          // Open modal for Accept form
+          await openModal_accept(trigger_id);
+        } else if (action.action_id.match(/add_/)) {
+          await openModal(trigger_id);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing Slack action:", error);
+      // Cannot send res.status(500) here because res.send() is already sent above
+    }
   }
 });
 

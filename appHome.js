@@ -4,6 +4,25 @@ const { JsonDB, Config } = require('node-json-db');  // Ensure this is your data
 const apiUrl = 'https://slack.com/api';  // Define Slack API URL
 
 const db = new JsonDB(new Config("myDatabase", true, false, '/')); // Adjust name and config as needed
+
+// generateUUID
+async function generateUniqueJobId() {
+  await db.read(); // Load latest data
+
+  let jobId;
+  let exists = true;
+
+  while (exists) {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    jobId = `JOB-${dateStr}-${randomStr}`;
+
+    exists = db.data.jobs.some(job => job.jobId === jobId);
+  }
+
+  return jobId;
+}
+//Update the view
 const updateView = async(user) => {
   // Intro message - 
   let blocks = [ 
