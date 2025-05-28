@@ -33,6 +33,38 @@ const openModal_accept = async(trigger_id,jobId) => {
           }
         ]
       };
+  console.log({
+        type: "modal",
+        callback_id: "accept_form",
+        private_metadata:jobId,
+        title: {
+          type: "plain_text",
+          text: "Accept Task"
+        },
+        submit: {
+          type: "plain_text",
+          text: "Submit"
+        },
+        close: {
+          type: "plain_text",
+          text: "Cancel"
+        },
+        blocks: [
+          {
+            type: "input",
+            block_id: "remarks_block",
+            label: {
+              type: "plain_text",
+              text: "Remarks"
+            },
+            element: {
+              type: "plain_text_input",
+              action_id: "remarks_input",
+              multiline: true
+            }
+          }
+        ]
+      })
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     trigger_id: trigger_id,
