@@ -89,9 +89,9 @@ app.post("/slack/actions", async (req, res) => {
         await displayHome(user, data);
       } else if (actions) {
         const action = actions[0];
-        console.log(payload)
         if (action.action_id === "accept_task") {
-          const jobId = view.mStaff_id;
+          const jobId = action.value
+          console.log(jobId)
           // Open modal for Accept form
           await openModal_accept(trigger_id,jobId);
         } 

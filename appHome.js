@@ -111,7 +111,7 @@ const updateView = async(user) => {
               },
               style: "primary",
               action_id: "accept_task",
-              value: "accept"
+              value: o.JobId
             },
             {
               type: "button",
@@ -122,7 +122,7 @@ const updateView = async(user) => {
               },
               style: "danger",
               action_id: "decline_task",
-              value: "reject"
+              value: o.JobId
             }
           ]
         });
@@ -138,7 +138,7 @@ const updateView = async(user) => {
                 text: "View Details",
                 emoji: true
               },
-              value: "details"}
+              value: o.JobId}
             ]},
           {
             type: "context",
