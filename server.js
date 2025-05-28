@@ -90,12 +90,10 @@ app.post("/slack/actions", async (req, res) => {
       } else if (actions) {
         const action = actions[0];
         console.log("loop")
-        console.log(action.action_id)
-        console.log(view)
         if (action.action_id === "accept_task") {
           const jobId = view.mStaff_id;
           // Open modal for Accept form
-          console.log(jobId)
+          console.log(payload)
           await openModal_accept(trigger_id,jobId);
         } else if (action.action_id.match(/add_/)) {
           await openModal(trigger_id);
