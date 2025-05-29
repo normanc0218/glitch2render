@@ -42,7 +42,7 @@ const openModal_accept = async (trigger_id, jobId) => {
       },
       {
         type: "input",
-        block_id: "remarks_block",
+        block_id: "signature",
         label: { type: "plain_text", text: "Accept the Job and Sign" },
         element: {
           type: "plain_text_input",
@@ -55,12 +55,13 @@ const openModal_accept = async (trigger_id, jobId) => {
       },
       {
         type: "actions",
+        block_id: "datepicker",
         elements: [
           {
             type: "datepicker",
             initial_date: initialDate,
             placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "start date"
+            action_id: "start_date"
           }
         ]
       },
@@ -70,12 +71,13 @@ const openModal_accept = async (trigger_id, jobId) => {
       },
       {
         type: "actions",
+        block_id: "timepicker",
         elements: [
           {
             type: "timepicker",
             initial_time: initialTime,
             placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "actionId-0"
+            action_id: "start_time"
           }
           
         ]

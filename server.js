@@ -99,8 +99,7 @@ app.post("/slack/actions", async (req, res) => {
           picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
           date: view.state.values.date.datepickeraction.selected_date,
           time: view.state.values.time.timepickeraction.selected_time,
-          status: "Pending",
-          JobId: Date.now().toString() // Or any unique ID logic
+          status: "Pending"
         };
 
         await displayHome(user, data);
@@ -109,14 +108,16 @@ app.post("/slack/actions", async (req, res) => {
       // Accept Modal Submission
       else if (view.callback_id === "accept_form") {
         const jobId = view.private_metadata;
-
+        console.log(view.state)
         const updatedData = {
-          date: view.state.values.date.datepickeraction.selected_date,
-          time: view.state.values["time"].actionId_0.selected_time,
+          date: view.state.values.datepicker.start_date.selected_date,
+          time: view.state.values.timepicker.start_time.selected_time,
           remarks: view.state.values.remarks_block.remarks_input.value,
           status: "Accepted"
         };
+          
           await displayHome(user.id, updatedData);
+          console.log(`Accepted by ${user.id}` )
       }      
         // Reject Modal Submission
       else if (view.callback_id === "reject_form") {
