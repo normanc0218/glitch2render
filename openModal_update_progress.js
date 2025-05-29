@@ -338,35 +338,54 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 					{
 						"text": {
 							"type": "mrkdwn",
+							"text": "Report other job status (Please select from below)"
+						},
+						"value": "value-4"
+					}
+				],
+				"action_id": "complete_job"
+			}
+		},{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Select here to report the job Status if not completed*"
+			},
+			"accessory": {
+				"type": "checkboxes",
+				"options": [
+	
+					{
+						"text": {
+							"type": "mrkdwn",
 							"text": "Waiting for parts"
 						},
-						"value": "value-1"
+						"value": "wait4part"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Follow-up check"
 						},
-						"value": "value-2"
+						"value": "fcheck"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Temporarily fixed"
 						},
-						"value": "value-3"
+						"value": "temporilyfixed"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Other"
 						},
-						"value": "value-4"
+						"value": "other"
 					}
 				],
-				"action_id": "reason_defect"
-			}
-		},
+				"action_id": "otheroption"
+			}}
 	]
 };
 
