@@ -180,12 +180,41 @@ const updateView = async (user) => {
 /* Display App Home */
 const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
+  // if (data) {
+  //   // Store in a local DB
+  //   const JobId = await generateUniqueJobId();
+  //   data.JobId = JobId;
+  //   db.push(`/${user.id}/data[]`, data, true);
+  // }
   if (data) {
-    // Store in a local DB
-    const JobId = await generateUniqueJobId();
-    data.JobId = JobId;
-    db.push(`/${user.id}/data[]`, data, true);
-  }
+      const userId = user.id || user; // handle if user is string
+      const path = `/${userId}/data`;
+
+      let jobs = [];
+
+      try {
+        jobs = await db.getData(path);
+      } catch (err) {
+        // No existing data
+        jobs = [];
+      }
+
+      // Check if we're updating an existing job or creating a new one
+      const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+      if (jobIndex > -1) {
+        // Update existing job
+        jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+      } else {
+        // New job – generate JobId
+        data.JobId = await generateUniqueJobId();
+        jobs.push(data);
+      }
+
+      await db.push(path, jobs, true);
+    }
+  
+  
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     user_id: user.id,
