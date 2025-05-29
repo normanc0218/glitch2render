@@ -245,7 +245,6 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				},
 				"action_id": "notify_supervisor_select",
         //supervisor option for the maintenance staff to call
-        "initial_option": ["U06DSKC32E4"] 
 			}
 		},
 		{
@@ -320,7 +319,55 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				"text": "End time",
 				"emoji": true
 			}
-		}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Status of the finished Job*"
+			},
+			"accessory": {
+				"type": "checkboxes",
+				"options": [
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Complete the job or Fixed the issue"
+						},
+						"value": "value-0"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Operator error"
+						},
+						"value": "value-1"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "No issue"
+						},
+						"value": "value-2"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Unknow issue"
+						},
+						"value": "value-3"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Other"
+						},
+						"value": "value-4"
+					}
+				],
+				"action_id": "reason_defect"
+			}
+		},
 	]
 };
 
