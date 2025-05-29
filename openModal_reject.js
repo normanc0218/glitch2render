@@ -26,12 +26,16 @@ const openModal_reject = async (trigger_id, jobId) => {
       text: "Cancel"
     },
     blocks: [
-      {
-        type: "section",
-        text: { type: "mrkdwn", text: "Who are you?" },
-        accessory: {
+       {
+        type: "input",
+        block_id:"reject_block",
+        label: {
+            type: "plain_text",
+            text: "Your Name"
+          },
+        element: {
           type: "static_select",
-          placeholder: { type: "plain_text", text: "Name", emoji: true },
+          placeholder: { type: "plain_text", text: "name ", emoji: true },
           options: [
             { text: { type: "plain_text", text: "Fai", emoji: true }, value: "value-0" },
             { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },

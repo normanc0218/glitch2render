@@ -100,16 +100,15 @@ app.post("/slack/actions", async (req, res) => {
             
           };
             await displayHome(user, updatedData);
-            console.log(`Accepted by ${user}` )
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
           console.log('view is ')
-          console.log(view)
+          console.log(view.state.values.reject_block.whoreject)
           const jobId = view.private_metadata;
           const updatedData = {
           JobId: jobId,
-          status: `Rejected by ${view.m2Fyv}`
+          status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };
 
           await displayHome(user,updatedData);

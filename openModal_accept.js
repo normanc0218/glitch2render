@@ -28,6 +28,7 @@ const openModal_accept = async (trigger_id, jobId) => {
     blocks: [
       {
         type: "input",
+        block_id:"accept_block",
         label: {
             type: "plain_text",
             text: "Your Name"
