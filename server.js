@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const { openModal_accept } = require("./openModal_accept.js");
+const { openModal_reject } = require("./openModal_reject.js");
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");
@@ -85,6 +86,7 @@ app.post("/slack/actions", async (req, res) => {
           ),
           date: view.state.values.date.datepickeraction.selected_date,
           time: view.state.values.time.timepickeraction.selected_time,
+          status:"Pending"
         };
         await displayHome(user, data);
       } else if (actions) {
@@ -95,6 +97,12 @@ app.post("/slack/actions", async (req, res) => {
           console.log(trigger_id)
           // Open modal for Accept form
           await openModal_accept(trigger_id,jobId);
+        } else if (action.action_id === "reject_task") {
+          const jobId = action.value
+          console.log(jobId)
+          console.log(trigger_id)
+          // Open modal for Reject form
+          await openModal_reject(trigger_id,jobId);
         } 
         else if (action.action_id.match(/add_/)) 
         {

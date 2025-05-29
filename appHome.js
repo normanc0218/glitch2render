@@ -88,7 +88,7 @@ const updateView = async(user) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Job ID:* ${o.JobId}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}`
+          text: `*Job ID:* ${o.JobId}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Start date:* ${o.date}\n*Start time:* ${o.time}\n*Status:* ${o.status}`
         },
         accessory: {
           type: "image",
