@@ -109,7 +109,7 @@ const updateView = async (user) => {
               },
               {
                 type: "button",
-                text: { type: "plain_text", text: "Reject", emoji: true },
+                text: { type: "plain_text", text: `Reject`, emoji: true },
                 style: "danger",
                 action_id: "reject_task",
                 value: o.JobId,
@@ -122,7 +122,7 @@ const updateView = async (user) => {
             elements: [
               {
                 type: "button",
-                text: { type: "plain_text", text: "Job Done", emoji: true },
+                text: { type: "plain_text", text: "Update Progress", emoji: true },
                 style: "primary",
                 action_id: "job_done",
                 value: o.JobId,
