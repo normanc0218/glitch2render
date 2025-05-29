@@ -2,6 +2,9 @@ require("dotenv").config();
 const express = require("express");
 const { openModal_accept } = require("./openModal_accept.js");
 const { openModal_reject } = require("./openModal_reject.js");
+const { openModal_update_progress } = require("./openModal_update_progress.js");
+const { openModal_view_detail } = require("./openModal_view_detail.js");
+
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
 const { displayHome } = require("./appHome");
@@ -115,6 +118,7 @@ app.post("/slack/actions", async (req, res) => {
         }
       } else if (actions) {
           const action = actions[0];
+          console.log(actions)
           if (action.action_id === "accept_task") {
             const jobId = action.value
 
@@ -122,10 +126,13 @@ app.post("/slack/actions", async (req, res) => {
             await openModal_accept(trigger_id,jobId);
           } else if (action.action_id === "reject_task") {
             const jobId = action.value
-            console.log(jobId)
             // Open modal for Reject form
             await openModal_reject(trigger_id,jobId);
-          } 
+          } else if (action.action_id === "update_progress") {
+            const jobId = action.value
+            //Open modal for update progress
+            await openModal_update_progress(trigger_id,jobId);
+          }
           else if (action.action_id.match(/add_/)) 
           {
             await openModal(trigger_id);

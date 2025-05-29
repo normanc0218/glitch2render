@@ -69,8 +69,6 @@ const updateView = async (user) => {
     for (const o of newData) {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
-      console.log(o)
-      console.log(user)
       const isAssignedToUser = o.mStaff_id.includes(user);
 
       const noteBlocks = [
@@ -124,7 +122,7 @@ const updateView = async (user) => {
                 type: "button",
                 text: { type: "plain_text", text: "Update Progress", emoji: true },
                 style: "primary",
-                action_id: "job_done",
+                action_id: "update_progress",
                 value: o.JobId,
               },
             ],
