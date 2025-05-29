@@ -58,102 +58,84 @@ app.post("/slack/actions", async (req, res) => {
   } else {
     // Otherwise it's an interactive payload (e.g. button, modal, etc.)
     try {
-      const payload = JSON.parse(req.body.payload);
+      let payload;
+        try {
+          payload = typeof req.body.payload === "string" ? JSON.parse(req.body.payload) : req.body.payload;
+        } catch (err) {
+          console.error("Failed to parse payload", err);
+          return res.status(400).send("Invalid payload");
+        }
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-      console.log(payload)
-      console.log(`type${type}`)
       if (type === "view_submission") {
         const ts = new Date();
-        // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
-        // const data = {
-        //   timestamp: ts.toLocaleString("en-US", {
-        //     timeZone: "America/New_York",
-        //   }),
-        //   machineLocation:
-        //     view.state.values.machineLocation.machine_location_input.value,
-        //   Description: view.state.values.Description.issue.value,
-        //   maintenanceStaff:
-        //     view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
-        //       (option) => option.text.text
-        //     ),
-        //   mStaff_id:
-        //     view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
-        //       (option) => option.value
-        //     ),
-        //   picture: view.state.values.picture.file_input_action_id_1.files.map(
-        //     (option) => option.url_private
-        //   ),
-        //   date: view.state.values.date.datepickeraction.selected_date,
-        //   time: view.state.values.time.timepickeraction.selected_time,
-        //   status:"Pending"
-        // };
-              // New Job Submission
-      if (view.callback_id === "new_job_form") {
-        const data = {
-          timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-          machineLocation: view.state.values.machineLocation.machine_location_input.value,
-          Description: view.state.values.Description.issue.value,
-          maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.text.text),
-          mStaff_id: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.value),
-          picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
-          date: view.state.values.date.datepickeraction.selected_date,
-          time: view.state.values.time.timepickeraction.selected_time,
-          status: "Pending"
-        };
-
-        await displayHome(user, data);
-      }
-
-      // Accept Modal Submission
-      else if (view.callback_id === "accept_form") {
-        const jobId = view.private_metadata;
-        const updatedData = {
-          date: view.state.values.datepicker.start_date.selected_date,
-          time: view.state.values.timepicker.start_time.selected_time,
-          remarks: view.state.values.signature.remarks_input.value,
-          status: "Accepted"
-        };
-          
-          await displayHome(user.id, updatedData);
-          // console.log(`Accepted by ${user.id}` )
-      }      
-        // Reject Modal Submission
-      else if (view.callback_id === "reject_form") {
-        const jobId = view.private_metadata;
-        const updatedData = {
-        JobId: jobId,
-        status: "Rejected"
-      };
-
-        await displayHome(user,updatedData);
-      }
-    } else if (actions) {
-        const action = actions[0];
-        if (action.action_id === "accept_task") {
-          const jobId = action.value
-          // console.log(jobId)
-          // console.log(trigger_id)
-          // Open modal for Accept form
-          await openModal_accept(trigger_id,jobId);
-        } else if (action.action_id === "reject_task") {
-          const jobId = action.value
-          // console.log(jobId)
-          // console.log(trigger_id)
-          // Open modal for Reject form
-          await openModal_reject(trigger_id,jobId);
-        } 
-        else if (action.action_id.match(/add_/)) 
-        {
-          await openModal(trigger_id);
+        console.log(view)
+        if (view.callback_id === "new_job_form") {
+          const data = {
+            timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+            machineLocation: view.state.values.machineLocation.machine_location_input.value,
+            Description: view.state.values.Description.issue.value,
+            maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.text.text),
+            mStaff_id: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.value),
+            picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
+            date: view.state.values.date.datepickeraction.selected_date,
+            time: view.state.values.time.timepickeraction.selected_time,
+            status: "Pending"
+          };
+          console.log(data)
+          await displayHome(user, data);
         }
+
+        // Accept Modal Submission
+        else if (view.callback_id === "accept_form") {
+          const jobId = view.private_metadata;
+          const updatedData = {
+            date: view.state.values.datepicker.start_date.selected_date,
+            time: view.state.values.timepicker.start_time.selected_time,
+            remarks: view.state.values.signature.remarks_input.value,
+            status: "Accepted"
+          };
+
+            await displayHome(user.id, updatedData);
+            // console.log(`Accepted by ${user.id}` )
+        }      
+          // Reject Modal Submission
+        else if (view.callback_id === "reject_form") {
+          const jobId = view.private_metadata;
+          const updatedData = {
+          JobId: jobId,
+          status: "Rejected"
+        };
+
+          await displayHome(user,updatedData);
+        }
+      } else if (actions) {
+          const action = actions[0];
+          if (action.action_id === "accept_task") {
+            const jobId = action.value
+            // console.log(jobId)
+            // console.log(trigger_id)
+            // Open modal for Accept form
+            await openModal_accept(trigger_id,jobId);
+          } else if (action.action_id === "reject_task") {
+            const jobId = action.value
+            // console.log(jobId)
+            // console.log(trigger_id)
+            // Open modal for Reject form
+            await openModal_reject(trigger_id,jobId);
+          } 
+          else if (action.action_id.match(/add_/)) 
+          {
+            console.log(`I trigger the modal`)
+            await openModal(trigger_id);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing Slack action:", error);
+        // Cannot send res.status(500) here because res.send() is already sent above
       }
-    } catch (error) {
-      console.error("Error processing Slack action:", error);
-      // Cannot send res.status(500) here because res.send() is already sent above
     }
-  }
 });
 
 app.listen(port, () => {
