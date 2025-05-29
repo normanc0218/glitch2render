@@ -46,6 +46,17 @@ const openModal_reject = async (trigger_id, jobId) => {
       },
       {
         type: "input",
+        block_id: "reason",
+        label: { type: "plain_text", text: "Specify Your Reason To Reject" },
+        element: {
+          type: "plain_text_input",
+          action_id: "reason_input",
+          multiline: true
+        },
+
+      },
+      {
+        type: "input",
         block_id: "signature",
         label: { type: "plain_text", text: "Reject the Job and Sign" },
         element: {
@@ -55,7 +66,7 @@ const openModal_reject = async (trigger_id, jobId) => {
       },
       {
         type: "section",
-        text: { type: "plain_text", text: "Date to Start", emoji: true }
+        text: { type: "plain_text", text: "Date", emoji: true }
       },
       {
         type: "actions",
@@ -65,13 +76,13 @@ const openModal_reject = async (trigger_id, jobId) => {
             type: "datepicker",
             initial_date: initialDate,
             placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "start_date"
+            action_id: "reject_date"
           }
         ]
       },
       {
         type: "section",
-        text: { type: "plain_text", text: "Time to Start", emoji: true }
+        text: { type: "plain_text", text: "Time", emoji: true }
       },
       {
         type: "actions",
@@ -81,7 +92,7 @@ const openModal_reject = async (trigger_id, jobId) => {
             type: "timepicker",
             initial_time: initialTime,
             placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "start_time"
+            action_id: "reject_time"
           }
           
         ]
