@@ -115,29 +115,31 @@ app.post("/slack/actions", async (req, res) => {
           // Update progress Modal Submission
         else if (view.callback_id === "update_progress") {
           console.log('view is ')
-          console.log(view.state.value)
+          console.log(view.state.values)
           const jobId = view.private_metadata;
           const updatedData = {
-           jobId: view.state.value.private_metadata,
-            updatedBy: view.state.value.accept_block?.whoupdate?.selected_option?.value || null,
-
-            endDate:view.state.value.date?.datepickeraction?.selected_date || null,
-            endTime: view.state.value.time?.timepickeraction?.selected_time || null,
-
-            supervisorUserId: view.state.value.supervisor_notify?.notify_supervisor_select?.selected_user || null,
-            supervisorMessage: view.state.value.supervisor_message?.notify_supervisor_message?.value || null,
-
-            otherStatuses: view.state.value.other_status_block?.otheroption?.selected_options?.map(opt => opt.value) || [],
-
-            issueCauses: view.state.value.reason_defect?.reason_defect?.selected_options?.map(opt => opt.value) || [],
-
+           jobId: jobId,
+            updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
+            issueCauses: view.state.values.reason_defect?.reason_defect?.selected_options?.map(opt => opt.value) || [],
             // Clean-up confirmations
-            toolsCollected:view.state.value['block_id_for_tools']?.select_option?.selected_option?.value || null,
-            resetConfirmed: view.state.value['block_id_for_reset']?.select_option?.selected_option?.value || null,
+            toolsCollected:view.state.values['block_id_for_tools']?.select_option?.selected_option?.value || null,
+            resetConfirmed: view.state.values['block_id_for_reset']?.select_option?.selected_option?.value || null,
+
+            supervisorUserId: view.state.values.supervisor_notify?.notify_supervisor_select?.selected_user || null,
+            supervisorMessage: view.state.values.supervisor_message?.notify_supervisor_message?.value || null,
 
             // Completion status
-            completionStatus: view.state.value['block_id_for_completion']?.complete_job?.selected_option?.value || null
+            completionStatus: view.state.values['block_id_for_completion']?.complete_job?.selected_option?.value || null,
+            otherStatuses: view.state.values.other_status_block?.otheroption?.selected_options?.map(opt => opt.value) || [],
+            
+            endDate:view.state.values.date?.datepickeraction?.selected_date || null,
+            endTime: view.state.values.time?.timepickeraction?.selected_time || null,
+            
+            //Picture of finished job
+            finish_pic:view.state.values.picture.finish_pic.files
           };
+          console.log(updatedData)
+          console.log(view.state.values.picture.finish_pic.files)
           await displayHome(user,updatedData);
         }
       } else if (actions) {
