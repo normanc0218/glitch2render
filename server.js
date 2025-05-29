@@ -122,14 +122,14 @@ app.post("/slack/actions", async (req, res) => {
             updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
             issueCauses: view.state.values.reason_defect?.reason_defect?.selected_options?.map(opt => opt.value) || [],
             // Clean-up confirmations
-            toolsCollected:view.state.values['block_id_for_tools']?.select_option?.selected_option?.value || null,
-            resetConfirmed: view.state.values['block_id_for_reset']?.select_option?.selected_option?.value || null,
+            toolsCollected:view.state.values.select_tools.tool_collected?.selected_option?.value || null,
+            resetConfirmed: view.state.values.resetbuttons.tool_collected?.selected_option?.value || null,
 
             supervisorUserId: view.state.values.supervisor_notify?.notify_supervisor_select?.selected_user || null,
             supervisorMessage: view.state.values.supervisor_message?.notify_supervisor_message?.value || null,
 
             // Completion status
-            completionStatus: view.state.values['block_id_for_completion']?.complete_job?.selected_option?.value || null,
+            completionStatus: view.state.values.complete_job_block.complete_job?.selected_option?.value || null,
             otherStatuses: view.state.values.other_status_block?.otheroption?.selected_options?.map(opt => opt.value) || [],
             
             endDate:view.state.values.date?.datepickeraction?.selected_date || null,
