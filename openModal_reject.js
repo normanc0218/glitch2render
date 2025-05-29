@@ -15,7 +15,7 @@ const openModal_reject = async (trigger_id, jobId) => {
     private_metadata: jobId,
     title: {
       type: "plain_text",
-      text: "reject Task"
+      text: "Reject Task"
     },
     submit: {
       type: "plain_text",
