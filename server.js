@@ -71,6 +71,7 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
+      console.log(payload)
       if (type === "view_submission") {
         const ts = new Date();
         if (view.callback_id === "new_job_form") {
@@ -91,8 +92,6 @@ app.post("/slack/actions", async (req, res) => {
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
-          console.log('the callback id is accept form')
-          console.log(view)
           const jobId = view.private_metadata;
           const updatedData = {
             date: view.state.values.datepicker.start_date.selected_date,
@@ -106,14 +105,39 @@ app.post("/slack/actions", async (req, res) => {
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
-          console.log('view is ')
-          console.log(view.state.values.reject_block.whoreject)
           const jobId = view.private_metadata;
           const updatedData = {
           JobId: jobId,
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
-        };
+        };  
+          await displayHome(user,updatedData);
+        }        
+          // Update progress Modal Submission
+        else if (view.callback_id === "update_progress") {
+          console.log('view is ')
+          console.log(view.state.value)
+          const jobId = view.private_metadata;
+          const updatedData = {
+           jobId: view.state.value.private_metadata,
+            updatedBy: view.state.value.accept_block?.whoupdate?.selected_option?.value || null,
 
+            endDate:view.state.value.date?.datepickeraction?.selected_date || null,
+            endTime: view.state.value.time?.timepickeraction?.selected_time || null,
+
+            supervisorUserId: view.state.value.supervisor_notify?.notify_supervisor_select?.selected_user || null,
+            supervisorMessage: view.state.value.supervisor_message?.notify_supervisor_message?.value || null,
+
+            otherStatuses: view.state.value.other_status_block?.otheroption?.selected_options?.map(opt => opt.value) || [],
+
+            issueCauses: view.state.value.reason_defect?.reason_defect?.selected_options?.map(opt => opt.value) || [],
+
+            // Clean-up confirmations
+            toolsCollected:view.state.value['block_id_for_tools']?.select_option?.selected_option?.value || null,
+            resetConfirmed: view.state.value['block_id_for_reset']?.select_option?.selected_option?.value || null,
+
+            // Completion status
+            completionStatus: view.state.value['block_id_for_completion']?.complete_job?.selected_option?.value || null
+          };
           await displayHome(user,updatedData);
         }
       } else if (actions) {

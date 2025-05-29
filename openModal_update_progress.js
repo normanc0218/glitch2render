@@ -12,7 +12,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",
 	"callback_id": "update_progress",
-	"private_metadata": "JOB-ID-HERE",
+	"private_metadata":jobId,
 	"title": {
 		"type": "plain_text",
 		"text": "Update progress"
@@ -273,7 +273,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"block_id": "date",
 			"element": {
 				"type": "datepicker",
-				"initial_date": "2025-05-29",
+				"initial_date": initialDate,
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
