@@ -238,12 +238,14 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				"emoji": true
 			},
 			"element": {
-				"type": "multi_users_select",
+				"type": "users_select",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select supervisor"
 				},
-				"action_id": "notify_supervisor_select"
+				"action_id": "notify_supervisor_select",
+        //supervisor option for the maintenance staff to call
+        "initial_option": ["U06DSKC32E4"] 
 			}
 		},
 		{
@@ -269,7 +271,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"block_id": "picture",
 			"label": {
 				"type": "plain_text",
-				"text": "Picture of the Job"
+				"text": "Picture of the Job (Max: 5 pics)"
 			},
 			"element": {
 				"type": "file_input",
