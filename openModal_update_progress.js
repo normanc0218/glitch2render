@@ -244,7 +244,6 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 					"text": "Select supervisor"
 				},
 				"action_id": "notify_supervisor_select",
-        //supervisor option for the maintenance staff to call
 			}
 		},
 		{
@@ -324,36 +323,36 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "*Status of the finished Job*"
+				"text": "*Status of the Finished Job*"
 			},
 			"accessory": {
-				"type": "checkboxes",
+				"type": "radio_buttons",
 				"options": [
 					{
 						"text": {
 							"type": "mrkdwn",
-							"text": "Complete the job or Fixed the issue"
+							"text": "Complete the job and Fixed the issue"
 						},
-						"value": "value-0"
+						"value": "complete"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
-							"text": "Operator error"
+							"text": "Waiting for parts"
 						},
 						"value": "value-1"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
-							"text": "No issue"
+							"text": "Follow-up check"
 						},
 						"value": "value-2"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
-							"text": "Unknow issue"
+							"text": "Temporarily fixed"
 						},
 						"value": "value-3"
 					},
