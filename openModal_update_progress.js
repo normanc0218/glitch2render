@@ -151,19 +151,14 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				}
 			]
 		},
-		{
-			"type": "section",
-			"block_id": "tools_collected_block",
-			"text": {
-				"type": "plain_text",
-				"text": "All tools have been returned and collected",
-				"emoji": true
-			}
-    },
 				{"type": "input",
 				"block_id": "select_tools",
 				"element": {
 					"type": "static_select",
+          "placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": true
 				},
 				"options": [
 					{
@@ -182,21 +177,20 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 					}
 				],
           "action_id":"tool_collected"
-			},
-		{
-			"type": "section",
-			"block_id": "reset_verified_block",
-			"text": {
+			}	,
+    "label": {
 				"type": "plain_text",
-				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
-				"emoji": true
-			},
-			"accessory": {
-				"type": "static_select",
-				"action_id": "select_reset_verified",
-				"placeholder": {
+				"text": "All tools have been returned and collected",
+				"emoji": true}
+        },
+				{"type": "input",
+				"block_id": "resetbuttons",
+				"element": {
+					"type": "static_select",
+          "placeholder": {
 					"type": "plain_text",
-					"text": "Pick one"
+					"text": "Select an item",
+					"emoji": true
 				},
 				"options": [
 					{
@@ -213,9 +207,14 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 						},
 						"value": "no"
 					}
-				]
-			}
-		},
+				],
+          "action_id":"tool_collected"
+			}	,
+    "label": {
+				"type": "plain_text",
+				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
+				"emoji": true}
+        },
 		{
 			"type": "rich_text",
 			"elements": [
@@ -324,13 +323,9 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			}
 		},
 		{
-			"type": "section",
+			"type": "input",
 			"block_id": "complete_job_block",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*Status of the Finished Job*"
-			},
-			"accessory": {
+			"element": {
 				"type": "radio_buttons",
 				"options": [
 					{
@@ -349,7 +344,13 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 					}
 				],
 				"action_id": "complete_job"
+			},			
+      "label": {
+				"type": "plain_text",
+				"text": "Status of Completed Job",
+				"emoji": true
 			}
+      
 		},
 		{
 			"type": "input",
