@@ -62,7 +62,7 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-
+      console.log(`view${view}`)
       if (type === "view_submission") {
         const ts = new Date();
         // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
@@ -112,7 +112,7 @@ app.post("/slack/actions", async (req, res) => {
         const updatedData = {
           date: view.state.values.datepicker.start_date.selected_date,
           time: view.state.values.timepicker.start_time.selected_time,
-          remarks: view.state.values.remarks_block.remarks_input.value,
+          remarks: view.state.values.signature.remarks_input.value,
           status: "Accepted"
         };
           

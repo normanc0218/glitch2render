@@ -73,6 +73,8 @@ const updateView = async (user) => {
       if (des.length > 3000) {
         des = des.substr(0, 2980) + "... _(truncated)_";
       }
+      console.log(`o.mStaff_id${o.mStaff_id}`);
+      console.log(`user${user}`)
       // Determine if the current user is the one assigned to the job
       const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
       // Start building the note blocks
@@ -184,6 +186,7 @@ const updateView = async (user) => {
 
 /* Display App Home */
 const displayHome = async (user, data) => {
+  console.log(`Displaying app home...`)
   if (data) {
     // Store in a local DB
     const JobId = await generateUniqueJobId();
