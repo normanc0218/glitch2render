@@ -120,7 +120,7 @@ app.post("/slack/actions", async (req, res) => {
           const updatedData = {
            jobId: jobId,
             updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
-            issueCauses: view.state.values.reason_defect?.reason_defect?.selected_options?.map(opt => opt.value) || [],
+            issueCauses: view.state.values.reason_defect_block.reason_defect?.selected_options?.map(opt => opt.value) || [],
             // Clean-up confirmations
             toolsCollected:view.state.values.select_tools.tool_collected?.selected_option?.value || null,
             resetConfirmed: view.state.values.resetbuttons.tool_collected?.selected_option?.value || null,
@@ -129,8 +129,8 @@ app.post("/slack/actions", async (req, res) => {
             supervisorMessage: view.state.values.supervisor_message?.notify_supervisor_message?.value || null,
 
             // Completion status
-            completionStatus: view.state.values.complete_job_block.complete_job?.selected_option?.value || null,
-            otherStatuses: view.state.values.other_status_block?.otheroption?.selected_options?.map(opt => opt.value) || [],
+            status: view.state.values.complete_job_block.complete_job?.selected_option?.value || null,
+            otherStatuses: view.state.values.other_status_block?.otheroption?.selected_options?.map(opt => opt.text.text) || [],
             
             endDate:view.state.values.date?.datepickeraction?.selected_date || null,
             endTime: view.state.values.time?.timepickeraction?.selected_time || null,
@@ -138,8 +138,6 @@ app.post("/slack/actions", async (req, res) => {
             //Picture of finished job
             finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
           };
-          console.log(view.state.values.reason_defect?.reason_defect?.selected_options)
-          console.log(view.state.values.other_status_block?.otheroption?.selected_options)
           await displayHome(user,updatedData);
         }
       } else if (actions) {
