@@ -136,10 +136,10 @@ app.post("/slack/actions", async (req, res) => {
             endTime: view.state.values.time?.timepickeraction?.selected_time || null,
             
             //Picture of finished job
-            finish_pic:view.state.values.picture.finish_pic.files
+            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
           };
-          console.log(updatedData)
-          console.log(view.state.values.picture.finish_pic.files)
+          console.log(view.state.values.reason_defect?.reason_defect?.selected_options)
+          console.log(view.state.values.other_status_block?.otheroption?.selected_options)
           await displayHome(user,updatedData);
         }
       } else if (actions) {
