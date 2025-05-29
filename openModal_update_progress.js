@@ -47,7 +47,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"text": "Fai",
 							"emoji": true
 						},
-						"value": "value-0"
+						"value": "Fai"
 					},
 					{
 						"text": {
@@ -55,7 +55,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"text": "Steven",
 							"emoji": true
 						},
-						"value": "value-1"
+						"value": "Steven"
 					},
 					{
 						"text": {
@@ -63,7 +63,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"text": "Sam",
 							"emoji": true
 						},
-						"value": "value-2"
+						"value": "Sam"
 					}
 				],
 				"action_id": "whoupdate"
@@ -267,23 +267,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"optional": true
 		},
-		{
-			"type": "input",
-			"block_id": "picture",
-			"label": {
-				"type": "plain_text",
-				"text": "Picture of the Job (Max: 5 pics)"
-			},
-			"element": {
-				"type": "file_input",
-				"action_id": "finish_pic",
-				"filetypes": [
-					"jpg",
-					"png"
-				],
-				"max_files": 5
-			}
-		},
+		
 		{
 			"type": "input",
 			"block_id": "date",
@@ -308,7 +292,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"block_id": "time",
 			"element": {
 				"type": "timepicker",
-				"initial_time": "02:13",
+				"initial_time": initialTime,
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select time",
@@ -396,7 +380,23 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"optional": true
 		}
-	]
+	,{
+			"type": "input",
+			"block_id": "picture",
+			"label": {
+				"type": "plain_text",
+				"text": "Picture of the Job (Max: 5 pics)"
+			},
+			"element": {
+				"type": "file_input",
+				"action_id": "finish_pic",
+				"filetypes": [
+					"jpg",
+					"png"
+				],
+				"max_files": 5
+			}
+		}]
 }
 ;
 
