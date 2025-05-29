@@ -66,30 +66,69 @@ app.post("/slack/actions", async (req, res) => {
       if (type === "view_submission") {
         const ts = new Date();
         // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
+        // const data = {
+        //   timestamp: ts.toLocaleString("en-US", {
+        //     timeZone: "America/New_York",
+        //   }),
+        //   machineLocation:
+        //     view.state.values.machineLocation.machine_location_input.value,
+        //   Description: view.state.values.Description.issue.value,
+        //   maintenanceStaff:
+        //     view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
+        //       (option) => option.text.text
+        //     ),
+        //   mStaff_id:
+        //     view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
+        //       (option) => option.value
+        //     ),
+        //   picture: view.state.values.picture.file_input_action_id_1.files.map(
+        //     (option) => option.url_private
+        //   ),
+        //   date: view.state.values.date.datepickeraction.selected_date,
+        //   time: view.state.values.time.timepickeraction.selected_time,
+        //   status:"Pending"
+        // };
+              // New Job Submission
+      if (view.callback_id === "new_job_form") {
         const data = {
-          timestamp: ts.toLocaleString("en-US", {
-            timeZone: "America/New_York",
-          }),
-          machineLocation:
-            view.state.values.machineLocation.machine_location_input.value,
+          timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+          machineLocation: view.state.values.machineLocation.machine_location_input.value,
           Description: view.state.values.Description.issue.value,
-          maintenanceStaff:
-            view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
-              (option) => option.text.text
-            ),
-          mStaff_id:
-            view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
-              (option) => option.value
-            ),
-          picture: view.state.values.picture.file_input_action_id_1.files.map(
-            (option) => option.url_private
-          ),
+          maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.text.text),
+          mStaff_id: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.value),
+          picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
           date: view.state.values.date.datepickeraction.selected_date,
           time: view.state.values.time.timepickeraction.selected_time,
-          status:"Pending"
+          status: "Pending",
+          JobId: Date.now().toString() // Or any unique ID logic
         };
+
         await displayHome(user, data);
-      } else if (actions) {
+      }
+
+      // Accept Modal Submission
+      else if (view.callback_id === "accept_form") {
+        const jobId = view.private_metadata;
+
+        const updatedData = {
+          date: view.state.values.date.datepickeraction.selected_date,
+          time: view.state.values["time"].actionId_0.selected_time,
+          remarks: view.state.values.remarks_block.remarks_input.value,
+          status: "Accepted"
+        };
+          await displayHome(user.id, updatedData);
+      }      
+        // Reject Modal Submission
+      else if (view.callback_id === "reject_form") {
+        const jobId = view.private_metadata;
+        const updatedData = {
+        JobId: jobId,
+        status: "Rejected"
+      };
+
+        await displayHome(user,updatedData);
+      }
+    } else if (actions) {
         const action = actions[0];
         if (action.action_id === "accept_task") {
           const jobId = action.value
@@ -106,7 +145,6 @@ app.post("/slack/actions", async (req, res) => {
         } 
         else if (action.action_id.match(/add_/)) 
         {
-          
           await openModal(trigger_id);
         }
       }
