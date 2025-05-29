@@ -12,6 +12,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 const openModal = async(trigger_id) => {
   const modal = {
 	"type": "modal",
+  "callback_id":"new_job_form",
 	"title": {
 		"type": "plain_text",
 		"text": "Maintenance Order Form",

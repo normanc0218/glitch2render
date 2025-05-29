@@ -70,7 +70,6 @@ app.post("/slack/actions", async (req, res) => {
       res.send(); // Sends 200 OK to Slack
       if (type === "view_submission") {
         const ts = new Date();
-        console.log(view)
         if (view.callback_id === "new_job_form") {
           const data = {
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
@@ -127,7 +126,6 @@ app.post("/slack/actions", async (req, res) => {
           } 
           else if (action.action_id.match(/add_/)) 
           {
-            console.log(`I trigger the modal`)
             await openModal(trigger_id);
           }
         }

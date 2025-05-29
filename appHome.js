@@ -73,8 +73,8 @@ const updateView = async (user) => {
       if (des.length > 3000) {
         des = des.substr(0, 2980) + "... _(truncated)_";
       }
-      console.log(`o.mStaff_id${o.mStaff_id}`);
-      console.log(`user${user}`)
+      // console.log(`o.mStaff_id${o.mStaff_id}`);
+      // console.log(`user${user}`)
       // Determine if the current user is the one assigned to the job
       const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
       // Start building the note blocks
@@ -198,6 +198,7 @@ const displayHome = async (user, data) => {
     user_id: user.id,
     view: await updateView(user.id),
   };
+  console.log(`view${updateView(user.id)}`)
   const result = await axios.post(
     `${apiUrl}/views.publish`,
     qs.stringify(args)
