@@ -11,15 +11,15 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 const openModal_reject = async (trigger_id, jobId) => {
   const modal = {
     type: "modal",
-    callback_id: "accept_form",
+    callback_id: "reject_form",
     private_metadata: jobId,
     title: {
       type: "plain_text",
-      text: "Accept Task"
+      text: "reject Task"
     },
     submit: {
       type: "plain_text",
-      text: "Accept"
+      text: "Reject"
     },
     close: {
       type: "plain_text",
@@ -37,13 +37,13 @@ const openModal_reject = async (trigger_id, jobId) => {
             { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },
             { text: { type: "plain_text", text: "Sam", emoji: true }, value: "value-2" }
           ],
-          action_id: "whoaccept"
+          action_id: "whoreject"
         }
       },
       {
         type: "input",
-        block_id: "remarks_block",
-        label: { type: "plain_text", text: "Accept the Job and Sign" },
+        block_id: "signature",
+        label: { type: "plain_text", text: "Reject the Job and Sign" },
         element: {
           type: "plain_text_input",
           action_id: "remarks_input"
@@ -55,12 +55,13 @@ const openModal_reject = async (trigger_id, jobId) => {
       },
       {
         type: "actions",
+        block_id: "datepicker",
         elements: [
           {
             type: "datepicker",
             initial_date: initialDate,
             placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "start date"
+            action_id: "start_date"
           }
         ]
       },
@@ -70,12 +71,13 @@ const openModal_reject = async (trigger_id, jobId) => {
       },
       {
         type: "actions",
+        block_id: "timepicker",
         elements: [
           {
             type: "timepicker",
             initial_time: initialTime,
             placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "actionId-0"
+            action_id: "start_time"
           }
           
         ]

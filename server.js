@@ -96,7 +96,7 @@ app.post("/slack/actions", async (req, res) => {
             time: view.state.values.timepicker.start_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
             status: "Accepted",
-            jobId: jobId
+            JobId: jobId
             
           };
             await displayHome(user, updatedData);
@@ -121,6 +121,7 @@ app.post("/slack/actions", async (req, res) => {
             await openModal_accept(trigger_id,jobId);
           } else if (action.action_id === "reject_task") {
             const jobId = action.value
+            console.log(jobId)
             // Open modal for Reject form
             await openModal_reject(trigger_id,jobId);
           } 
