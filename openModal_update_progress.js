@@ -45,47 +45,60 @@ const openModal_update_progress = async (trigger_id, jobId) => {
         }
       },
       {
-        type: "input",
-        block_id: "signature",
-        label: { type: "plain_text", text: "Accept the Job and Sign" },
-        element: {
-          type: "plain_text_input",
-          action_id: "remarks_input"
-        }
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Date to Start", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "datepicker",
-        elements: [
-          {
-            type: "datepicker",
-            initial_date: initialDate,
-            placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "start_date"
-          }
-        ]
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Time to Start", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "timepicker",
-        elements: [
-          {
-            type: "timepicker",
-            initial_time: initialTime,
-            placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "start_time"
-          }
-          
-        ]
-      }
+			"type": "input",
+			"block_id": "picture",
+			"label": {
+				"type": "plain_text",
+				"text": "Picture of the defect"
+			},
+			"element": {
+				"type": "file_input",
+				"action_id": "file_input_action_id_1",
+				"filetypes": [
+					"jpg",
+					"png"
+				],
+				"max_files": 5
+			}
+		},
+		{
+			"type": "input",
+      "block_id":"date",
+			"element": {
+				"type": "datepicker",
+				"initial_date": initialDate,
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepickeraction"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Start date",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+      "block_id":"time",
+			"element": {
+				"type": "timepicker",
+				"initial_time": initialTime,
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select time",
+					"emoji": true
+				},
+				"action_id": "timepickeraction"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Start time",
+				"emoji": true
+			}
+		}
     ]
   };
 
