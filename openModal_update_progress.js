@@ -10,50 +10,270 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 
 const openModal_update_progress = async (trigger_id, jobId) => {
   const modal = {
-    type: "modal",
-    callback_id: "update_progress",
-    private_metadata: jobId,
-    title: {
-      type: "plain_text",
-      text: "Update progress"
-    },
-    submit: {
-      type: "plain_text",
-      text: "Submit"
-    },
-    close: {
-      type: "plain_text",
-      text: "Cancel"
-    },
-    blocks: [
-      {
-        type: "input",
-        block_id:"accept_block",
-        label: {
-            type: "plain_text",
-            text: "Your Name"
-          },
-        element: {
-          type: "static_select",
-          placeholder: { type: "plain_text", text: "name ", emoji: true },
-          options: [
-            { text: { type: "plain_text", text: "Fai", emoji: true }, value: "value-0" },
-            { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },
-            { text: { type: "plain_text", text: "Sam", emoji: true }, value: "value-2" }
-          ],
-          action_id: "whoaccept"
-        }
-      },
-      {
+	"type": "modal",
+	"callback_id": "update_progress",
+	"private_metadata": "JOB-ID-HERE",
+	"title": {
+		"type": "plain_text",
+		"text": "Update progress"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "Submit"
+	},
+	"close": {
+		"type": "plain_text",
+		"text": "Cancel"
+	},
+	"blocks": [
+		{
+			"type": "input",
+			"block_id": "accept_block",
+			"label": {
+				"type": "plain_text",
+				"text": "Your Name"
+			},
+			"element": {
+				"type": "static_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "name ",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Fai",
+							"emoji": true
+						},
+						"value": "value-0"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Steven",
+							"emoji": true
+						},
+						"value": "value-1"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Sam",
+							"emoji": true
+						},
+						"value": "value-2"
+					}
+				],
+				"action_id": "whoupdate"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*What is the cause of this issue?*"
+			},
+			"accessory": {
+				"type": "checkboxes",
+				"options": [
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Wear or Tear"
+						},
+						"value": "value-0"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Operator error"
+						},
+						"value": "value-1"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "No issue"
+						},
+						"value": "value-2"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Unknow issue"
+						},
+						"value": "value-3"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Other"
+						},
+						"value": "value-4"
+					}
+				],
+				"action_id": "reason_defect"
+			}
+		},
+		{
+			"type": "input",
+			"element": {
+				"type": "plain_text_input",
+				"multiline": true,
+				"action_id": "plain_text_input-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "*Specify the other reason if any?",
+				"emoji": true
+			},
+			"optional": true
+		},
+		{
+			"type": "rich_text",
+			"elements": [
+				{
+					"type": "rich_text_section",
+					"elements": [
+						{
+							"type": "text",
+							"text": "Clean-up Checklist",
+							"style": {
+								"bold": true
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "plain_text",
+				"text": "All tools have been retuned and collected",
+				"emoji": true
+			},
+			"accessory": {
+				"type": "static_select",
+				"action_id": "select_option",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Pick one"
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Yes"
+						},
+						"value": "yes"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "No"
+						},
+						"value": "no"
+					}
+				]
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "plain_text",
+				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
+				"emoji": true
+			},
+			"accessory": {
+				"type": "static_select",
+				"action_id": "select_option",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Pick one"
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Yes"
+						},
+						"value": "yes"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "No"
+						},
+						"value": "no"
+					}
+				]
+			}
+		},
+		{
+			"type": "rich_text",
+			"elements": [
+				{
+					"type": "rich_text_section",
+					"elements": [
+						{
+							"type": "text",
+							"text": "Call Supervisor to notify them of the Job",
+							"style": {
+								"bold": true
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "input",
+			"block_id": "supervisor_notify",
+			"label": {
+				"type": "plain_text",
+				"text": "Notify Supervisor",
+				"emoji": true
+			},
+			"element": {
+				"type": "multi_users_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select supervisor"
+				},
+				"action_id": "notify_supervisor_select"
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "supervisor_message",
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "notify_supervisor_message",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "e.g. Please arrange for cleanup after repair"
+				}
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Message to Supervisor",
+				"emoji": true
+			},
+			"optional": true
+		},
+		{
 			"type": "input",
 			"block_id": "picture",
 			"label": {
 				"type": "plain_text",
-				"text": "Picture of the defect"
+				"text": "Picture of the Job"
 			},
 			"element": {
 				"type": "file_input",
-				"action_id": "file_input_action_id_1",
+				"action_id": "finish_pic",
 				"filetypes": [
 					"jpg",
 					"png"
@@ -63,10 +283,10 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 		},
 		{
 			"type": "input",
-      "block_id":"date",
+			"block_id": "date",
 			"element": {
 				"type": "datepicker",
-				"initial_date": initialDate,
+				"initial_date": "2025-05-29",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
@@ -76,16 +296,16 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "Start date",
+				"text": "End date",
 				"emoji": true
 			}
 		},
 		{
 			"type": "input",
-      "block_id":"time",
+			"block_id": "time",
 			"element": {
 				"type": "timepicker",
-				"initial_time": initialTime,
+				"initial_time": "02:13",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select time",
@@ -95,12 +315,12 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "Start time",
+				"text": "End time",
 				"emoji": true
 			}
 		}
-    ]
-  };
+	]
+};
 
   try {
     const response = await axios.post(
