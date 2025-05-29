@@ -35,13 +35,12 @@ function generateUniqueJobId() {
 }
 //Update the view
 const updateView = async (user) => {
-  // Intro message -
   let blocks = [
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "This is the Form for Manager and Supervisors to assign Maintenance job to Maintenance people.",
+        text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
       },
       accessory: {
         type: "button",
@@ -57,27 +56,23 @@ const updateView = async (user) => {
       type: "divider",
     },
   ];
-  // Append new data blocks after the intro -
+
   let newData = [];
   try {
     const rawData = await db.getData(`/${user}/data/`);
-    newData = rawData.slice().reverse(); // Reverse to make the latest first
-    newData = newData.slice(0, 50); // Just display 20. Block Kit display has some limit.
+    newData = rawData.slice().reverse().slice(0, 50); // latest 50
   } catch (error) {
-    //console.error(error);
+    console.error("Error fetching data:", error);
   }
-  if (newData && newData.length > 0) {
+
+  if (newData.length > 0) {
     for (const o of newData) {
       let des = o.Description || "(No description provided)";
+      if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
+      console.log(o)
+      console.log(user)
+      const isAssignedToUser = o.mStaff_id.includes(user);
 
-      if (des.length > 3000) {
-        des = des.substr(0, 2980) + "... _(truncated)_";
-      }
-      // console.log(`o.mStaff_id${o.mStaff_id}`);
-      // console.log(`user${user}`)
-      // Determine if the current user is the one assigned to the job
-      const isAssignedToUser = o.mStaff_id.includes(user); // Compare maintenanceStaff with user.id
-      // Start building the note blocks
       const noteBlocks = [
         {
           type: "section",
@@ -100,10 +95,8 @@ const updateView = async (user) => {
         },
       ];
 
-      // Conditionally add the action buttons if the user is assigned to this job
       if (isAssignedToUser) {
         if (o.status === "Pending") {
-          // Show Accept / Reject if the job hasn't been handled yet
           noteBlocks.push({
             type: "actions",
             elements: [
@@ -124,7 +117,6 @@ const updateView = async (user) => {
             ],
           });
         } else if (o.status === "Accepted") {
-          // If job is accepted, allow to complete the job
           noteBlocks.push({
             type: "actions",
             elements: [
@@ -137,56 +129,57 @@ const updateView = async (user) => {
               },
             ],
           });
-
-          noteBlocks.push(
-            {
-              type: "actions",
-              elements: [
-                {
-                  type: "button",
-                  text: {
-                    type: "plain_text",
-                    text: "View Details",
-                    emoji: true,
-                  },
-                  value: o.JobId,
-                },
-              ],
-            },
-            {
-              type: "context",
-              elements: [
-                {
-                  type: "mrkdwn",
-                  text: `🕒 ${o.timestamp || "No timestamp"}`,
-                },
-              ],
-            }
-          );
-
-          noteBlocks.push({
-            type: "divider",
-          });
-          blocks = blocks.concat(noteBlocks);
         }
-      }
-      // The final view -
-      let view = {
-        type: "home",
-        title: {
-          type: "plain_text",
-          text: "Keep notes!",
-        },
-        blocks: blocks,
       };
-      return JSON.stringify(view);
+
+      noteBlocks.push(
+        {
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "View Details",
+                emoji: true,
+              },
+              value: o.JobId,
+            },
+          ],
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `🕒 ${o.timestamp || "No timestamp"}`,
+            },
+          ],
+        },
+        {
+          type: "divider",
+        }
+      );
+
+      blocks = blocks.concat(noteBlocks);
     }
   }
+
+  const view = {
+    type: "home",
+    title: {
+      type: "plain_text",
+      text: "Keep notes!",
+    },
+    blocks: blocks,
+  };
+
+  return JSON.stringify(view);
 };
 
 /* Display App Home */
 const displayHome = async (user, data) => {
-  console.log(`Displaying app home...`)
+  console.log(`Displaying app home...`);
   if (data) {
     // Store in a local DB
     const JobId = await generateUniqueJobId();
@@ -198,7 +191,6 @@ const displayHome = async (user, data) => {
     user_id: user.id,
     view: await updateView(user.id),
   };
-  console.log(`view${updateView(user.id)}`)
   const result = await axios.post(
     `${apiUrl}/views.publish`,
     qs.stringify(args)

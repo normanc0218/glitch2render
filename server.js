@@ -93,11 +93,12 @@ app.post("/slack/actions", async (req, res) => {
             date: view.state.values.datepicker.start_date.selected_date,
             time: view.state.values.timepicker.start_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
-            status: "Accepted"
+            status: "Accepted",
+            
           };
 
-            await displayHome(user.id, updatedData);
-            // console.log(`Accepted by ${user.id}` )
+            await displayHome(user, updatedData);
+            // console.log(`Accepted by ${user}` )
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
