@@ -158,13 +158,12 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				"type": "plain_text",
 				"text": "All tools have been returned and collected",
 				"emoji": true
-			},
-			"accessory": {
-				"type": "static_select",
-				"action_id": "select_tools_collected",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Pick one"
+			}
+    },
+				{"type": "input",
+				"block_id": "select_tools",
+				"element": {
+					"type": "static_select",
 				},
 				"options": [
 					{
@@ -181,9 +180,9 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 						},
 						"value": "no"
 					}
-				]
-			}
-		},
+				],
+          "action_id":"tool_collected"
+			},
 		{
 			"type": "section",
 			"block_id": "reset_verified_block",
