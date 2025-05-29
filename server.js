@@ -62,7 +62,8 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-      console.log(`view${view}`)
+      console.log(payload)
+      console.log(`type${type}`)
       if (type === "view_submission") {
         const ts = new Date();
         // console.log(view.state.values.picture.file_input_action_id_1.files[0].thumb_1024);
@@ -108,7 +109,6 @@ app.post("/slack/actions", async (req, res) => {
       // Accept Modal Submission
       else if (view.callback_id === "accept_form") {
         const jobId = view.private_metadata;
-        console.log(view.state)
         const updatedData = {
           date: view.state.values.datepicker.start_date.selected_date,
           time: view.state.values.timepicker.start_time.selected_time,
@@ -117,7 +117,7 @@ app.post("/slack/actions", async (req, res) => {
         };
           
           await displayHome(user.id, updatedData);
-          console.log(`Accepted by ${user.id}` )
+          // console.log(`Accepted by ${user.id}` )
       }      
         // Reject Modal Submission
       else if (view.callback_id === "reject_form") {
@@ -133,14 +133,14 @@ app.post("/slack/actions", async (req, res) => {
         const action = actions[0];
         if (action.action_id === "accept_task") {
           const jobId = action.value
-          console.log(jobId)
-          console.log(trigger_id)
+          // console.log(jobId)
+          // console.log(trigger_id)
           // Open modal for Accept form
           await openModal_accept(trigger_id,jobId);
         } else if (action.action_id === "reject_task") {
           const jobId = action.value
-          console.log(jobId)
-          console.log(trigger_id)
+          // console.log(jobId)
+          // console.log(trigger_id)
           // Open modal for Reject form
           await openModal_reject(trigger_id,jobId);
         } 
