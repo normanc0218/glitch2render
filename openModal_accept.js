@@ -54,7 +54,7 @@ const openModal_accept = async (trigger_id, jobId) => {
       {
         type: "input",
         block_id: "signature",
-        label: { type: "plain_text", text: "Accept the Job and Sign" },
+        label: { type: "plain_text", text: "Specify the reason if you are currently occupied. " },
         element: {
           type: "plain_text_input",
           action_id: "remarks_input"
@@ -62,7 +62,7 @@ const openModal_accept = async (trigger_id, jobId) => {
       },
       {
         type: "section",
-        text: { type: "plain_text", text: "Date to Start", emoji: true }
+        text: { type: "plain_text", text: "Plan to Start Date", emoji: true }
       },
       {
         type: "actions",
@@ -78,7 +78,7 @@ const openModal_accept = async (trigger_id, jobId) => {
       },
       {
         type: "section",
-        text: { type: "plain_text", text: "Time to Start", emoji: true }
+        text: { type: "plain_text", text: "Plan to Start Time", emoji: true }
       },
       {
         type: "actions",

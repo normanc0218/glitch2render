@@ -70,7 +70,8 @@ const updateView = async (user) => {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
       const isAssignedToUser = o.mStaff_id.includes(user);
-
+      console.log(user)
+      console.log
       const noteBlocks = [
         {
           type: "section",
@@ -212,7 +213,6 @@ const displayHome = async (user, data) => {
 
       await db.push(path, jobs, true);
     }
-  
   
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
