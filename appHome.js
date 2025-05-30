@@ -232,4 +232,4 @@ const displayHome = async (user, data) => {
   }
 };
 
-module.exports = { displayHome };
+module.exports = { db,displayHome };

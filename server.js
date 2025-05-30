@@ -72,7 +72,7 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-      console.log(view)
+      // console.log(view)
       // View detail
       if (type === "block_actions" && actions && actions[0].action_id === "view_detail") {
         const jobId = actions[0].value;
@@ -97,7 +97,7 @@ app.post("/slack/actions", async (req, res) => {
             time: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          console.log(data)
+          // console.log(data)
           await displayHome(user, data);
         }
 
@@ -125,8 +125,8 @@ app.post("/slack/actions", async (req, res) => {
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "update_progress") {
-          console.log('view is ')
-          console.log(view.state.values)
+          // console.log('view is ')
+          // console.log(view.state.values)
           const jobId = view.private_metadata;
           const updatedData = {
             JobId: jobId,
@@ -154,7 +154,6 @@ app.post("/slack/actions", async (req, res) => {
         } 
       } else if (actions) {
           const action = actions[0];
-          console.log(actions)
           if (action.action_id === "accept_task") {
             const jobId = action.value
 
