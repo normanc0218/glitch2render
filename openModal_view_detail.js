@@ -16,7 +16,21 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id) => {
-  const modal = require('./modal_j.json');
+const job = await.db.
+const modal = {
+  type: "modal",
+  title: { type: "plain_text", text: "Job Details" },
+  close: { type: "plain_text", text: "Close" },
+  blocks: [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Job ID:* ${job.JobId}\n*Status:* ${job.status}\n*Machine:* ${job.machineLocation}`
+      }
+    }
+  ]
+};
 
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
