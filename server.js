@@ -105,8 +105,8 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           const updatedData = {
-            acceptdate: view.state.values.datepicker.start_date.selected_date,
-            accepttime: view.state.values.timepicker.start_time.selected_time,
+            acceptdate: view.state.values.datepicker.accept_date.selected_date,
+            accepttime: view.state.values.timepicker.accept_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
             status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
             JobId: jobId
@@ -119,8 +119,8 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           const updatedData = {
           JobId: jobId,
-          rejectdate: view.state.values.datepicker.start_date.selected_date,
-          rejecttime: view.state.values.timepicker.start_time.selected_time,
+          rejectdate: view.state.values.datepicker.reject_date.selected_date,
+          rejecttime: view.state.values.timepicker.reject_time.selected_time,
           rejectreason:view.state.values.reason.reason_input.value,
           rejectby:view.state.values.reject_block.whoreject.selected_option.text.text,
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`

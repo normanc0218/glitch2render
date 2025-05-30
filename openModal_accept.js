@@ -72,7 +72,7 @@ const openModal_accept = async (trigger_id, jobId) => {
             type: "datepicker",
             initial_date: initialDate,
             placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "start_date"
+            action_id: "accept_date"
           }
         ]
       },
@@ -88,7 +88,7 @@ const openModal_accept = async (trigger_id, jobId) => {
             type: "timepicker",
             initial_time: initialTime,
             placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "start_time"
+            action_id: "accept_time"
           }
           
         ]

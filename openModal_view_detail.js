@@ -82,6 +82,15 @@ const openModal_view_detail = async(trigger_id, jobId) => {
             }
           },{
           type: "divider",
+        }]: []),...(job.endDate || job.rejecttime || job.rejectby
+        ? [{
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `*Reject Date:* ${job.rejectdate || "N/A"}\n *Reject Time:* ${job.rejecttime || "N/A"}\n*Reject by:* ${job.rejectby || "None"}\n*Reject reason:* ${job.rejectreason}`
+            }
+          },{
+          type: "divider",
         }]: []),{
               "type": "header",
               "text": {
