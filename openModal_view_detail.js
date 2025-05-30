@@ -81,15 +81,20 @@ const openModal_view_detail = async(trigger_id, jobId) => {
               type: "mrkdwn",
               text: `*Status:* ${job.status}`
             }
-          },
+          },{
+              "type": "header",
+              "text": {
+                "type": "plain_text",
+                "text": "Picture for Job Order",
+                "emoji": true
+              }
+            },
           ...(job.picture?.length
-            ? [
-                {
-                  type: "image",
-                  image_url: job.picture[0],
-                  alt_text: "Job image"
-                }
-              ]
+            ? job.picture.slice(0, 5).map((url, index) => ({
+                type: "image",
+                image_url: url,
+                alt_text: `Job image ${index + 1}`
+              }))
             : [])
         ]
       };
