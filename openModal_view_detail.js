@@ -20,18 +20,79 @@ const openModal_view_detail = async(trigger_id) => {
 const job = await db.getData("/data") || [];
 console.log(job)
 const modal = {
-  type: "modal",
-  title: { type: "plain_text", text: "Job Details" },
-  close: { type: "plain_text", text: "Close" },
-  blocks: [
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*Job ID:* ${job.JobId}\n*Status:* ${job.status}\n*Machine:* ${job.machineLocation}`
-      }
-    }
-  ]
+    type: "modal",
+    callback_id: "view_detail_modal",
+    title: {
+      type: "plain_text",
+      text: "Job Details",
+      emoji: true
+    },
+    close: {
+      type: "plain_text",
+      text: "Close",
+      emoji: true
+    },
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Job ID:* ${job.JobId}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Ordered By:* ${job.Orderedby || "N/A"}\n*Timestamp:* ${job.timestamp}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Description:* ${job.Description}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Assigned Staff:* ${job.maintenanceStaff.join(", ")}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Date:* ${job.date}  *Time:* ${job.time}`
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Status:* ${job.status}`
+        }
+      },
+      ...(job.picture?.length
+        ? [
+            {
+              type: "image",
+              image_url: job.picture[0],
+              alt_text: "Job image"
+            }
+          ]
+        : [])
+    ]
+  };
 };
 
   const args = {
