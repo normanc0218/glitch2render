@@ -1,5 +1,6 @@
 const axios = require('axios');
 const qs = require('qs');
+const db = require('./myDatabase.json'); 
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -16,7 +17,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id) => {
-const job = await.db.
+const job = await db.getData("/jobs") || [];
 const modal = {
   type: "modal",
   title: { type: "plain_text", text: "Job Details" },
