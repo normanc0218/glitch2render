@@ -331,7 +331,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"type": "mrkdwn",
 							"text": "Report other job status (Please select from below)"
 						},
-						"value": "value-4"
+						"value": "Reported other job status"
 					}
 				],
 				"action_id": "complete_job"
@@ -367,8 +367,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"type": "mrkdwn",
 							"text": "Other"
 						},
-						"value": "other",
-            "accessory":
+						"value": "other"
 					}
 				],
 				"action_id": "otheroption"
@@ -376,6 +375,18 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"label": {
 				"type": "plain_text",
 				"text": "Other Job Status (if not completed)",
+				"emoji": true
+			},
+			"optional": true
+		},{
+			"type": "input",
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "specify_other"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "If you select other, please specify*",
 				"emoji": true
 			},
 			"optional": true
