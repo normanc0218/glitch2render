@@ -6,7 +6,7 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
 
 const managerUsers = [
-  "U01", // Slack user ID
+  "U06DSKC32E4", // Slack supervisor user ID
 ];
 // generateUUID
 async function generateUniqueJobId()  {
@@ -38,7 +38,7 @@ async function generateUniqueJobId()  {
 }
 //Update the view
 const updateView = async (user) => {
-  let blocks;
+  let blocks=[];
   if (managerUsers.includes(user)) {
   blocks.push({
     type: "section",
@@ -61,7 +61,7 @@ const updateView = async (user) => {
     type: "section",
     text: {
       type: "mrkdwn",
-      text: "Welcome! Here you can view your assigned maintenance tasks.",
+      text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
     },
   });
 }
@@ -221,7 +221,7 @@ const displayHome = async (user, data) => {
 
       await db.push(path, jobs, true);
     }
-  
+  console.log(user)
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     user_id: user.id,
