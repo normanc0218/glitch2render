@@ -4,6 +4,7 @@ const { openModal_accept } = require("./openModal_accept.js");
 const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
+const axios = require("axios");
 
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
@@ -189,7 +190,32 @@ app.post("/slack/actions", async (req, res) => {
       }
     }
 });
+app.get('/slack/oauth/callback', async (req, res) => {
+  const code = req.query.code;
 
+  if (!code) {
+    return res.status(400).send('Missing code parameter from Slack');
+  }
+
+  try {
+    const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
+      params: {
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        code: code,
+        redirect_uri: 'https://ambiguous-ionized-traffic.glitch.me/slack/oauth/callback'
+      }
+    });
+
+    if (response.data.ok) {
+      res.send('App successfully installed to Slack!');
+    } else {
+      res.status(500).send(`Slack OAuth failed: ${response.data.error}`);
+    }
+  } catch (err) {
+    res.status(500).send(`OAuth request failed: ${err.message}`);
+  }
+});
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
