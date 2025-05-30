@@ -5,6 +5,9 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
 
+const managerUsers = [
+  "U01", // Slack user ID
+];
 // generateUUID
 async function generateUniqueJobId()  {
   let jobId;
@@ -35,27 +38,33 @@ async function generateUniqueJobId()  {
 }
 //Update the view
 const updateView = async (user) => {
-  let blocks = [
-    {
-      type: "section",
+  let blocks;
+  if (managerUsers.includes(user)) {
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
+    },
+    accessory: {
+      type: "button",
+      action_id: "add_note",
       text: {
-        type: "mrkdwn",
-        text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
-      },
-      accessory: {
-        type: "button",
-        action_id: "add_note",
-        text: {
-          type: "plain_text",
-          text: "Submit an order",
-          emoji: true,
-        },
+        type: "plain_text",
+        text: "Submit an order",
+        emoji: true,
       },
     },
-    {
-      type: "divider",
+  });
+} else {
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "Welcome! Here you can view your assigned maintenance tasks.",
     },
-  ];
+  });
+}
 
   let newData = [];
   try {
