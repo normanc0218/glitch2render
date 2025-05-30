@@ -6,7 +6,7 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
 
 // generateUUID
-function generateUniqueJobId() {
+async function generateUniqueJobId()  {
   let jobId;
   let exists = true;
 
@@ -70,8 +70,6 @@ const updateView = async (user) => {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
       const isAssignedToUser = o.mStaff_id.includes(user);
-      console.log(user)
-      console.log
       const noteBlocks = [
         {
           type: "section",
@@ -203,11 +201,12 @@ const displayHome = async (user, data) => {
       const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
 
       if (jobIndex > -1) {
-        // Update existing job
+        console.log(`Updating JobId: ${data.JobId}`);
         jobs[jobIndex] = { ...jobs[jobIndex], ...data };
       } else {
-        // New job – generate JobId
-        data.JobId = await generateUniqueJobId();
+        data.JobId = await generateUniqueJobId();        
+        console.log(`Creating new job with JobId: ${data.JobId}`);
+
         jobs.push(data);
       }
 

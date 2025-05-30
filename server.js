@@ -71,7 +71,7 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-      console.log(payload)
+      console.log(view.callback_id)
       if (type === "view_submission") {
         const ts = new Date();
         if (view.callback_id === "new_job_form") {
