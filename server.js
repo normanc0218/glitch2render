@@ -101,7 +101,7 @@ app.post("/slack/actions", async (req, res) => {
             date: view.state.values.datepicker.start_date.selected_date,
             time: view.state.values.timepicker.start_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
-            status: "Accepted",
+            status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
             JobId: jobId
             
           };

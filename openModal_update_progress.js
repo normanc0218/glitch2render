@@ -242,19 +242,42 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 		{
 			"type": "input",
 			"block_id": "supervisor_notify",
-			"label": {
-				"type": "plain_text",
-				"text": "Notify Supervisor",
-				"emoji": true
-			},
-			"element": {
-				"type": "users_select",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select supervisor"
-				},
-				"action_id": "notify_supervisor_select"
-			}
+			"options": [
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Tim"
+						},
+						"value": "tim123"
+					},
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Justin"
+						},
+						"value": "justin123"
+					},					
+          {
+						"text": {
+							"type": "mrkdwn",
+							"text": "Grace"
+						},
+						"value": "grace123"
+					},
+          {
+						"text": {
+							"type": "mrkdwn",
+							"text": "Norman"
+						},
+						"value": "norman123"
+					}
+				],
+				"action_id": "notify_superviosr",			
+        "label": {
+          "type": "plain_text",
+          "text": "Status of Completed Job",
+          "emoji": true
+        }
 		},
 		{
 			"type": "input",
