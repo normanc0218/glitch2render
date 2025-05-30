@@ -59,7 +59,7 @@ const updateView = async (user) => {
 
   let newData = [];
   try {
-    const rawData = await db.getData(`/${user}/data/`);
+    const rawData = await db.getData(`/data/`);
     newData = rawData.slice().reverse().slice(0, 50); // latest 50
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -186,7 +186,7 @@ const displayHome = async (user, data) => {
   // }
   if (data) {
       const userId = user.id || user; // handle if user is string
-      const path = `/${userId}/data`;
+      const path = `/data`;
 
       let jobs = [];
 

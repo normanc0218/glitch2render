@@ -59,6 +59,7 @@ app.post("/slack/actions", async (req, res) => {
 
     return res.status(200).send("Unknown command");
   } else {
+    
     // Otherwise it's an interactive payload (e.g. button, modal, etc.)
     try {
       let payload;
@@ -71,7 +72,12 @@ app.post("/slack/actions", async (req, res) => {
       const { token, trigger_id, user, actions, type, view } = payload;
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
-      console.log(view.callback_id)
+      console.log(view)
+      if (type === "block_actions" && actions && actions[0].action_id === "view_detail") {
+        const jobId = actions[0].value;
+        const userId = user.id;
+        await openModal_view_detail(trigger_id,jobId);
+        };
       if (type === "view_submission") {
         if (view.callback_id === "new_job_form") {
           const ts = new Date();
