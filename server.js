@@ -93,8 +93,8 @@ app.post("/slack/actions", async (req, res) => {
             mStaff_id: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.value),
 
             picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
-            date: view.state.values.date.datepickeraction.selected_date,
-            time: view.state.values.time.timepickeraction.selected_time,
+            orderdate: view.state.values.date.datepickeraction.selected_date,
+            ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
           // console.log(data)
@@ -105,8 +105,8 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           const updatedData = {
-            date: view.state.values.datepicker.start_date.selected_date,
-            time: view.state.values.timepicker.start_time.selected_time,
+            acceptdate: view.state.values.datepicker.start_date.selected_date,
+            accepttime: view.state.values.timepicker.start_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
             status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
             JobId: jobId
@@ -119,6 +119,8 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           const updatedData = {
           JobId: jobId,
+          rejectdate: view.state.values.datepicker.start_date.selected_date,
+          rejecttime: view.state.values.timepicker.start_time.selected_time,
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };  
           await displayHome(user,updatedData);

@@ -18,7 +18,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id, jobId) => {
     const data = await db.getData("/data") || [];
-    const job = data[0]
+    const job = data.find(item => item.JobId === jobId)
     const modal = {
         type: "modal",
         callback_id: "view_detail_modal",
@@ -72,7 +72,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Date:* ${job.date}  *Time:* ${job.time}`
+              text: `*Order Date:* ${job.orderdate}  *Order Time:* ${job.ordertime}`
             }
           },
           {
