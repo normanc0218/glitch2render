@@ -242,7 +242,9 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 		{
 			"type": "input",
 			"block_id": "supervisor_notify",
-			"options": [
+			"element": {
+				"type": "radio_buttons",
+				"options": [
 					{
 						"text": {
 							"type": "mrkdwn",
@@ -256,15 +258,15 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"text": "Justin"
 						},
 						"value": "justin123"
-					},					
-          {
+					},
+					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Grace"
 						},
 						"value": "grace123"
 					},
-          {
+					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Norman"
@@ -272,12 +274,13 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 						"value": "norman123"
 					}
 				],
-				"action_id": "notify_superviosr",			
-        "label": {
-          "type": "plain_text",
-          "text": "Status of Completed Job",
-          "emoji": true
-        }
+				"action_id": "notify_supervisor"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Notify the supervisor",
+				"emoji": true
+			}
 		},
 		{
 			"type": "input",
@@ -403,6 +406,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"optional": true
 		},{
 			"type": "input",
+      "block_id": "specify",
 			"element": {
 				"type": "plain_text_input",
 				"action_id": "specify_other"
