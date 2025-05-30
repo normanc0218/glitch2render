@@ -82,14 +82,30 @@ const openModal_view_detail = async(trigger_id, jobId) => {
             }
           },{
           type: "divider",
-        }]: []),...(job.endDate || job.rejecttime || job.rejectby
+        }]: []),...(job.endDate || job.endTime 
         ? [{
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Reject Date:* ${job.rejectdate || "N/A"}\n *Reject Time:* ${job.rejecttime || "N/A"}\n*Reject by:* ${job.rejectby || "None"}\n*Reject reason:* ${job.rejectreason}`
+              text: `*Done By:* ${job.updatedBy || "N/A"}\n *Cause of issue:* ${job.issueCauses || "N/A"}\n*Tools collected:* ${job.toolsCollected || "None"}\n*Lockout confirmed:* ${job.resetConfirmed}
+              \n*Notify to Supervisor:* ${job.supervisorUserId} \n*Message to Supervisor:* ${job.supervisorMessage|| "None"} \n*Other Status:* ${job.otherStatuses|| "None"} \n*Specify other Status:* ${job.otherSpecify|| "None"}
+              \n*End Date:* ${job.endDate|| "None"}\n*End Time:* ${job.endTime|| "None"}`
             }
           },{
+              "type": "header",
+              "text": {
+                "type": "plain_text",
+                "text": "Picture for Finished Job",
+                "emoji": true
+              }
+            },
+          ...(job.picture?.length
+            ? job.picture.slice(0, 5).map((url, index) => ({
+                type: "image",
+                image_url: url,
+                alt_text: `Job image ${index + 1}`
+              }))
+        : []),{
           type: "divider",
         }]: []),{
               "type": "header",

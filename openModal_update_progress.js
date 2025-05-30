@@ -132,7 +132,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"element": {
 				"type": "plain_text_input",
 				"multiline": true,
-				"action_id": "plain_text_input-action"
+				"action_id": "otherreason"
 			},
 			"label": {
 				"type": "plain_text",
