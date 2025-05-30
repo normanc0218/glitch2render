@@ -144,7 +144,7 @@ app.post("/slack/actions", async (req, res) => {
             finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
           };
           await displayHome(user,updatedData);
-        }
+        } 
       } else if (actions) {
           const action = actions[0];
           console.log(actions)
