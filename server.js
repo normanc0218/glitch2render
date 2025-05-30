@@ -73,11 +73,11 @@ app.post("/slack/actions", async (req, res) => {
       res.send(); // Sends 200 OK to Slack
       console.log(view.callback_id)
       if (type === "view_submission") {
-        const ts = new Date();
         if (view.callback_id === "new_job_form") {
+          const ts = new Date();
           const data = {
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-            Orderedby:user,
+            Orderedby:user.username,
             machineLocation: view.state.values.machineLocation.machineLocation.selected_option.value,
             finder:view.state.values.reporter_block.reporter.value,
             Description: view.state.values.Description.issue.value,
@@ -90,7 +90,7 @@ app.post("/slack/actions", async (req, res) => {
             time: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          console.log(user)
+          console.log(data)
           await displayHome(user, data);
         }
 
