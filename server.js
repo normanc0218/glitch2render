@@ -136,6 +136,7 @@ app.post("/slack/actions", async (req, res) => {
             JobId: jobId,
             updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
             issueCauses: view.state.values.reason_defect_block.reason_defect?.selected_options?.map(opt => opt.value) || [],
+            otherreason:view.state.values.other_reason_input.otherreason.value,
             // Clean-up confirmations
             toolsCollected:view.state.values.select_tools.tool_collected?.selected_option?.value || null,
             resetConfirmed: view.state.values.resetbuttons.tool_collected?.selected_option?.value || null,

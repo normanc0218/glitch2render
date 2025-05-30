@@ -126,6 +126,14 @@ const openModal = async(trigger_id) => {
     {
       "text": {
         "type": "plain_text",
+        "text": "Die Washroom",
+        "emoji": true
+      },
+      "value": "Die Washroom"
+    },
+    {
+      "text": {
+        "type": "plain_text",
         "text": "Office",
         "emoji": true
       },
