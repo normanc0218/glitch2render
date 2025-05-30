@@ -118,7 +118,7 @@ app.post("/slack/actions", async (req, res) => {
           console.log(view.state.values)
           const jobId = view.private_metadata;
           const updatedData = {
-           jobId: jobId,
+            JobId: jobId,
             updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
             issueCauses: view.state.values.reason_defect_block.reason_defect?.selected_options?.map(opt => opt.value) || [],
             // Clean-up confirmations
