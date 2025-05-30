@@ -81,7 +81,15 @@ const openModal_view_detail = async(trigger_id, jobId) => {
               type: "mrkdwn",
               text: `*Status:* ${job.status}`
             }
-          },{
+          }, ...(job.acceptdate || job.accepttime || job.remarks
+        ? [{
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `*Accepted Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`
+            }
+          }]
+            : []),{
               "type": "header",
               "text": {
                 "type": "plain_text",
@@ -95,7 +103,9 @@ const openModal_view_detail = async(trigger_id, jobId) => {
                 image_url: url,
                 alt_text: `Job image ${index + 1}`
               }))
-            : [])
+        : [])
+          
+         
         ]
       };
     
