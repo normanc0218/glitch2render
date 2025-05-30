@@ -21,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.post("/slack/events", signVerification, async (req, res) => {
+  console.log(req)
   if (event.type === "app_home_opened") {
   console.log("App home opened by user:", event.user);
   await displayHome(event.user); // Ensure this passes correct user ID
