@@ -39,6 +39,7 @@ async function generateUniqueJobId()  {
 //Update the view
 const updateView = async (user) => {
   let blocks=[];
+  console.log(user)
   if (managerUsers.includes(user)) {
   blocks.push({
     type: "section",
@@ -91,7 +92,7 @@ const updateView = async (user) => {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Job ID:* ${o.JobId}\n*Ordered by:* ${o.Orderedby}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff}\n*Order date:* ${o.orderdate}\n*Order time:* ${o.ordertime}\n*Status:* ${o.status}`,
+            text: `*Job ID:* ${o.JobId}\n*Ordered by:* ${o.Orderedby}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff || "N/A"}\n*Order date:* ${o.orderdate}\n*Order time:* ${o.ordertime}\n*Status:* ${o.status}`,
           },
           accessory: {
             type: "image",
@@ -222,10 +223,11 @@ const displayHome = async (user, data) => {
       await db.push(path, jobs, true);
     }
   console.log(user)
+  const userId = user.id || user;
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
-    user_id: user.id,
-    view: await updateView(user.id),
+    user_id: userId,
+    view: await updateView(userId),
   };
   const result = await axios.post(
     `${apiUrl}/views.publish`,
