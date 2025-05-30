@@ -4,9 +4,12 @@ const { JsonDB, Config } = require("node-json-db"); // Ensure this is your datab
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
-
+ // Slack supervisor user ID
 const managerUsers = [
-  "U", // Slack supervisor user ID
+  "U06D0NAAL5N",// Chris
+  "U06DSKC32E4",// Norman
+  "U06D0NA0H16", // Justin
+  "U06CBUTM4JW"// Tim
 ];
 // generateUUID
 async function generateUniqueJobId()  {
@@ -39,7 +42,6 @@ async function generateUniqueJobId()  {
 //Update the view
 const updateView = async (user) => {
   let blocks=[];
-  console.log(user)
   if (managerUsers.includes(user)) {
   blocks.push({
     type: "section",
@@ -222,7 +224,6 @@ const displayHome = async (user, data) => {
 
       await db.push(path, jobs, true);
     }
-  console.log(user)
   const userId = user.id || user;
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
