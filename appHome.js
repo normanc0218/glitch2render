@@ -6,7 +6,7 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
 
 const managerUsers = [
-  "U06DSKC32E4", // Slack supervisor user ID
+  "U", // Slack supervisor user ID
 ];
 // generateUUID
 async function generateUniqueJobId()  {
