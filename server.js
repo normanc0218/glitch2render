@@ -73,6 +73,7 @@ app.post("/slack/actions", async (req, res) => {
       // Always respond immediately
       res.send(); // Sends 200 OK to Slack
       console.log(view)
+      // View detail
       if (type === "block_actions" && actions && actions[0].action_id === "view_detail") {
         const jobId = actions[0].value;
         const userId = user.id;
