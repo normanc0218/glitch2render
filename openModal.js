@@ -47,36 +47,116 @@ const openModal = async(trigger_id) => {
 				"type": "static_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Select the person",
+					"text": "Select the Machine or Location",
 					"emoji": true
 				},
 				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Fai",
-							"emoji": true
-						},
-						"value": "U06DSKC32E4"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Steven",
-							"emoji": true
-						},
-						"value": "value-1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Sam",
-							"emoji": true
-						},
-						"value": "value-2"
-					}
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "#7 Machine",
+        "emoji": true
+      },
+      "value": "#7 Machine"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "#8 Machine",
+        "emoji": true
+      },
+      "value": "#8 Machine"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "#9 Machine",
+        "emoji": true
+      },
+      "value": "#9 Machine"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "#10 Machine",
+        "emoji": true
+      },
+      "value": "#10 Machine"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "#11 Machine",
+        "emoji": true
+      },
+      "value": "#11 Machine"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Packaging",
+        "emoji": true
+      },
+      "value": "Packaging"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Warehouse",
+        "emoji": true
+      },
+      "value": "Warehouse"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Loading dock",
+        "emoji": true
+      },
+      "value": "Loading dock"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Washroom",
+        "emoji": true
+      },
+      "value": "Washroom"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Office",
+        "emoji": true
+      },
+      "value": "Office"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Boiler room",
+        "emoji": true
+      },
+      "value": "Boiler room"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Compressor",
+        "emoji": true
+      },
+      "value": "Compressor"
+    },
+    {
+      "text": {
+        "type": "plain_text",
+        "text": "Others",
+        "emoji": true
+      },
+      "value": "Others"
+    }
 				],
-				"action_id": "pickedGuy"
+				"action_id": "machineLocation"
 			}
 		},{
 			"type": "input",
@@ -90,7 +170,7 @@ const openModal = async(trigger_id) => {
 				"action_id": "reporter",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "reporter"
+					"text": "Name of the finder"
 				}
 			}
 		},

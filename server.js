@@ -77,16 +77,20 @@ app.post("/slack/actions", async (req, res) => {
         if (view.callback_id === "new_job_form") {
           const data = {
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-            machineLocation: view.state.values.machineLocation.machine_location_input.value,
+            Orderedby:user,
+            machineLocation: view.state.values.machineLocation.machineLocation.selected_option.value,
+            finder:view.state.values.reporter_block.reporter.value,
             Description: view.state.values.Description.issue.value,
             maintenanceStaff: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.text.text),
+            //mStaff_id should not be shown in the Home view
             mStaff_id: view.state.values.maintenanceStaff.pickedGuy.selected_options.map(opt => opt.value),
+
             picture: view.state.values.picture.file_input_action_id_1.files.map(file => file.url_private),
             date: view.state.values.date.datepickeraction.selected_date,
             time: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          console.log(data)
+          console.log(user)
           await displayHome(user, data);
         }
 
