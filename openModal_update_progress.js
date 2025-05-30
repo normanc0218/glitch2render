@@ -324,7 +324,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"type": "mrkdwn",
 							"text": "Complete the job and Fixed the issue"
 						},
-						"value": "complete"
+						"value": "Completed"
 					},
 					{
 						"text": {
@@ -341,8 +341,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				"text": "Status of Completed Job",
 				"emoji": true
 			}
-      
-		},
+      		},
 		{
 			"type": "input",
 			"block_id": "other_status_block",
@@ -354,28 +353,22 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"type": "mrkdwn",
 							"text": "Waiting for parts"
 						},
-						"value": "wait4part"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Follow-up check"
-						},
-						"value": "fcheck"
+						"value": "Waiting for parts"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Temporarily fixed"
 						},
-						"value": "temporarilyfixed"
+						"value": "Temporarilyfixed"
 					},
 					{
 						"text": {
 							"type": "mrkdwn",
 							"text": "Other"
 						},
-						"value": "other"
+						"value": "other",
+            "accessory":
 					}
 				],
 				"action_id": "otheroption"
@@ -386,6 +379,29 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 				"emoji": true
 			},
 			"optional": true
+		},
+		{
+			"type": "input",
+			"block_id": "follow_up_block",
+			"element": {
+				"type": "radio_buttons",
+				"options": [
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Yes,I will follow up the job"
+						},
+						"value": "Completed"
+					}
+				],
+				"action_id": "followUp"
+			},			
+      "label": {
+				"type": "plain_text",
+				"text": "Please make sure to follow up the job!",
+				"emoji": true
+			}
+      
 		}
 	,{
 			"type": "input",
