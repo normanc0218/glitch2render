@@ -39,16 +39,58 @@ const openModal = async(trigger_id) => {
 		{
 			"type": "input",
 			"block_id": "machineLocation",
-			"label": {
+      "label": {
 				"type": "plain_text",
 				"text": "Machine and Location"
 			},
 			"element": {
-				"type": "plain_text_input",
-				"action_id": "machine_location_input",
+				"type": "static_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Where is the machine?"
+					"text": "Select the person",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Fai",
+							"emoji": true
+						},
+						"value": "U06DSKC32E4"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Steven",
+							"emoji": true
+						},
+						"value": "value-1"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Sam",
+							"emoji": true
+						},
+						"value": "value-2"
+					}
+				],
+				"action_id": "pickedGuy"
+			}
+		},{
+			"type": "input",
+			"block_id": "reporter_block",
+			"label": {
+				"type": "plain_text",
+				"text": "Who found the issue?"
+			},
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "reporter",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "reporter"
 				}
 			}
 		},
