@@ -44,14 +44,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Ordered By:* ${job.Orderedby || "N/A"}\n*Timestamp:* ${job.timestamp}`
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`
+              text: `*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`
             }
           },
           {
@@ -65,31 +58,31 @@ const openModal_view_detail = async(trigger_id, jobId) => {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}`
+              text: `*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`
             }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Order Date:* ${job.orderdate}  *Order Time:* ${job.ordertime}`
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Status:* ${job.status}`
-            }
-          }, ...(job.acceptdate || job.accepttime || job.remarks
+          },{
+          type: "divider",
+        },
+          ...(job.acceptdate || job.accepttime || job.remarks
         ? [{
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Accepted Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`
+              text: `*Accept Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`
             }
-          }]
-            : []),{
+          },{
+          type: "divider",
+        }]: []),
+          ...(job.rejectdate || job.rejecttime || job.rejectby
+        ? [{
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `*Reject Date:* ${job.rejectdate || "N/A"}\n *Reject Time:* ${job.rejecttime || "N/A"}\n*Reject by:* ${job.rejectby || "None"}\n*Reject reason:* ${job.rejectreason}`
+            }
+          },{
+          type: "divider",
+        }]: []),{
               "type": "header",
               "text": {
                 "type": "plain_text",

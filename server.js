@@ -121,6 +121,8 @@ app.post("/slack/actions", async (req, res) => {
           JobId: jobId,
           rejectdate: view.state.values.datepicker.start_date.selected_date,
           rejecttime: view.state.values.timepicker.start_time.selected_time,
+          rejectreason:view.state.values.reason.reason_input.value,
+          rejectby:view.state.values.reject_block.whoreject.selected_option.text.text,
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };  
           await displayHome(user,updatedData);
