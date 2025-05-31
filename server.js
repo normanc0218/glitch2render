@@ -22,38 +22,42 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 
-app.post('/slack/events', async (req, res) => {
+app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
-  
-  const { type, challenge, event } = req.body; // ← no need to parse!
 
-  if (type === 'url_verification') {
-    return res.send(challenge); // Send as plain text
+  const { type, challenge, event } = req.body;
+
+  // URL Verification (Slack will call this when setting up your event subscription)
+  if (type === "url_verification") {
+    return res.send({ challenge }); // Respond with the challenge parameter Slack sends
   }
 
-  if (type === 'event_callback') {
-    console.log("✅ Event received:", event.type);
+  // Event callback
+  if (type === "event_callback") {
+    console.log("✅ Slack request verified");
 
-    if (event.type === 'app_home_opened') {
-      await displayHome(event.user);
+    // Check for specific event types here
+    if (event.type === "app_home_opened") {
+      console.log("App home opened by user:", event.user);
+      await displayHome(event.user); // Display the home tab for the user
     }
 
-    return res.sendStatus(200);
+    return res.sendStatus(200); // Always respond 200 OK for event callback
   }
 
-  return res.sendStatus(400);
+  // If the event type is unknown or unsupported
+  return res.sendStatus(400); // Send 400 for unsupported events
 });
 
 
+// app.post("/slack/events", async (req, res) => {
+//   console.log("🔥 /slack/events reached");
 
-// app.post("/slack/events", signVerification, async (req, res) => {
-//   console.log(req)
+//   const { type, challenge, event } = req.body;
 //   if (event.type === "app_home_opened") {
 //   console.log("App home opened by user:", event.user);
 //   await displayHome(event.user); // Ensure this passes correct user ID
 // }
-//   const { type, challenge, event } = req.body;
-
 //   switch (type) {
 //     case "url_verification":
 //       // Step 1: Respond to Slack URL Verification
