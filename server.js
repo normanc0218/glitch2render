@@ -21,36 +21,7 @@ app.use(express.json({
     req.rawBody = buf.toString('utf8');
   }
 }));
-// app.use(express.json());  // For JSON payloads
-// app.use(express.raw({ type: '*/*', limit: '10mb' }));
-// app.post("/slack/events",signVerification, async (req, res) => {
-//   console.log("🔥 /slack/events reached");
-
-//   const { type, challenge, event } = req.body;
-
-//   // URL Verification (Slack will call this when setting up your event subscription)
-//   if (type === "url_verification") {
-//     return res.send({ challenge }); // Respond with the challenge parameter Slack sends
-//   }
-
-//   // Event callback
-//   if (type === "event_callback") {
-//     console.log("✅ Slack request verified");
-
-//     // Check for specific event types here
-//     if (event.type === "app_home_opened") {
-//       console.log("App home opened by user:", event.user);
-//       await displayHome(event.user); // Display the home tab for the user
-//     }
-
-//     return res.sendStatus(200); // Always respond 200 OK for event callback
-//   }
-
-//   // If the event type is unknown or unsupported
-//   return res.sendStatus(400); // Send 400 for unsupported events
-// });
-
-
+app.use(express.urlencoded({ extended: true }));
 app.post("/slack/events",signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
@@ -79,11 +50,10 @@ app.post("/slack/events",signVerification, async (req, res) => {
 // Slack Actions
 
 
-// Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
-// app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
+
 app.post("/slack/actions", async (req, res) => {
   // If it's a slash command payload
+
   if (!req.body.payload) {
     const { command, user_id, trigger_id, text, response_url, user_name } =
       req.body;

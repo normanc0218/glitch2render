@@ -221,7 +221,6 @@ const displayHome = async (user, data) => {
     view: await updateView(userId), // ensure that this is an object and ready to be sent as JSON
   };
 
-  console.log("Prepared view data:", JSON.stringify(args.view, null, 2)); // Pretty print for debugging
 
   try {
     const result = await axios.post(
