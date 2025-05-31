@@ -6,7 +6,7 @@ const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
 
 let signVerification = (req, res, next) => {
    let slackSignature = req.headers['x-slack-signature'];
-   console.log(req)
+   
    let requestBody = qs.stringify(req.body, {format : 'RFC1738'});
    let timestamp = req.headers['x-slack-request-timestamp'];
    let time = Math.floor(new Date().getTime()/1000);
@@ -16,16 +16,20 @@ let signVerification = (req, res, next) => {
    if (!slackSigningSecret) {
       return res.status(400).send('Slack signing secret is empty.');
    }
-  console.log(requestBody)
+
    let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
    let mySignature = 'v0=' + 
                   crypto.createHmac('sha256', slackSigningSecret)
                         .update(sigBasestring, 'utf8')
                         .digest('hex');
+  console.log(mySignature);
+  console.log(slackSignature);
+
    if (crypto.timingSafeEqual(
               Buffer.from(mySignature, 'utf8'),
               Buffer.from(slackSignature, 'utf8'))
       ) {
+     
           next();
    } else {
           return res.status(400).send('Verification failed');
