@@ -19,10 +19,10 @@ let signVerification = (req, res, next) => {
     return res.status(400).send('Slack signing secret is empty.');
   }
 
-  let requestBody = req.body.toString('utf8')
+  let requestBody = req
   // Create the signature base string
   let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
-  console.log(sigBasestring)
+  console.log(requestBody)
 
   // Create your own signature from the base string and compare it with Slack's signature
   let mySignature = 'v0=' + 

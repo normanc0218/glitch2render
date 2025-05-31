@@ -16,10 +16,7 @@ const signVerification = require("./signVerification");
 const app = express();
 const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
-app.use(express.raw({ type: 'application/json' }));
-// Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
-// app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
+
 
 
 app.post("/slack/events",signVerification, async (req, res) => {
@@ -76,6 +73,11 @@ app.post("/slack/events",signVerification, async (req, res) => {
 //   }
 // });
 // Slack Actions
+
+
+// Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
+// app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
 app.post("/slack/actions", async (req, res) => {
   // If it's a slash command payload
   if (!req.body.payload) {
