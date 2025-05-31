@@ -7,11 +7,9 @@ let signVerification = (req, res, next) => {
   // Slack's signature and timestamp
   let slackSignature = req.headers['x-slack-signature'];
   let timestamp = req.headers['x-slack-request-timestamp'];
-  console.log(timestamp)
-  console.log(slackSignature)
   // Generate the current time
   let time = Math.floor(new Date().getTime() / 1000);
-
+  console.log(slackSignature,timestamp,time)
   // Allow a 5-minute window (300 seconds) to avoid replay attacks
   if (Math.abs(time - timestamp) > 300) {
     return res.status(400).send('Ignore this request.');
@@ -24,7 +22,7 @@ let signVerification = (req, res, next) => {
 
   // The body should be raw, so we must parse the request body as a string
   let requestBody = req.body.toString();
-
+  console.log(requestBody)
   // Create the signature base string
   let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
 
@@ -39,7 +37,6 @@ let signVerification = (req, res, next) => {
       Buffer.from(mySignature, 'utf8'),
       Buffer.from(slackSignature, 'utf8')
     )) {
-      
       // If signatures match, pass the request to the next middleware
       return next();
   } else {
