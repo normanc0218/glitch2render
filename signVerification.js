@@ -9,7 +9,6 @@ let signVerification = (req, res, next) => {
   let timestamp = req.headers['x-slack-request-timestamp'];
   // Generate the current time
   let time = Math.floor(new Date().getTime() / 1000);
-  console.log(slackSignature,timestamp,time)
   // Allow a 5-minute window (300 seconds) to avoid replay attacks
   if (Math.abs(time - timestamp) > 300) {
     return res.status(400).send('Ignore this request.');
@@ -20,11 +19,10 @@ let signVerification = (req, res, next) => {
     return res.status(400).send('Slack signing secret is empty.');
   }
 
-  // The body should be raw, so we must parse the request body as a string
-  let requestBody = req.body.toString();
-  console.log(requestBody)
+  let requestBody = req.body
   // Create the signature base string
   let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
+  console.log(sigBasestring)
 
   // Create your own signature from the base string and compare it with Slack's signature
   let mySignature = 'v0=' + 

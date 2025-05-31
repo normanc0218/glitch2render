@@ -18,8 +18,8 @@ const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 
 // Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
 
 
 app.post("/slack/events", signVerification, async (req, res) => {
