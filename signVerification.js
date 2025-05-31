@@ -2,7 +2,11 @@ const crypto = require('crypto');
 
 // Fetch this from environment variables
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
-
+function convertToQueryString(data) {
+  return Object.keys(data)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
+    .join('&');
+}
 let signVerification = (req, res, next) => {
   // Slack's signature and timestamp
   let slackSignature = req.headers['x-slack-signature'];
@@ -19,7 +23,12 @@ let signVerification = (req, res, next) => {
     return res.status(400).send('Slack signing secret is empty.');
   }
 
-  let requestBody = req
+  let bodyString = req.body.toString()
+    // Parse the string into a JSON object
+  let jsonData = JSON.parse(bodyString);
+
+  // Convert the JSON object into a query string
+  const requestBody = convertToQueryString(jsonData);
   // Create the signature base string
   let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
   console.log(requestBody)

@@ -18,7 +18,7 @@ const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 
 
-
+app.use(express.raw({ type: '*/*', limit: '10mb' }));
 app.post("/slack/events",signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
