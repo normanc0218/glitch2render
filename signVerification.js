@@ -19,7 +19,7 @@ let signVerification = (req, res, next) => {
     return res.status(400).send('Slack signing secret is empty.');
   }
 
-  let requestBody = req.body
+  let requestBody = req.body.toString('utf8')
   // Create the signature base string
   let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
   console.log(sigBasestring)
