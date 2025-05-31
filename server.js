@@ -16,62 +16,66 @@ const signVerification = require("./signVerification");
 const app = express();
 const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
-
-app.use(express.json());  // For JSON payloads
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString('utf8');
+  }
+}));
+// app.use(express.json());  // For JSON payloads
 // app.use(express.raw({ type: '*/*', limit: '10mb' }));
+// app.post("/slack/events",signVerification, async (req, res) => {
+//   console.log("🔥 /slack/events reached");
+
+//   const { type, challenge, event } = req.body;
+
+//   // URL Verification (Slack will call this when setting up your event subscription)
+//   if (type === "url_verification") {
+//     return res.send({ challenge }); // Respond with the challenge parameter Slack sends
+//   }
+
+//   // Event callback
+//   if (type === "event_callback") {
+//     console.log("✅ Slack request verified");
+
+//     // Check for specific event types here
+//     if (event.type === "app_home_opened") {
+//       console.log("App home opened by user:", event.user);
+//       await displayHome(event.user); // Display the home tab for the user
+//     }
+
+//     return res.sendStatus(200); // Always respond 200 OK for event callback
+//   }
+
+//   // If the event type is unknown or unsupported
+//   return res.sendStatus(400); // Send 400 for unsupported events
+// });
+
+
 app.post("/slack/events",signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
   const { type, challenge, event } = req.body;
+  if (event.type === "app_home_opened") {
+  console.log("App home opened by user:", event.user);
+  await displayHome(event.user); // Ensure this passes correct user ID
+}
+  switch (type) {
+    case "url_verification":
+      // Step 1: Respond to Slack URL Verification
+      return res.send({ challenge });
 
-  // URL Verification (Slack will call this when setting up your event subscription)
-  if (type === "url_verification") {
-    return res.send({ challenge }); // Respond with the challenge parameter Slack sends
-  }
+    case "event_callback": {
+      console.log("✅ Slack request verified");
+      if (event.type === "app_home_opened") {
+        await displayHome(event.user);
+      }
 
-  // Event callback
-  if (type === "event_callback") {
-    console.log("✅ Slack request verified");
-
-    // Check for specific event types here
-    if (event.type === "app_home_opened") {
-      console.log("App home opened by user:", event.user);
-      await displayHome(event.user); // Display the home tab for the user
+      return res.sendStatus(200); // Always respond 200 to Slack
     }
-
-    return res.sendStatus(200); // Always respond 200 OK for event callback
+    default:
+      return res.sendStatus(400);
   }
-
-  // If the event type is unknown or unsupported
-  return res.sendStatus(400); // Send 400 for unsupported events
 });
-
-
-// app.post("/slack/events", async (req, res) => {
-//   console.log("🔥 /slack/events reached");
-
-//   const { type, challenge, event } = req.body;
-//   if (event.type === "app_home_opened") {
-//   console.log("App home opened by user:", event.user);
-//   await displayHome(event.user); // Ensure this passes correct user ID
-// }
-//   switch (type) {
-//     case "url_verification":
-//       // Step 1: Respond to Slack URL Verification
-//       return res.send({ challenge });
-
-//     case "event_callback": {
-//       console.log("✅ Slack request verified");
-//       if (event.type === "app_home_opened") {
-//         await displayHome(event.user);
-//       }
-
-//       return res.sendStatus(200); // Always respond 200 to Slack
-//     }
-//     default:
-//       return res.sendStatus(400);
-//   }
-// });
 // Slack Actions
 
 
