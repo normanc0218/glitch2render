@@ -20,32 +20,49 @@ const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 // Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.post("/slack/events", signVerification, async (req, res) => {
-  console.log(req)
-  if (event.type === "app_home_opened") {
-  console.log("App home opened by user:", event.user);
-  await displayHome(event.user); // Ensure this passes correct user ID
-}
-  const { type, challenge, event } = req.body;
+  const body = JSON.parse(req.body.toString()); // ← Convert raw buffer to JSON
+  const { type, challenge, event } = body;
 
-  switch (type) {
-    case "url_verification":
-      // Step 1: Respond to Slack URL Verification
-      return res.send({ challenge });
-
-    case "event_callback": {
-      console.log("✅ Slack request verified");
-      if (event.type === "app_home_opened") {
-        await displayHome(event.user);
-      }
-
-      return res.sendStatus(200); // Always respond 200 to Slack
-    }
-    default:
-      return res.sendStatus(400);
+  if (type === "url_verification") {
+    return res.status(200).send(challenge); // Send as plain string
   }
+
+  if (type === "event_callback") {
+    if (event.type === "app_home_opened") {
+      await displayHome(event.user);
+    }
+    return res.sendStatus(200);
+  }
+
+  return res.sendStatus(400);
 });
+
+// app.post("/slack/events", signVerification, async (req, res) => {
+//   console.log(req)
+//   if (event.type === "app_home_opened") {
+//   console.log("App home opened by user:", event.user);
+//   await displayHome(event.user); // Ensure this passes correct user ID
+// }
+//   const { type, challenge, event } = req.body;
+
+//   switch (type) {
+//     case "url_verification":
+//       // Step 1: Respond to Slack URL Verification
+//       return res.send({ challenge });
+
+//     case "event_callback": {
+//       console.log("✅ Slack request verified");
+//       if (event.type === "app_home_opened") {
+//         await displayHome(event.user);
+//       }
+
+//       return res.sendStatus(200); // Always respond 200 to Slack
+//     }
+//     default:
+//       return res.sendStatus(400);
+//   }
+// });
 // Slack Actions
 app.post("/slack/actions", async (req, res) => {
   // If it's a slash command payload
@@ -190,32 +207,32 @@ app.post("/slack/actions", async (req, res) => {
       }
     }
 });
-app.get('/slack/oauth/callback', async (req, res) => {
-  const code = req.query.code;
+// app.get('/slack/oauth/callback', async (req, res) => {
+//   const code = req.query.code;
 
-  if (!code) {
-    return res.status(400).send('Missing code parameter from Slack');
-  }
+//   if (!code) {
+//     return res.status(400).send('Missing code parameter from Slack');
+//   }
 
-  try {
-    const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
-      params: {
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        code: code,
-        redirect_uri: 'https://ambiguous-ionized-traffic.glitch.me/slack/oauth/callback'
-      }
-    });
+//   try {
+//     const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
+//       params: {
+//         client_id: process.env.CLIENT_ID,
+//         client_secret: process.env.CLIENT_SECRET,
+//         code: code,
+//         redirect_uri: 'https://ambiguous-ionized-traffic.glitch.me/slack/oauth/callback'
+//       }
+//     });
 
-    if (response.data.ok) {
-      res.send('App successfully installed to Slack!');
-    } else {
-      res.status(500).send(`Slack OAuth failed: ${response.data.error}`);
-    }
-  } catch (err) {
-    res.status(500).send(`OAuth request failed: ${err.message}`);
-  }
-});
+//     if (response.data.ok) {
+//       res.send('App successfully installed to Slack!');
+//     } else {
+//       res.status(500).send(`Slack OAuth failed: ${response.data.error}`);
+//     }
+//   } catch (err) {
+//     res.status(500).send(`OAuth request failed: ${err.message}`);
+//   }
+// });
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
