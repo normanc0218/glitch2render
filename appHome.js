@@ -190,58 +190,115 @@ const updateView = async (user) => {
 /* Display App Home */
 const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
-  // if (data) {
-  //   // Store in a local DB
-  //   const JobId = await generateUniqueJobId();
-  //   data.JobId = JobId;
-  //   db.push(`/${user.id}/data[]`, data, true);
-  // }
+
+  const userId = user.id || user; // Assign userId from user object or directly
+  const path = `/data`;
+
   if (data) {
-      const userId = user.id || user; // handle if user is string
-      const path = `/data`;
-
-      let jobs = [];
-
-      try {
-        jobs = await db.getData(path);
-      } catch (err) {
-        // No existing data
-        jobs = [];
-      }
-
-      // Check if we're updating an existing job or creating a new one
-      const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
-
-      if (jobIndex > -1) {
-        console.log(`Updating JobId: ${data.JobId}`);
-        jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-      } else {
-        data.JobId = await generateUniqueJobId();        
-        console.log(`Creating new job with JobId: ${data.JobId}`);
-
-        jobs.push(data);
-      }
-
-      await db.push(path, jobs, true);
+    let jobs = [];
+    try {
+      jobs = await db.getData(path);
+    } catch {
+      jobs = [];
     }
-  const userId = user.id || user;
+
+    const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+    if (jobIndex > -1) {
+      console.log(`Updating JobId: ${data.JobId}`);
+      jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+    } else {
+      data.JobId = await generateUniqueJobId();        
+      console.log(`Creating new job with JobId: ${data.JobId}`);
+      jobs.push(data);
+    }
+
+    await db.push(path, jobs, true);
+  }
+
   const args = {
-    token: process.env.SLACK_BOT_TOKEN,
     user_id: userId,
-    view: await updateView(userId),
+    view: await updateView(userId), // ensure that this is an object and ready to be sent as JSON
   };
-  const result = await axios.post(
-    `${apiUrl}/views.publish`,
-    qs.stringify(args)
-  );
+
+  console.log("Prepared view data:", JSON.stringify(args.view, null, 2)); // Pretty print for debugging
 
   try {
+    const result = await axios.post(
+      `${apiUrl}/views.publish`,
+      args,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        },
+      }
+    );
+
     if (result.data.error) {
       console.log(result.data.error);
     }
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log("Error while posting the view:", error);
   }
 };
+
+
+// const displayHome = async (user, data) => {
+//   console.log(`Displaying app home...`);
+//   // if (data) {
+//   //   // Store in a local DB
+//   //   const JobId = await generateUniqueJobId();
+//   //   data.JobId = JobId;
+//   //   db.push(`/${user.id}/data[]`, data, true);
+//   // }
+//   if (data) {
+//       const userId = user.id || user; // handle if user is string
+//       const path = `/data`;
+
+//       let jobs = [];
+
+//       try {
+//         jobs = await db.getData(path);
+//       } catch (err) {
+//         // No existing data
+//         jobs = [];
+//       }
+
+//       // Check if we're updating an existing job or creating a new one
+//       const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+//       if (jobIndex > -1) {
+//         console.log(`Updating JobId: ${data.JobId}`);
+//         jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+//       } else {
+//         data.JobId = await generateUniqueJobId();        
+//         console.log(`Creating new job with JobId: ${data.JobId}`);
+
+//         jobs.push(data);
+//       }
+
+//       await db.push(path, jobs, true);
+//     }
+//   const userId = user.id || user;
+//   const args = {
+//     token: process.env.SLACK_BOT_TOKEN,
+//     user_id: userId,
+//     view: await updateView(userId),
+//   };
+//   console.log(args)
+//   const result = await axios.post(
+//     `${apiUrl}/views.publish`,
+//     args
+//   );
+
+//   try {
+//     if (result.data.error) {
+//       console.log(result.data.error);
+//     }
+//   } catch (e) {
+//     console.log(e);
+//   }
+// };
 
 module.exports = { db,displayHome };
