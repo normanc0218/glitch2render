@@ -1,37 +1,49 @@
 const crypto = require('crypto');
+
+// Fetch this from environment variables
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
 
-const signVerification = (req, res, next) => {
-  const slackSignature = req.headers['x-slack-signature'];
-  const timestamp = req.headers['x-slack-request-timestamp'];
+let signVerification = (req, res, next) => {
+  // Slack's signature and timestamp
+  let slackSignature = req.headers['x-slack-signature'];
+  let timestamp = req.headers['x-slack-request-timestamp'];
 
-  if (!slackSignature || !timestamp) {
-    return res.status(400).send('Missing headers');
-  }
+  // Generate the current time
+  let time = Math.floor(new Date().getTime() / 1000);
 
-  // Prevent replay attacks
-  const time = Math.floor(Date.now() / 1000);
+  // Allow a 5-minute window (300 seconds) to avoid replay attacks
   if (Math.abs(time - timestamp) > 300) {
     return res.status(400).send('Ignore this request.');
   }
 
-  const sigBasestring = `v0:${timestamp}:${req.body.toString()}`;
-  const mySignature = 'v0=' +
-    crypto
-      .createHmac('sha256', slackSigningSecret)
-      .update(sigBasestring, 'utf8')
-      .digest('hex');
-
-  const valid = crypto.timingSafeEqual(
-    Buffer.from(mySignature, 'utf8'),
-    Buffer.from(slackSignature, 'utf8')
-  );
-
-  if (!valid) {
-    return res.status(400).send('Verification failed');
+  // If Slack signing secret is not found, return error
+  if (!slackSigningSecret) {
+    return res.status(400).send('Slack signing secret is empty.');
   }
 
-  next();
+  // The body should be raw, so we must parse the request body as a string
+  let requestBody = req.body.toString();
+
+  // Create the signature base string
+  let sigBasestring = 'v0:' + timestamp + ':' + requestBody;
+
+  // Create your own signature from the base string and compare it with Slack's signature
+  let mySignature = 'v0=' + 
+                    crypto.createHmac('sha256', slackSigningSecret)
+                          .update(sigBasestring, 'utf8')
+                          .digest('hex');
+
+  // Compare the signatures in constant time to prevent timing attacks
+  if (crypto.timingSafeEqual(
+      Buffer.from(mySignature, 'utf8'),
+      Buffer.from(slackSignature, 'utf8')
+    )) {
+      // If signatures match, pass the request to the next middleware
+      return next();
+  } else {
+    // If the signatures don't match, respond with a verification error
+    return res.status(400).send('Verification failed');
+  }
 };
 
 module.exports = signVerification;

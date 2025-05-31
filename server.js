@@ -20,23 +20,31 @@ const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 // Middleware for parsing URL-encoded bodies (Slack sends payloads this way)
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.post("/slack/events", signVerification, async (req, res) => {
-  const body = JSON.parse(req.body.toString()); // ← Convert raw buffer to JSON
-  const { type, challenge, event } = body;
 
-  if (type === "url_verification") {
-    return res.status(200).send(challenge); // Send as plain string
+
+app.post('/slack/events', async (req, res) => {
+  console.log("🔥 /slack/events reached");
+  
+  const { type, challenge, event } = req.body; // ← no need to parse!
+
+  if (type === 'url_verification') {
+    return res.send(challenge); // Send as plain text
   }
 
-  if (type === "event_callback") {
-    if (event.type === "app_home_opened") {
+  if (type === 'event_callback') {
+    console.log("✅ Event received:", event.type);
+
+    if (event.type === 'app_home_opened') {
       await displayHome(event.user);
     }
+
     return res.sendStatus(200);
   }
 
   return res.sendStatus(400);
 });
+
+
 
 // app.post("/slack/events", signVerification, async (req, res) => {
 //   console.log(req)
