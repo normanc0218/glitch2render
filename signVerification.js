@@ -7,7 +7,8 @@ let signVerification = (req, res, next) => {
   // Slack's signature and timestamp
   let slackSignature = req.headers['x-slack-signature'];
   let timestamp = req.headers['x-slack-request-timestamp'];
-
+  console.log(timestamp)
+  console.log(slackSignature)
   // Generate the current time
   let time = Math.floor(new Date().getTime() / 1000);
 
@@ -38,6 +39,7 @@ let signVerification = (req, res, next) => {
       Buffer.from(mySignature, 'utf8'),
       Buffer.from(slackSignature, 'utf8')
     )) {
+      
       // If signatures match, pass the request to the next middleware
       return next();
   } else {
