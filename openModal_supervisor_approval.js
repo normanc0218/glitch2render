@@ -24,13 +24,6 @@ const supervisors = {
   "Grace":"U0"
 };
 
-const superOptions = Object.entries(supervisors).map(([name, value]) => ({
-  text: {
-    type: "mrkdwn",
-    text: name
-  },
-  value: value
-}));
 
 const openModal_supervisor_approval = async (trigger_id, jobId) => {
   const modal ={
@@ -43,7 +36,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 	},
 	"submit": {
 		"type": "plain_text",
-		"text": "Submit"
+		"text": "Approved"
 	},
 	"close": {
 		"type": "plain_text",
@@ -52,6 +45,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 	"blocks": [
 		{
 			"type": "section",
+      "block_id":"tool_id",
 			"text": {
 				"type": "mrkdwn",
 				"text": "*Assigned Maintenance has/have collected their tools and materials*"
