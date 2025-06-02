@@ -209,6 +209,10 @@ app.post("/slack/actions", async (req, res) => {
           // console.log('view is ')
           // console.log(view.state.values)
           const jobId = view.private_metadata;
+          //from previous payloads (or from database)
+          const data = await db.getData("/data") || [];
+          const job = data.find(item => item.JobId === jobId);
+          
           const updatedData = {
             JobId: jobId,
             
@@ -223,7 +227,7 @@ app.post("/slack/actions", async (req, res) => {
             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
               };
-          const msg = `✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}`
+          const msg = `✅ Job *${jobId}* was *approved and completed* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}`
 
           await displayHome(user, updatedData);
           //Notify the channel

@@ -34,7 +34,7 @@ async function notifyNewOrder(orderData, jobId) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `📋 *New Maintenance Job Submitted*\n*Job ID:* ${jobId}\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
+        text: `📋 *Assigned To <@${orderData.maintenanceStaff}>/n New Maintenance Job Submitted*\n*Job ID:* ${jobId}\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
       },
     },
     {
