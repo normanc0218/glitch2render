@@ -143,7 +143,8 @@ const updateView = async (user) => {
         }
       };
       // the work is done and ask Supervisor for approal
-      if (user.includes(o.supervisorUserId) && o.endTime) {
+      console.log(o.checkTime)
+      if (o.checkTime === null && user.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push({
           type: "actions",
           elements: [

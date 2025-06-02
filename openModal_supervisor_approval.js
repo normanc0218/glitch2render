@@ -29,7 +29,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",
 	"callback_id": "review_progress",
-	"private_metadata": "jobID",
+	"private_metadata": jobId,
 	"title": {
 		"type": "plain_text",
 		"text": "Review progress"
