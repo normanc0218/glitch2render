@@ -11,7 +11,7 @@ const axios = require("axios");
 
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
-const { displayHome } = require("./appHome");
+const { db,displayHome } = require("./appHome");
 const { openModal } = require("./openModal"); // Make sure this file and function exist
 const qs = require("qs");
 const signVerification = require("./signVerification");
@@ -113,8 +113,8 @@ app.post("/slack/actions", async (req, res) => {
             status: "Pending"
           };
           // console.log(data)
-          await displayHome(user, data);
-          const messageTs = await notifyNewOrder(data)
+          const jobId = await displayHome(user, data);
+          const messageTs = await notifyNewOrder(data,jobId)
         }
 
         // Accept Modal Submission

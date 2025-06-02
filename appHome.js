@@ -216,7 +216,7 @@ const displayHome = async (user, data) => {
 
   const userId = user.id || user; // Assign userId from user object or directly
   const path = `/data`;
-
+  let jobId = data?.JobId; // start with existing JobId if available
   if (data) {
     let jobs = [];
     try {
@@ -231,7 +231,8 @@ const displayHome = async (user, data) => {
       console.log(`Updating JobId: ${data.JobId}`);
       jobs[jobIndex] = { ...jobs[jobIndex], ...data };
     } else {
-      data.JobId = await generateUniqueJobId();        
+      jobId = await generateUniqueJobId();
+      data.JobId = jobId;        
       console.log(`Creating new job with JobId: ${data.JobId}`);
       jobs.push(data);
     }
@@ -263,6 +264,7 @@ const displayHome = async (user, data) => {
   } catch (error) {
     console.log("Error while posting the view:", error);
   }
+  return jobId;
 };
 
 
