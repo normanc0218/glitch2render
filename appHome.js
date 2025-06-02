@@ -145,7 +145,6 @@ const updateView = async (user) => {
         }
       };
       // the work is done and ask Supervisor for approal
-      console.log(o.checkTime)
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push({
           type: "actions",

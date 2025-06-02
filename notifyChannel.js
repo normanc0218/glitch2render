@@ -28,7 +28,7 @@ async function threadNotify(message, threadTs = null) {
 }
 
 async function notifyNewOrder(orderData, jobId) {
-  const mentions = orderData.maintenanceStaff.map(id => `<@${id}>`).join(" and ");
+  const mentions = orderData.mStaff_id.map(id => `<@${id}>`).join(" and ");
   const blocks = [
     {
       type: "section",
@@ -70,7 +70,8 @@ async function notifyNewOrder(orderData, jobId) {
   );
 
   if (res.data.ok) {
-    const ts = res.data.ts; // Capture timestamp of the message
+    console.log(res.data)
+    const ts = res.data.messageTs; // Capture timestamp of the message
     return ts;
   } else {
     console.error("Failed to send notification:", res.data);

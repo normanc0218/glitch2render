@@ -89,7 +89,6 @@ app.post("/slack/actions", async (req, res) => {
       // console.log(view)
       // View detail
       if (type === "block_actions" && actions && actions[0].action_id === "view_detail") {
-        console.log(actions)
         const jobId = actions[0].value;
         const userId = user.id;
         await openModal_view_detail(trigger_id,jobId);
@@ -128,7 +127,7 @@ app.post("/slack/actions", async (req, res) => {
           //from previous payloads (or from database)
           const data = await db.getData("/data") || [];
           const job = data.find(item => item.JobId === jobId);
-          
+          console.log(job.messageTs)
           const updatedData = {
             acceptdate: view.state.values.datepicker.accept_date.selected_date,
             accepttime: view.state.values.timepicker.accept_time.selected_time,
