@@ -9,7 +9,8 @@ const managerUsers = [
   "U06D0NAAL5N",// Chris
   "U06DSKC32E4",// Norman
   "U06D0NA0H16", // Justin
-  "U06CBUTM4JW"// Tim
+  "U06CBUTM4JW",// Tim
+  "U0"//Grace
 ];
 // generateUUID
 async function generateUniqueJobId()  {
@@ -140,7 +141,24 @@ const updateView = async (user) => {
           });
         }
       };
-      if managerUsers.include(o.Manager)
+      if (managerUsers.include(o.supervisorUserID) && o.status is not none){
+                noteBlocks.push({
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "Supervisor Approve?",
+                  emoji: true,
+                },
+                style: "primary",
+                action_id: "review_progress", // you'll handle this action
+                value: o.JobId,
+              },
+            ],
+          });
+        };
       noteBlocks.push(
         {
           type: "actions",

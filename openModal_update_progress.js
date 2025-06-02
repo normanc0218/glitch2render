@@ -17,13 +17,21 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 
 // list of managerUser IDs
 const supervisors = {
-  "Chris" : "U06D0NAAL5N",// Chris
+  // "Chris" : "U06D0NAAL5N",// Chris
   "Norman":  "U06DSKC32E4",// Norman
   "Justin": "U06D0NA0H16", // Justin
-  "Tim": "U06CBUTM4JW"// Tim
+  "Tim": "U06CBUTM4JW",// Tim
+  "Grace":"U0"
 };
 
-
+const superOptions = Object.entries(supervisors).map(([name, value]) => ({
+  text: {
+    type: "mkdwn",
+    text: name,
+    emoji: true
+  },
+  value: value
+}));
 const openModal_update_progress = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",
@@ -253,36 +261,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"block_id": "supervisor_notify",
 			"element": {
 				"type": "radio_buttons",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Tim"
-						},
-						"value": "tim123"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Justin"
-						},
-						"value": "justin123"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Grace"
-						},
-						"value": "grace123"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Norman"
-						},
-						"value": "norman123"
-					}
-				],
+				"options": superOptions,
 				"action_id": "notify_supervisor"
 			},
 			"label": {

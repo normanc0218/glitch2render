@@ -152,7 +152,8 @@ app.post("/slack/actions", async (req, res) => {
             toolsCollected:view.state.values.select_tools.tool_collected?.selected_option?.value || null,
             resetConfirmed: view.state.values.resetbuttons.tool_collected?.selected_option?.value || null,
             //Do I need superviosr Id or the username?
-            supervisorUserId: view.state.values.supervisor_notify.notify_supervisor.selected_option?.text.text || null,
+            supervisorUser: view.state.values.supervisor_notify.notify_supervisor.selected_option?.text.text || null,
+            supervisorUserId: view.state.values.supervisor_notify.notify_supervisor.selected_option?.value || null,
             supervisorMessage: view.state.values.supervisor_message?.notify_supervisor_message?.value || null,
 
             // Completion status
