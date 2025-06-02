@@ -114,7 +114,7 @@ app.post("/slack/actions", async (req, res) => {
           };
           // console.log(data)
           await displayHome(user, data);
-          await notifyNewOrder(data)
+          const messageTs = await notifyNewOrder(data)
         }
 
         // Accept Modal Submission

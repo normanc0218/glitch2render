@@ -38,18 +38,18 @@ async function notifyNewOrder(orderData, jobId) {
             emoji: true,
           },
           action_id: "view_detail",
-          value: jobId, // Pass the jobId to identify the job
+          value: jobId,
         },
       ],
     },
   ];
 
-  await axios.post(
+  const res = await axios.post(
     "https://slack.com/api/chat.postMessage",
     {
       channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-      blocks: blocks,
-      text: `New job submitted by ${orderData.Orderedby}`, // fallback text
+      blocks,
+      text: `New job submitted by ${orderData.Orderedby}`,
     },
     {
       headers: {
@@ -58,7 +58,16 @@ async function notifyNewOrder(orderData, jobId) {
       },
     }
   );
+
+  if (res.data.ok) {
+    const ts = res.data.ts; // Capture timestamp of the message
+    return ts;
+  } else {
+    console.error("Failed to send notification:", res.data);
+    return null;
+  }
 }
+
 
 module.exports = { notifyChannel, notifyNewOrder };
 
