@@ -5,6 +5,8 @@ const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
+const { notifyChannel } = require("./notifyChannel");
+
 const axios = require("axios");
 
 const crypto = require("crypto");
@@ -125,6 +127,8 @@ app.post("/slack/actions", async (req, res) => {
             
           };
             await displayHome(user, updatedData);
+          //Notify the channel
+            await notifyChannel(`✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.`)
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
