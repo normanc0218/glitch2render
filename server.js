@@ -185,6 +185,10 @@ app.post("/slack/actions", async (req, res) => {
             const jobId = action.value
             //Open modal for update progress
             await openModal_update_progress(trigger_id,jobId);
+          } else if (action.action_id === "review_progress") {
+            const jobId = action.value
+            //Open modal for update progress
+            await openModal_update_progress(trigger_id,jobId);
           }
           else if (action.action_id.match(/add_/)) 
           {
