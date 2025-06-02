@@ -28,13 +28,13 @@ async function threadNotify(message, threadTs = null) {
 }
 
 async function notifyNewOrder(orderData, jobId) {
-  const mentions = orderData.mStaff_id.map(id => `<@${id}>`).join(" and ");
+  // const mentions = orderData.mStaff_id.map(id => `<@${id}>`).join(" and ");
   const blocks = [
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `📋 *New Maintenance Job Submitted and Assigned To ${mentions} * \n*Job ID:* ${jobId}\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
+        text: `📋 *New Maintenance Job Submitted and Assigned To  * \n*Job ID:* ${jobId}\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
       },
     },
     {
