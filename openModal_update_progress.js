@@ -31,7 +31,7 @@ const superOptions = Object.entries(supervisors).map(([name, value]) => ({
   },
   value: value
 }));
-console.log(superOptions)
+
 const openModal_update_progress = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",

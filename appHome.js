@@ -142,9 +142,9 @@ const updateView = async (user) => {
         }
       };
       // the work is done and ask Supervisor for approal
-      console.log(`if this need approval:${managerUsers.includes(o.supervisorUserID)}`)
-      console.log(`if this need approval:${o.status}`)
-      if (managerUsers.includes(o.supervisorUserID) && o.status) {
+      console.log(`if this need approval:${managerUsers.includes(o.supervisorUserId)}`)
+      console.log(`if this need approval:${o.supervisorUserId}`)
+      if (managerUsers.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push({
           type: "actions",
           elements: [

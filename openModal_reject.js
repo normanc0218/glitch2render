@@ -27,6 +27,7 @@ const openModal_reject = async (trigger_id, jobId) => {
     },
     submit: {
       type: "plain_text",
+      style: "danger",
       text: "Reject"
     },
     close: {
