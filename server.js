@@ -185,7 +185,7 @@ app.post("/slack/actions", async (req, res) => {
             supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
 
             // Completion status
-            status: "Approved and Completed",
+            status: " 👍 *Approved and Completed*",
             
             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,

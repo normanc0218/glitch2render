@@ -65,7 +65,7 @@ const updateView = async (user) => {
     type: "section",
     text: {
       type: "mrkdwn",
-      text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
+      text: "Hi,this is a list of the assigned order from the supervisors to you. Please make sure to accept the job even if you are occupied by the other and ",
     },
   });
 }
@@ -144,7 +144,7 @@ const updateView = async (user) => {
       };
       // the work is done and ask Supervisor for approal
       console.log(o.checkTime)
-      if (o.checkTime === null && user.includes(o.supervisorUserId) && o.endTime) {
+      if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push({
           type: "actions",
           elements: [
