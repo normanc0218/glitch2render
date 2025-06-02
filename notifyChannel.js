@@ -2,6 +2,8 @@ const axios = require("axios");
 
 async function notifyChannel(message) {
   try {
+    console.log(message);
+    console.log(process.env.SLACK_NOTIFICATION_CHANNEL)
     await axios.post("https://slack.com/api/chat.postMessage", {
       channel: process.env.SLACK_NOTIFICATION_CHANNEL,
       text: message,
