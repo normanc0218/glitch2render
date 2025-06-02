@@ -118,7 +118,9 @@ app.post("/slack/actions", async (req, res) => {
           data.JobId = jobId;
           data.messageTs = messageTs;
   
-          await db.push("/data", data, false); 
+
+          // ✅ Push new job data to the array
+          await db.push("/data[]", data, false);
         }
 
         // Accept Modal Submission
