@@ -89,6 +89,7 @@ app.post("/slack/actions", async (req, res) => {
       // console.log(view)
       // View detail
       if (type === "block_actions" && actions && actions[0].action_id === "view_detail") {
+        console.log(actions)
         const jobId = actions[0].value;
         const userId = user.id;
         await openModal_view_detail(trigger_id,jobId);
