@@ -220,7 +220,7 @@ const openModal = async(trigger_id) => {
 							"text": "Fai",
 							"emoji": true
 						},
-						"value": "U06DSKC32E4"
+						"value": "U08V4M4RT8R"
 					},
 					{
 						"text": {
