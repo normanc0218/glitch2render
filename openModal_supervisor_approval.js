@@ -32,14 +32,14 @@ const superOptions = Object.entries(supervisors).map(([name, value]) => ({
   value: value
 }));
 
-const openModal_update_progress = async (trigger_id, jobId) => {
+const openModal_supervisor_approval = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",
-	"callback_id": "update_progress",
-	"private_metadata":jobId,
+	"callback_id": "review_progress",
+	"private_metadata": "jobID",
 	"title": {
 		"type": "plain_text",
-		"text": "Update progress"
+		"text": "Review progress"
 	},
 	"submit": {
 		"type": "plain_text",
@@ -51,97 +51,86 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 	},
 	"blocks": [
 		{
-			"type": "input",
-			"block_id": "accept_block",
-			"label": {
-				"type": "plain_text",
-				"text": "Your Name"
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Assigned Maintenance has/have collected their tools and materials*"
 			},
-			"element": {
+			"accessory": {
 				"type": "static_select",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "name ",
+					"text": "Select an item",
 					"emoji": true
 				},
 				"options": [
 					{
 						"text": {
 							"type": "plain_text",
-							"text": "Fai",
+							"text": "Yes",
 							"emoji": true
 						},
-						"value": "Fai"
+						"value": "Yes"
 					},
 					{
 						"text": {
 							"type": "plain_text",
-							"text": "Steven",
+							"text": "No",
 							"emoji": true
 						},
-						"value": "Steven"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Sam",
-							"emoji": true
-						},
-						"value": "Sam"
+						"value": "No"
 					}
 				],
-				"action_id": "whoupdate"
+				"action_id": "Maitenance_tool"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*Working area needs extra helps for cleaning?*"
+			},
+			"accessory": {
+				"type": "static_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Yes",
+							"emoji": true
+						},
+						"value": "Yes"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "No",
+							"emoji": true
+						},
+						"value": "No"
+					}
+				],
+				"action_id": "working_are"
 			}
 		},
 		{
 			"type": "input",
-			"block_id": "reason_defect_block",
+			"block_id": "clean_input",
 			"element": {
-				"type": "checkboxes",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Wear or Tear"
-						},
-						"value": "wear_tear"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Operator error"
-						},
-						"value": "operator_error"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "No issue"
-						},
-						"value": "no_issue"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Unknown issue"
-						},
-						"value": "unknown_issue"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Other"
-						},
-						"value": "other"
-					}
-				],
-				"action_id": "reason_defect"
+				"type": "plain_text_input",
+				"action_id": "name_clean"
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "What is the cause of this issue?",
+				"text": "Assign who to help cleaning the working area?",
 				"emoji": true
-			}
+			},
+			"optional": true
 		},
 		{
 			"type": "input",
@@ -149,151 +138,21 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"element": {
 				"type": "plain_text_input",
 				"multiline": true,
-				"action_id": "otherreason"
+				"action_id": "detailOfJob"
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "*Specify the other reason if any?",
+				"text": "*Specify other details related to this job",
 				"emoji": true
 			},
 			"optional": true
 		},
-		{
-			"type": "rich_text",
-			"elements": [
-				{
-					"type": "rich_text_section",
-					"elements": [
-						{
-							"type": "text",
-							"text": "Clean-up Checklist",
-							"style": {
-								"bold": true
-							}
-						}
-					]
-				}
-			]
-		},
-				{"type": "input",
-				"block_id": "select_tools",
-				"element": {
-					"type": "static_select",
-          "placeholder": {
-					"type": "plain_text",
-					"text": "Select an item",
-					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Yes"
-						},
-						"value": "yes"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "No"
-						},
-						"value": "no"
-					}
-				],
-          "action_id":"tool_collected"
-			}	,
-    "label": {
-				"type": "plain_text",
-				"text": "All tools have been returned and collected",
-				"emoji": true}
-        },
-				{"type": "input",
-				"block_id": "resetbuttons",
-				"element": {
-					"type": "static_select",
-          "placeholder": {
-					"type": "plain_text",
-					"text": "Select an item",
-					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Yes"
-						},
-						"value": "yes"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "No"
-						},
-						"value": "no"
-					}
-				],
-          "action_id":"tool_collected"
-			}	,
-    "label": {
-				"type": "plain_text",
-				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
-				"emoji": true}
-        },
-		{
-			"type": "rich_text",
-			"elements": [
-				{
-					"type": "rich_text_section",
-					"elements": [
-						{
-							"type": "text",
-							"text": "Call Supervisor to notify them of the Job",
-							"style": {
-								"bold": true
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "input",
-			"block_id": "supervisor_notify",
-			"element": {
-				"type": "radio_buttons",
-				"options": superOptions,
-				"action_id": "notify_supervisor"},
-			"label": {
-				"type": "plain_text",
-				"text": "Notify the supervisor",
-				"emoji": true
-			}
-    },
-		{
-			"type": "input",
-			"block_id": "supervisor_message",
-			"element": {
-				"type": "plain_text_input",
-				"action_id": "notify_supervisor_message",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "e.g. Please arrange for cleanup after repair"
-				}
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Message to Supervisor",
-				"emoji": true
-			},
-			"optional": true
-		},
-		
 		{
 			"type": "input",
 			"block_id": "date",
 			"element": {
 				"type": "datepicker",
-				"initial_date": initialDate,
+				"initial_date": "2025-06-02",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
@@ -303,7 +162,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "End date",
+				"text": "Check date",
 				"emoji": true
 			}
 		},
@@ -312,7 +171,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"block_id": "time",
 			"element": {
 				"type": "timepicker",
-				"initial_time": initialTime,
+				"initial_time": "14:13",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select time",
@@ -322,129 +181,11 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "End time",
+				"text": "Check time",
 				"emoji": true
 			}
-		},
-		{
-			"type": "input",
-			"block_id": "complete_job_block",
-			"element": {
-				"type": "radio_buttons",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Complete the job and Fixed the issue"
-						},
-						"value": "Completed"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Report other job status (Please select from below)"
-						},
-						"value": "Reported other job status"
-					}
-				],
-				"action_id": "complete_job"
-			},			
-      "label": {
-				"type": "plain_text",
-				"text": "Status of Completed Job",
-				"emoji": true
-			}
-      		},
-		{
-			"type": "input",
-			"block_id": "other_status_block",
-			"element": {
-				"type": "checkboxes",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Waiting for parts"
-						},
-						"value": "Waiting for parts"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Temporarily fixed"
-						},
-						"value": "Temporarilyfixed"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Other"
-						},
-						"value": "other"
-					}
-				],
-				"action_id": "otheroption"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Other Job Status (if not completed)",
-				"emoji": true
-			},
-			"optional": true
-		},{
-			"type": "input",
-      "block_id": "specify",
-			"element": {
-				"type": "plain_text_input",
-				"action_id": "specify_other"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "If you select other, please specify*",
-				"emoji": true
-			},
-			"optional": true
-		},
-		{
-			"type": "input",
-			"block_id": "follow_up_block",
-			"element": {
-				"type": "radio_buttons",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Yes,I will follow up the job"
-						},
-						"value": "Completed"
-					}
-				],
-				"action_id": "followUp"
-			},			
-      "label": {
-				"type": "plain_text",
-				"text": "Please make sure to follow up the job!",
-				"emoji": true
-			}
-      
 		}
-	,{
-			"type": "input",
-			"block_id": "picture",
-			"label": {
-				"type": "plain_text",
-				"text": "Picture of the Job (Max: 5 pics)"
-			},
-			"element": {
-				"type": "file_input",
-				"action_id": "finish_pic",
-				"filetypes": [
-					"jpg",
-					"png"
-				],
-				"max_files": 5
-			}
-		}]
+	]
 }
 ;
 
@@ -472,4 +213,4 @@ const openModal_update_progress = async (trigger_id, jobId) => {
   }
 };
 
-module.exports = { openModal_update_progress };
+module.exports = { openModal_supervisor_approval };

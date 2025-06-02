@@ -4,6 +4,7 @@ const { openModal_accept } = require("./openModal_accept.js");
 const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
+const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 const axios = require("axios");
 
 const crypto = require("crypto");
