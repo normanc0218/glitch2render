@@ -65,9 +65,11 @@ const updateView = async (user) => {
     type: "section",
     text: {
       type: "mrkdwn",
-      text: "Hi,this is a list of the assigned order from the supervisors to you. Please make sure to accept the job even if you are occupied by the other and ",
+      text: `*Instruction:* Please find below the list of orders assigned to you by your supervisors. We kindly ask that you accept each task.\n If you have other engagements—just update your planned time and date as needed. Rejections should only be made under special or exceptional circumstances.`,
     },
-  });
+  },{
+          type: "divider",
+        });
 }
 
   let newData = [];
