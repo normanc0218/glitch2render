@@ -115,13 +115,20 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(data)
           const jobId = await displayHome(user, data);
           const messageTs = await notifyNewOrder(data,jobId)
-          console.log(messageTs,jobId)
+          
+          data.JobId = jobId;
+          data.messageTs = messageTs;
+  
+          await db.push("/data", data, false); 
         }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
-          const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.`
+          //from previous payloads (or from database)
+          const data = await db.getData("/data") || [];
+          const job = data.find(item => item.JobId === jobId);
+          
           const updatedData = {
             acceptdate: view.state.values.datepicker.accept_date.selected_date,
             accepttime: view.state.values.timepicker.accept_time.selected_time,
@@ -130,13 +137,19 @@ app.post("/slack/actions", async (req, res) => {
             JobId: jobId
             
           };
-            await displayHome(user, updatedData);
+          const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.\n *Status update:* ${updatedData.status}`
+
+          await displayHome(user, updatedData);
           //Notify the channel
-            await threadNotify(msg,messageTs)
+          await threadNotify(msg,job.messageTs)
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
           const jobId = view.private_metadata;
+          //from previous payloads (or from database)
+          const data = await db.getData("/data") || [];
+          const job = data.find(item => item.JobId === jobId);
+          
           const updatedData = {
           JobId: jobId,
           rejectdate: view.state.values.datepicker.reject_date.selected_date,
@@ -145,14 +158,21 @@ app.post("/slack/actions", async (req, res) => {
           rejectby:view.state.values.reject_block.whoreject.selected_option.text.text,
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };  
-          await displayHome(user,updatedData);
-          await notifyChannel(`✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.`);
+          const msg = `✅ Job *${jobId}* was *rejected* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.\n *Status update:* ${updatedData.status}`
+
+          await displayHome(user, updatedData);
+          //Notify the channel
+          await threadNotify(msg,job.messageTs);
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "update_progress") {
           // console.log('view is ')
           // console.log(view.state.values)
           const jobId = view.private_metadata;
+                    //from previous payloads (or from database)
+          const data = await db.getData("/data") || [];
+          const job = data.find(item => item.JobId === jobId);
+          
           const updatedData = {
             JobId: jobId,
             updatedBy: view.state.values.accept_block?.whoupdate?.selected_option?.value || null,
@@ -176,9 +196,13 @@ app.post("/slack/actions", async (req, res) => {
             
             
             //Picture of finished job
-            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
+            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)|| []
           };
-          await displayHome(user,updatedData);
+          const msg = `✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}`
+
+          await displayHome(user, updatedData);
+          //Notify the channel
+          await threadNotify(msg,job.messageTs);
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "review_progress") {
@@ -199,7 +223,11 @@ app.post("/slack/actions", async (req, res) => {
             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
               };
-          await displayHome(user,updatedData);
+          const msg = `✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}`
+
+          await displayHome(user, updatedData);
+          //Notify the channel
+          await threadNotify(msg,job.messageTs);
         } 
       } else if (actions) {
           const action = actions[0];
