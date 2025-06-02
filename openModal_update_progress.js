@@ -337,7 +337,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 							"type": "mrkdwn",
 							"text": "Complete the job and Fixed the issue"
 						},
-						"value": "Completed"
+						"value": "Waiting for Supervisor Approval"
 					},
 					{
 						"text": {

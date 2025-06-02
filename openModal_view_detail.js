@@ -99,8 +99,8 @@ const openModal_view_detail = async(trigger_id, jobId) => {
                 "emoji": true
               }
             },
-          ...(job.picture?.length
-            ? job.picture.slice(0, 5).map((url, index) => ({
+          ...(job.finish_pic?.length
+            ? job.finish_pic.slice(0, 5).map((url, index) => ({
                 type: "image",
                 image_url: url,
                 alt_text: `Job image ${index + 1}`
