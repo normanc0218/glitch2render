@@ -83,6 +83,7 @@ const updateView = async (user) => {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
       const isAssignedToUser = o.mStaff_id.includes(user);
+      
       const noteBlocks = [
         {
           type: "section",
@@ -142,7 +143,7 @@ const updateView = async (user) => {
         }
       };
       // the work is done and ask Supervisor for approal
-      if (managerUsers.includes(o.supervisorUserId) && o.endTime) {
+      if (user.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push({
           type: "actions",
           elements: [

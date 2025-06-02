@@ -146,7 +146,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 			"block_id": "date",
 			"element": {
 				"type": "datepicker",
-				"initial_date": "2025-06-02",
+				"initial_date": initialDate,
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
@@ -165,7 +165,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 			"block_id": "time",
 			"element": {
 				"type": "timepicker",
-				"initial_time": "14:13",
+				"initial_time": initialTime,
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select time",

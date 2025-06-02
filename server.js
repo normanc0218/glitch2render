@@ -172,7 +172,7 @@ app.post("/slack/actions", async (req, res) => {
           await displayHome(user,updatedData);
         }        
           // Update progress Modal Submission
-        else if (view.callback_id === "update_progress") {
+        else if (view.callback_id === "review_progress") {
           // console.log('view is ')
           // console.log(view.state.values)
           const jobId = view.private_metadata;
@@ -182,18 +182,14 @@ app.post("/slack/actions", async (req, res) => {
             toolsChecked:view.state.values.tool_id.Maitenance_tool.selected_option?.value || null,
             extrahelp: view.state.values.clean_input.name_clean.value || null,
             
-            supervisorcomment: view.state.values.clean_input.name_clean.value || null,
+            supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
 
             // Completion status
             status: "Approved and Completed",
             
             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
-            
-            
-            //Picture of finished job
-            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
-          };
+              };
           await displayHome(user,updatedData);
         } 
       } else if (actions) {
