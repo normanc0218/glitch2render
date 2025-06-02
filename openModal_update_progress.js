@@ -15,6 +15,15 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
+// list of managerUser IDs
+const supervisors = {
+  "Chris" : "U06D0NAAL5N",// Chris
+  "Norman":  "U06DSKC32E4",// Norman
+  "Justin": "U06D0NA0H16", // Justin
+  "Tim": "U06CBUTM4JW"// Tim
+};
+
+
 const openModal_update_progress = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",

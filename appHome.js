@@ -140,7 +140,7 @@ const updateView = async (user) => {
           });
         }
       };
-
+      if managerUsers.include(o.Manager)
       noteBlocks.push(
         {
           type: "actions",
