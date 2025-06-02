@@ -18,4 +18,42 @@ async function notifyChannel(message) {
   }
 }
 
-module.exports = { notifyChannel };
+async function notifyNewOrder(orderData) {
+  const blocks = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `📋 *New Maintenance Job Submitted*\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
+      }
+    },
+    {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "View Details",
+            emoji: true
+          },
+          action_id: "view_detail",
+        }
+      ]
+    }
+  ];
+
+  await axios.post("https://slack.com/api/chat.postMessage", {
+    channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+    blocks: blocks,
+    text: `New job submitted by ${orderData.Orderedby}`, // fallback text
+  }, {
+    headers: {
+      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      "Content-Type": "application/json",
+    }
+  });
+}
+
+module.exports = { notifyChannel, notifyNewOrder };
+

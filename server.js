@@ -5,7 +5,7 @@ const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
-const { notifyChannel } = require("./notifyChannel");
+const {  notifyChannel, notifyNewOrder } = require("./notifyChannel");
 
 const axios = require("axios");
 
@@ -113,6 +113,7 @@ app.post("/slack/actions", async (req, res) => {
           };
           // console.log(data)
           await displayHome(user, data);
+          await notifyNewOrder(data)
         }
 
         // Accept Modal Submission
@@ -142,6 +143,7 @@ app.post("/slack/actions", async (req, res) => {
           status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };  
           await displayHome(user,updatedData);
+          await notifyChannel(`✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.`);
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "update_progress") {
