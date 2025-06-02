@@ -5,7 +5,7 @@ const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
-const {  notifyChannel, notifyNewOrder } = require("./notifyChannel");
+const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 
 const axios = require("axios");
 
@@ -115,11 +115,13 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(data)
           const jobId = await displayHome(user, data);
           const messageTs = await notifyNewOrder(data,jobId)
+          console.log(messageTs,jobId)
         }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
+          const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.`
           const updatedData = {
             acceptdate: view.state.values.datepicker.accept_date.selected_date,
             accepttime: view.state.values.timepicker.accept_time.selected_time,
@@ -130,7 +132,7 @@ app.post("/slack/actions", async (req, res) => {
           };
             await displayHome(user, updatedData);
           //Notify the channel
-            await notifyChannel(`✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.`)
+            await threadNotify(msg,messageTs)
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {

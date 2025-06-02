@@ -1,22 +1,32 @@
 const axios = require("axios");
 
-async function notifyChannel(message) {
+async function threadNotify(message, threadTs = null) {
   try {
-    console.log(message);
-    console.log(process.env.SLACK_NOTIFICATION_CHANNEL_ID)
-    await axios.post("https://slack.com/api/chat.postMessage", {
+    const payload = {
       channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
       text: message,
-    }, {
+    };
+
+    // Add thread_ts if replying to a thread
+    if (threadTs) {
+      payload.thread_ts = threadTs;
+    }
+
+    const response = await axios.post("https://slack.com/api/chat.postMessage", payload, {
       headers: {
         Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
         "Content-Type": "application/json",
-      }
+      },
     });
+
+    if (!response.data.ok) {
+      console.error("Slack API error:", response.data);
+    }
   } catch (error) {
     console.error("Failed to send Slack notification:", error.response?.data || error.message);
   }
 }
+
 
 async function notifyNewOrder(orderData, jobId) {
   const blocks = [
@@ -24,7 +34,7 @@ async function notifyNewOrder(orderData, jobId) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `📋 *New Maintenance Job Submitted*\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
+        text: `📋 *New Maintenance Job Submitted*\n*Job ID:* ${jobId}\n*Ordered by:* ${orderData.Orderedby}\n*Location:* ${orderData.machineLocation}\n*Description:* ${orderData.Description}`,
       },
     },
     {
@@ -69,5 +79,5 @@ async function notifyNewOrder(orderData, jobId) {
 }
 
 
-module.exports = { notifyChannel, notifyNewOrder };
+module.exports = { threadNotify, notifyNewOrder };
 
