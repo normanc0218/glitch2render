@@ -26,12 +26,13 @@ const supervisors = {
 
 const superOptions = Object.entries(supervisors).map(([name, value]) => ({
   text: {
-    type: "mkdwn",
+    type: "mrkdwn",
     text: name,
     emoji: true
   },
   value: value
 }));
+console.log(superOptions)
 const openModal_update_progress = async (trigger_id, jobId) => {
   const modal ={
 	"type": "modal",
@@ -262,14 +263,12 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 			"element": {
 				"type": "radio_buttons",
 				"options": superOptions,
-				"action_id": "notify_supervisor"
-			},
+				"action_id": "notify_supervisor",
 			"label": {
 				"type": "plain_text",
 				"text": "Notify the supervisor",
 				"emoji": true
-			}
-		},
+			}},
 		{
 			"type": "input",
 			"block_id": "supervisor_message",

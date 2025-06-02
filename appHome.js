@@ -141,24 +141,25 @@ const updateView = async (user) => {
           });
         }
       };
-      if (managerUsers.include(o.supervisorUserID) && o.status is not none){
-                noteBlocks.push({
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Supervisor Approve?",
-                  emoji: true,
-                },
-                style: "primary",
-                action_id: "review_progress", // you'll handle this action
-                value: o.JobId,
+      // the work is done and ask Supervisor for approal
+      if (managerUsers.includes(o.supervisorUserID) && o.status && o.status.trim() !== "") {
+        noteBlocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Supervisor Approve?",
+                emoji: true,
               },
-            ],
-          });
-        };
+              style: "primary",
+              action_id: "review_progress",
+              value: o.JobId,
+            },
+          ],
+        });
+      };
       noteBlocks.push(
         {
           type: "actions",
