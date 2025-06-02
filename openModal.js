@@ -16,6 +16,19 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
+const maintenanceStaff = {
+  "Fai": "U08V4M4RT8R",
+  "Steven": "value-1",
+  "Sam": "value-2"
+};
+const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
+  text: {
+    type: "plain_text",
+    text: name,
+    emoji: true
+  },
+  value: value
+}));
 const openModal = async(trigger_id) => {
   const modal = {
 	"type": "modal",
@@ -213,32 +226,7 @@ const openModal = async(trigger_id) => {
 					"text": "Select the person",
 					"emoji": true
 				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Fai",
-							"emoji": true
-						},
-						"value": "U08V4M4RT8R"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Steven",
-							"emoji": true
-						},
-						"value": "value-1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Sam",
-							"emoji": true
-						},
-						"value": "value-2"
-					}
-				],
+				"options": staffOptions,
 				"action_id": "pickedGuy"
 			}
 		},

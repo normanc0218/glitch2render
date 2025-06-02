@@ -163,6 +163,7 @@ app.post("/slack/actions", async (req, res) => {
             endDate:view.state.values.date?.datepickeraction?.selected_date || null,
             endTime: view.state.values.time?.timepickeraction?.selected_time || null,
             
+            
             //Picture of finished job
             finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)
           };
