@@ -144,30 +144,29 @@ app.post("/slack/actions", async (req, res) => {
             ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          // Get Slack message timestamp
-          const messageTs = await notifyNewOrder(data, jobId);
-          data.messageTs = messageTs;
+                // Get Slack message timestamp
+                const messageTs = await notifyNewOrder(data, jobId);
+                data.messageTs = messageTs;
 
-          // Save job to DB (create or update)
-          let jobs = [];
-          try {
-            jobs = await db.getData("/data/");
-          } catch {
-            jobs = [];
-          }
+                // Save job to DB (create or update)
+                let jobs = [];
+                try {
+                  jobs = await db.getData("/data/");
+                } catch {
+                  jobs = [];
+                }
 
-          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
-          if (jobIndex > -1) {
-            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-          } else {
-            jobs.push(data);
-          }
-          await db.push("/data/", jobs, true);
+                const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+                if (jobIndex > -1) {
+                  jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+                } else {
+                  jobs.push(data);
+                }
+                await db.push("/data/", jobs, true);
 
-          // Now update user's home view (with full job info incl. messageTs)
-          await displayHome(user, data);
-        }
-      }
+                // Now update user's home view (with full job info incl. messageTs)
+                await displayHome(user, data);
+              }
 //           await displayHome(user, data);
 
 //           const messageTs = await notifyNewOrder(data,jobId)
@@ -188,7 +187,7 @@ app.post("/slack/actions", async (req, res) => {
 //             jobs.push(data);
 //             await db.push("/data/", jobs, true);
 //           }
-//         }
+        // }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
