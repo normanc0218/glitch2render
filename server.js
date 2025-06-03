@@ -97,7 +97,6 @@ app.post("/slack/actions", async (req, res) => {
         if (view.callback_id === "new_job_form") {
           const ts = new Date();
           const data = {
-            messageTs:
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
             Orderedby:user.username,
             machineLocation: view.state.values.machineLocation.machineLocation.selected_option.value,
@@ -112,11 +111,29 @@ app.post("/slack/actions", async (req, res) => {
             ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          
+
           const jobId = await displayHome(user, data);
 
-          await notifyNewOrder(data,jobId)          
+          const messageTs = await notifyNewOrder(data,jobId)
+          
+          data.JobId = jobId;
+          data.messageTs = messageTs;
+          let jobs = [];
+          try {
+            jobs = await db.getData("/data/");
+          } catch {
+            jobs = [];
+          }
 
+          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+          if (jobIndex > -1) {
+            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+            await db.push("/data/", jobs, true);
+          } else {
+            // Fallback safety: shouldn't happen, but just in case
+            jobs.push(data);
+            await db.push("/data/", jobs, true);
+          }
         }
 
         // Accept Modal Submission
