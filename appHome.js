@@ -263,8 +263,9 @@ const displayHome = async (user, data) => {
   } catch (error) {
     console.log("Error while posting the view:", error);
   }
-  return jobId;
-};
+  
+}
+return jobId;
 
 
 

@@ -111,8 +111,10 @@ app.post("/slack/actions", async (req, res) => {
             ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-          // console.log(data)
+
           const jobId = await displayHome(user, data);
+          console.log("here")
+          console.log(jobId)
           const messageTs = await notifyNewOrder(data,jobId)
           
           data.JobId = jobId;
