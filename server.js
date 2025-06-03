@@ -144,12 +144,11 @@ app.post("/slack/actions", async (req, res) => {
             ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-
-          await displayHome(user, data);
-
-          const messageTs = await notifyNewOrder(data,jobId)
-          
+          // Get Slack message timestamp
+          const messageTs = await notifyNewOrder(data, jobId);
           data.messageTs = messageTs;
+
+          // Save job to DB (create or update)
           let jobs = [];
           try {
             jobs = await db.getData("/data/");
@@ -160,13 +159,36 @@ app.post("/slack/actions", async (req, res) => {
           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
           if (jobIndex > -1) {
             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-            await db.push("/data/", jobs, true);
           } else {
-            // Fallback safety: shouldn't happen, but just in case
             jobs.push(data);
-            await db.push("/data/", jobs, true);
           }
+          await db.push("/data/", jobs, true);
+
+          // Now update user's home view (with full job info incl. messageTs)
+          await displayHome(user, data);
         }
+      }
+//           await displayHome(user, data);
+
+//           const messageTs = await notifyNewOrder(data,jobId)
+          
+//           let jobs = [];
+//           try {
+//             jobs = await db.getData("/data/");
+//           } catch {
+//             jobs = [];
+//           }
+
+//           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+//           if (jobIndex > -1) {
+//             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+//             await db.push("/data/", jobs, true);
+//           } else {
+//             // Fallback safety: shouldn't happen, but just in case
+//             jobs.push(data);
+//             await db.push("/data/", jobs, true);
+//           }
+//         }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {

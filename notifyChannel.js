@@ -54,31 +54,33 @@ async function notifyNewOrder(orderData, jobId) {
     },
   ];
 
-  const res = await axios.post(
-    "https://slack.com/api/chat.postMessage",
-    {
-      channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-      blocks,
-      text: `New job submitted by ${orderData.Orderedby}`,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-        "Content-Type": "application/json",
+  try {
+    const res = await axios.post(
+      "https://slack.com/api/chat.postMessage",
+      {
+        channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+        blocks,
+        text: `New job submitted by ${orderData.Orderedby}`,
       },
-    }
-  );
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-  // if (res.data.ok) {
-  //   console.log(res.data)
-  //   const ts = res.data.ts; // Capture timestamp of the message
-  //   return ts;
-  // } else {
-  //   console.error("Failed to send notification:", res.data);
-  //   return null;
-  // }
+    if (res.data.ok) {
+      return res.data.ts; // ✅ Return the message timestamp
+    } else {
+      console.error("Slack API error:", res.data.error);
+      return null;
+    }
+  } catch (err) {
+    console.error("Error sending Slack notification:", err);
+    return null;
+  }
 }
 
-
-module.exports = { threadNotify, notifyNewOrder };
+module.exports = { notifyNewOrder };
 
