@@ -150,7 +150,6 @@ app.post("/slack/actions", async (req, res) => {
           const messageTs = await notifyNewOrder(data,jobId)
           
           data.messageTs = messageTs;
-          
           let jobs = [];
           try {
             jobs = await db.getData("/data/");
@@ -161,13 +160,13 @@ app.post("/slack/actions", async (req, res) => {
           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
           if (jobIndex > -1) {
             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+            await db.push("/data/", jobs, true);
           } else {
+            // Fallback safety: shouldn't happen, but just in case
             jobs.push(data);
+            await db.push("/data/", jobs, true);
           }
-
-          await db.push("/data/", jobs, true);
         }
-      }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
