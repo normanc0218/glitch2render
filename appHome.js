@@ -227,16 +227,18 @@ const displayHome = async (user, data) => {
         jobs = [];
       }
 
-      // Check if we're updating an existing job or creating a new one
+      // 🔧 Ensure JobId exists BEFORE searching or pushing
+      if (!data.JobId) {
+        data.JobId = await generateUniqueJobId();
+      }
+
       const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
 
       if (jobIndex > -1) {
         console.log(`Updating JobId: ${data.JobId}`);
         jobs[jobIndex] = { ...jobs[jobIndex], ...data };
       } else {
-        data.JobId = await generateUniqueJobId();        
         console.log(`Creating new job with JobId: ${data.JobId}`);
-
         jobs.push(data);
       }
       console.log("printing")

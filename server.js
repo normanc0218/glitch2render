@@ -25,6 +25,37 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: true }));
+//helper functions
+// generateUUID
+async function generateUniqueJobId()  {
+  let jobId;
+  let exists = true;
+
+  while (exists) {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    jobId = `JOB-${dateStr}-${randomStr}`;
+    exists = false;
+    try {
+      const allUsers = db.getData("/"); // root object: { user1: { data: [...] }, user2: { data: [...] }, ... }
+
+      for (const user in allUsers) {
+        const userJobs = allUsers[user]?.data || [];
+        if (userJobs.some((job) => job.JobId === jobId)) {
+          exists = true;
+          break;
+        }
+      }
+    } catch (error) {
+      // If /jobs doesn't exist yet, that's fine — it means no data yet
+      exists = false;
+    }
+  }
+
+  return jobId;
+}
+
+//events
 app.post("/slack/events",signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
@@ -96,7 +127,9 @@ app.post("/slack/actions", async (req, res) => {
       if (type === "view_submission") {
         if (view.callback_id === "new_job_form") {
           const ts = new Date();
+          const jobId = await generateUniqueJobId();
           const data = {
+            JobId : jobId,
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
             Orderedby:user.username,
             machineLocation: view.state.values.machineLocation.machineLocation.selected_option.value,
@@ -112,29 +145,29 @@ app.post("/slack/actions", async (req, res) => {
             status: "Pending"
           };
 
-          const jobId = await displayHome(user, data);
+          await displayHome(user, data);
 
           const messageTs = await notifyNewOrder(data,jobId)
           
-          // data.JobId = jobId;
-//           data.messageTs = messageTs;
-//           let jobs = [];
-//           try {
-//             jobs = await db.getData("/data/");
-//           } catch {
-//             jobs = [];
-//           }
+          data.messageTs = messageTs;
+          
+          let jobs = [];
+          try {
+            jobs = await db.getData("/data/");
+          } catch {
+            jobs = [];
+          }
 
-//           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
-//           if (jobIndex > -1) {
-//             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-//             await db.push("/data/", jobs, true);
-//           } else {
-//             // Fallback safety: shouldn't happen, but just in case
-//             jobs.push(data);
-//             await db.push("/data/", jobs, true);
-//           }
+          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+          if (jobIndex > -1) {
+            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+          } else {
+            jobs.push(data);
+          }
+
+          await db.push("/data/", jobs, true);
         }
+      }
 
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
