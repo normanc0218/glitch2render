@@ -210,40 +210,43 @@ const updateView = async (user) => {
 };
 
 /* Display App Home */
-const displayHome = async (user, data) => {
+const displayHome = async (user, data = {}) => {
   console.log(`Displaying app home...`);
 
-  const userId = user.id || user; // Assign userId from user object or directly
+  const userId = user.id || user;
   const path = `/data`;
-  let jobId = data?.JobId; // start with existing JobId if available
-  if (data) {
-    let jobs = [];
-    try {
-      jobs = await db.getData(path);
-    } catch {
-      jobs = [];
-    }
+  let jobs = [];
 
-    const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+  // Ensure data is an object and prepare jobId
+  let jobId = data.JobId;
 
-    if (jobIndex > -1) {
-      console.log(`Updating JobId: ${data.JobId}`);
-      jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-    } else {
-      jobId = await generateUniqueJobId();
-      data.JobId = jobId;        
-      console.log(`Creating new job with JobId: ${data.JobId}`);
-      jobs.push(data);
-    }
-
-    await db.push(path, jobs, true);
+  try {
+    jobs = await db.getData(path);
+  } catch {
+    jobs = [];
   }
+
+  if (!jobId) {
+    jobId = await generateUniqueJobId();
+    data.JobId = jobId;
+  }
+
+  const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+  if (jobIndex > -1) {
+    console.log(`Updating JobId: ${data.JobId}`);
+    jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+  } else {
+    console.log(`Creating new job with JobId: ${data.JobId}`);
+    jobs.push(data);
+  }
+
+  await db.push(path, jobs, true);
 
   const args = {
     user_id: userId,
-    view: await updateView(userId), // ensure that this is an object and ready to be sent as JSON
+    view: await updateView(userId),
   };
-
 
   try {
     const result = await axios.post(
@@ -263,9 +266,65 @@ const displayHome = async (user, data) => {
   } catch (error) {
     console.log("Error while posting the view:", error);
   }
-  
-}
-return jobId;
+
+  return jobId;
+};
+
+// const displayHome = async (user, data) => {
+//   console.log(`Displaying app home...`);
+
+//   const userId = user.id || user; // Assign userId from user object or directly
+//   const path = `/data`;
+//   let jobId = data?.JobId; // start with existing JobId if available
+//   if (data) {
+//     let jobs = [];
+//     try {
+//       jobs = await db.getData(path);
+//     } catch {
+//       jobs = [];
+//     }
+
+//     const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+//     if (jobIndex > -1) {
+//       console.log(`Updating JobId: ${data.JobId}`);
+//       jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+//     } else {
+//       jobId = await generateUniqueJobId();
+//       data.JobId = jobId;        
+//       console.log(`Creating new job with JobId: ${data.JobId}`);
+//       jobs.push(data);
+//     }
+
+//     await db.push(path, jobs, true);
+//   }
+
+//   const args = {
+//     user_id: userId,
+//     view: await updateView(userId), // ensure that this is an object and ready to be sent as JSON
+//   };
+
+
+//   try {
+//     const result = await axios.post(
+//       `${apiUrl}/views.publish`,
+//       args,
+//       {
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+//         },
+//       }
+//     );
+
+//     if (result.data.error) {
+//       console.log(result.data.error);
+//     }
+//   } catch (error) {
+//     console.log("Error while posting the view:", error);
+//   }
+//   return jobId;
+// };
 
 
 

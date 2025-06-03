@@ -113,16 +113,19 @@ app.post("/slack/actions", async (req, res) => {
           };
 
           const jobId = await displayHome(user, data);
-          console.log("here")
-          console.log(jobId)
+
           const messageTs = await notifyNewOrder(data,jobId)
           
           data.JobId = jobId;
           data.messageTs = messageTs;
-  
-
-          // ✅ Push new job data to the array
-          await db.push("/data[]", data, false);
+          let jobs = [];
+            try {
+              jobs = db.getData("/data");
+            } catch {
+              jobs = [];
+            };
+           jobs.push(data);
+          await db.push("/data", data, false);
         }
 
         // Accept Modal Submission
