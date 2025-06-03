@@ -120,12 +120,13 @@ app.post("/slack/actions", async (req, res) => {
           data.messageTs = messageTs;
           let jobs = [];
             try {
-              jobs = db.getData("/data");
+              jobs = await db.getData("/data");
             } catch {
               jobs = [];
             };
-           jobs.push(data);
-          await db.push("/data", data, false);
+          
+          jobs.push(data);
+          await db.push("/data", data, true);
         }
 
         // Accept Modal Submission

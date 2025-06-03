@@ -208,9 +208,11 @@ const updateView = async (user) => {
 
   return JSON.stringify(view);
 };
-
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
+});
 /* Display App Home */
-const displayHome = async (user, data = {}) => {
+const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
 
   const userId = user.id || user;
