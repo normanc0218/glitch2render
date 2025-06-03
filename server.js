@@ -6,6 +6,7 @@ const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
+const path = require("path");
 
 const axios = require("axios");
 
@@ -332,6 +333,12 @@ app.post("/slack/actions", async (req, res) => {
     }
 });
 
+
+// Serve your JSON file to Power BI
+app.get("/data-export", (req, res) => {
+  const filePath = path.join(__dirname, "myDatabase.json");
+  res.sendFile(filePath);
+});
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
