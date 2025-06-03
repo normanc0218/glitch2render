@@ -126,7 +126,7 @@ app.post("/slack/actions", async (req, res) => {
             };
           
           jobs.push(data);
-          await db.push("/data", data, true);
+          await db.push("/data", jobs, true);
         }
 
         // Accept Modal Submission

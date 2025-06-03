@@ -216,9 +216,7 @@ process.on('unhandledRejection', (reason, promise) => {
 /* Display App Home */
 const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
-
-
-    if (data) {
+  if (data) {
       const userId = user.id || user; // handle if user is string
       const path = `/data`;
 
@@ -243,6 +241,7 @@ const displayHome = async (user, data) => {
 
         jobs.push(data);
       }
+      console.log(jobs)
 
       await db.push(path, jobs, true);
     }
