@@ -69,14 +69,14 @@ async function notifyNewOrder(orderData, jobId) {
     }
   );
 
-  if (res.data.ok) {
-    console.log(res.data)
-    const ts = res.data.ts; // Capture timestamp of the message
-    return ts;
-  } else {
-    console.error("Failed to send notification:", res.data);
-    return null;
-  }
+  // if (res.data.ok) {
+  //   console.log(res.data)
+  //   const ts = res.data.ts; // Capture timestamp of the message
+  //   return ts;
+  // } else {
+  //   console.error("Failed to send notification:", res.data);
+  //   return null;
+  // }
 }
 
 
