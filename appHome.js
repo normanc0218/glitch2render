@@ -75,8 +75,6 @@ const updateView = async (user) => {
   let newData = [];
   try {
     const rawData = await db.getData(`/data/`);
-    console.log(rawData)
-    console.log(typeof rawData)
     newData = rawData.slice().reverse().slice(0, 50); // latest 50
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -241,7 +239,9 @@ const displayHome = async (user, data) => {
 
         jobs.push(data);
       }
-
+      console.log("printing")
+      console.log(jobs)
+      console.log(data)
       await db.push(path, jobs, true);
     }
   const userId = user.id || user;

@@ -116,24 +116,24 @@ app.post("/slack/actions", async (req, res) => {
 
           const messageTs = await notifyNewOrder(data,jobId)
           
-          data.JobId = jobId;
-          data.messageTs = messageTs;
-          let jobs = [];
-          try {
-            jobs = await db.getData("/data/");
-          } catch {
-            jobs = [];
-          }
+          // data.JobId = jobId;
+//           data.messageTs = messageTs;
+//           let jobs = [];
+//           try {
+//             jobs = await db.getData("/data/");
+//           } catch {
+//             jobs = [];
+//           }
 
-          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
-          if (jobIndex > -1) {
-            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-            await db.push("/data/", jobs, true);
-          } else {
-            // Fallback safety: shouldn't happen, but just in case
-            jobs.push(data);
-            await db.push("/data/", jobs, true);
-          }
+//           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+//           if (jobIndex > -1) {
+//             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+//             await db.push("/data/", jobs, true);
+//           } else {
+//             // Fallback safety: shouldn't happen, but just in case
+//             jobs.push(data);
+//             await db.push("/data/", jobs, true);
+//           }
         }
 
         // Accept Modal Submission
