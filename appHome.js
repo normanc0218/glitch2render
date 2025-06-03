@@ -12,34 +12,7 @@ const managerUsers = [
   "U06CBUTM4JW",// Tim
   "U0"//Grace
 ];
-// generateUUID
-// async function generateUniqueJobId()  {
-//   let jobId;
-//   let exists = true;
 
-//   while (exists) {
-//     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-//     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-//     jobId = `JOB-${dateStr}-${randomStr}`;
-//     exists = false;
-//     try {
-//       const allUsers = db.getData("/"); // root object: { user1: { data: [...] }, user2: { data: [...] }, ... }
-
-//       for (const user in allUsers) {
-//         const userJobs = allUsers[user]?.data || [];
-//         if (userJobs.some((job) => job.JobId === jobId)) {
-//           exists = true;
-//           break;
-//         }
-//       }
-//     } catch (error) {
-//       // If /jobs doesn't exist yet, that's fine — it means no data yet
-//       exists = false;
-//     }
-//   }
-
-//   return jobId;
-// }
 //Update the view
 const updateView = async (user) => {
   let blocks=[];
