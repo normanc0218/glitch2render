@@ -241,7 +241,6 @@ const displayHome = async (user, data) => {
 
         jobs.push(data);
       }
-      console.log(jobs)
 
       await db.push(path, jobs, true);
     }
