@@ -1,5 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
+const { fetchCalendar } = require('./fetchCalendar');
+
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -9,7 +11,8 @@ const nyDate = new Intl.DateTimeFormat('en-US', {
 const [month, day, year] = nyDate.split('/');
 
 const openModal_daily_job = async(trigger_id, jobId) => {
-    const data = await db.getData("/data") || [];
+    const events = await fetchCalendar('3c900c9ad4cfa608582d351a1cffae1c54c08ad48cab7be68eb3921305a88352@group.calendar.google.com');
+
     const job = data.find(item => item.JobId === jobId)
     const modal = {
         type: "modal",
