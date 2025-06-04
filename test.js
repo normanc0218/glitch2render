@@ -1,4 +1,15 @@
 const { fetchCalendar } = require('./fetchCalendar');
+// function formatTimeFromISO(isoString, options = { stripLeadingZero: false }) {
+//   const date = new Date(isoString);
+//   console.log(date)
+//   const hours = date.getHours();
+//   const minutes = date.getMinutes().toString().padStart(2, '0');
+//   return `${hours}:${minutes}`
+// }
+function extractTimeFromISO(isoString) {
+  // Extract the "T09:00:00" part and then slice "09:00"
+  return isoString.split('T')[1].slice(0, 5); // returns "09:00"
+}
 
 (async () => {
   const now = new Date();
@@ -8,11 +19,13 @@ const { fetchCalendar } = require('./fetchCalendar');
     const job = events[0];
     const jobId = `JOB-${jobDate}-${job.etag.slice(1, 7)}`;
     console.log("Sample Job Info:");
+    console.log(job.start.dateTime);
     console.log({
       JobId: jobId,
-      Summary: job.summary,
-      Start: job.start?.dateTime || job.start?.date,
-      End: job.end?.dateTime || job.end?.date,
+      Assigned_to:`Fai`,
+      Description: job.summary,
+      Start: extractTimeFromISO(job.start.dateTime),
+      End: extractTimeFromISO(job.end.dateTime) 
     });
   } else {
     console.log("No events found.");
