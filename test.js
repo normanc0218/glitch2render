@@ -1,80 +1,31 @@
-require('dotenv').config();
-const express = require('express');
-const { OAuth2Client } = require('google-auth-library');
-const axios = require('axios');
+const { google } = require('googleapis');
+const { auth } = require('google-auth-library');
+const keys = require('./google_calendar_key.json'); // Your service account key
 
-const app = express();
-const PORT = 4000;
-
-// OAuth2 setup
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = 'https://ambiguous-ionized-traffic.glitch.me/oauth2callback';
-
-const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-
-// Required scopes
-const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-
-app.get('/', (req, res) => {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-
-  res.send(`<a href="${authUrl}" target="_blank">🔐 Authenticate with Google</a>`);
-});
-
-app.get('/oauth2callback', async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.status(400).send('Missing auth code.');
-
+async function fetchEvents() {
   try {
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
+    const authClient = await auth.fromJSON(keys);
+    authClient.scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
 
-    console.log('✅ Authenticated!');
+    const calendar = google.calendar({ version: 'v3', auth: authClient });
 
-    // Fetch events from calendar
-    const accessToken = (await oAuth2Client.getAccessToken()).token;
+    const res = await calendar.events.list({
+      calendarId: 'rizopiamaintenance@gmail.com', // calendar owner's email
+      timeMin: new Date().toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
 
-    const calendarRes = await axios.get(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-        params: {
-          timeMin: new Date().toISOString(),
-          maxResults: 5,
-          singleEvents: true,
-          orderBy: 'startTime',
-        },
-      }
-    );
-
-    const events = calendarRes.data.items || [];
-
-    let html = `<h2>✅ Auth successful</h2>`;
-    html += `<p>Access token: <code>${tokens.access_token}</code></p>`;
-    html += `<h3>📅 Upcoming Events</h3><ul>`;
-    if (events.length === 0) {
-      html += `<li>No upcoming events</li>`;
+    const events = res.data.items;
+    if (events.length) {
+      events.forEach(e =>
+        console.log(`${e.start.dateTime || e.start.date}: ${e.summary}`)
+      );
     } else {
-      events.forEach((event) => {
-        const start = event.start.dateTime || event.start.date;
-        html += `<li><strong>${start}</strong>: ${event.summary}</li>`;
-      });
+      console.log('No upcoming events.');
     }
-    html += `</ul>`;
-
-    res.send(html);
   } catch (err) {
-    console.error('OAuth2 error:', err);
-    res.status(500).send('OAuth2 failed');
+    console.error('Failed to fetch events:', err.message);
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+}

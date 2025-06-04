@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "boxwood-reach-461916-d2",
+  "private_key_id": "ead0e8de443a59463b59084f924a4e18b7d4b336",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCybLkbsH17J768\naTKolITB+8piedKs0PTdYqAGUzlWSwIb93CfUWeF/uew5NekhyrOyPTC24noL144\nS/1/cvStEFoNnD/CjPXvY6Snoi7GS3d2qJmxgYuCGGCUimFtP+g/gVbnHQwdlV5A\nMWq9YjJnxgkyyFuXIehz9B/lzkUvNf9mh+U7ZrUeNCB6by24orW/ERW5zcFQFJYz\n25WfduniJEi1yw0JW3XuRq0Oza4qfavHlfFqYVSuqH6AEaotMPY768tGc4z/NjVc\nAO6jM6y/BHb4xEzYq6ecx49oMk1H3AqFbvfmVCNRrIF+a+QOgtNO6eFuTQ7+FbJb\nbwvvMbK/AgMBAAECggEALmhlBTS0jpHZ5HugN4TZuvLYwyBYkaaP6f07DiobYbyE\nwe1sF6Q+vvV8IeCDzkFx+vL95qjfh8q6QP5S4xFtXo5APgYD94Bef3N1Yjym2eDL\nI8vanfbJ6H6asEgF6zqSF+J2TgqaGh+9sgiocLXX0nIJ9nFykS66nV5D5avvBsYf\nAl0L7B1Ata7nhiAVuP/L/9Uvx+0RXaLbrnKaJkg3Ng9q+fmhHYhR7nrMZCMY7q+j\nDoBmntJfmAxbWoBFmkVLoWsI8o2sK2MmvxpmksZyqOOCOhzprhZyzoIFkyFeqTcI\nQCXPMHGcccGWbICBuibQvrPpT16EwxCGgQ5cVXY7EQKBgQDrfJZM0d8XuxONzoqa\nyB5889gwcUQQbDO7aORtDSAdmY17Y55b4YziTpcYxev0ZrQUJsDvdoMr42hNPUUu\n1yqLJ83UfKCo2yHwS7pEJLkjrGLLqKMsu7h08P2Y+qtrOCaKmSL56CbSieDr4tuw\nuHj5utDeUEuP03YX4/++OA34SwKBgQDB96O07emUwLJC4R+JpFn5yHibzDReR5DR\nZuFIdPzvz/vMfTUlWUkLAZ+d6Y3RaBugIF/otCVPLJHACnx2nLeatJ8Vu2WjVij2\nfA8xlHrf0+m9Xtwx8I3m3/rM7iiSbRi/dlfWIXzeWfOmdOwrIFNGf2SNr5CO2gvr\nyAJmnkLO3QKBgFt4xKVIbKE6MOlHjn17OKSOz65ZgPfkH+AvaXOWwp/c0qFYW94S\n6ffKUVT1JKeF8XNWbmFWJrO4nP5Ly4DbYZI2PvTICFwu6qr9r3fiz+u0fZfghKnO\nrWL3bXqr/EQkxovV2kk6zUHA/xaBw5aMwak30QRaKk/O8zNqhB/uhDarAoGAeij3\n3ox0Lu5Jlttn3G05CZqbcyvh03rpFyjfO54KaxKnN/unTBV2bksgdvjQC5GwzGF3\nZfyG/t1IEhXIm39KF1IoWyyB76Pk+o/ZldU4qd0x+cVTktQ42q43q3dW8Blrm7Hx\n0feXSAaI8E31K5gZOm4jKyTmO0HSfjWiZXTJCLUCgYAgsPDUVu8SS6a6HJGRbBam\nT6fbrmneb8NH2hK98/Bkx3FPqHXzz5KiJRuB4XFa79KQ/t+nHZUihJKkzBavjrNf\njqzY1QyWLLhAO0WH77MUyLniFsImZdyObiZS2HPqa7qWUc4ZrdzpQL0Wpv58lAte\n7sLXsgE9pl5KnlVTpOxstQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "google-calendar@boxwood-reach-461916-d2.iam.gserviceaccount.com",
+  "client_id": "116272817285201418663",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/google-calendar%40boxwood-reach-461916-d2.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
