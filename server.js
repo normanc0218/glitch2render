@@ -5,6 +5,8 @@ const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
+const { openModal_daily_job } = require("./openModal_daily_job.js");
+
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -318,8 +320,11 @@ app.post("/slack/actions", async (req, res) => {
             await openModal_update_progress(trigger_id,jobId);
           } else if (action.action_id === "review_progress") {
             const jobId = action.value
-            //Open modal for update progress
+            //Open modal for Daily jobs
             await openModal_supervisor_approval(trigger_id,jobId);
+          }else if (action.action_id === "open_daily_job") {
+            //Open modal for update progress
+            await openModal_daily_job(trigger_id);
           }
           else if (action.action_id.match(/add_/)) 
           {

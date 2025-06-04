@@ -16,6 +16,21 @@ const managerUsers = [
 //Update the view
 const updateView = async (user) => {
   let blocks=[];
+  blocks.push({
+  type: "actions",
+  elements: [
+    {
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: "📅 Daily Job",
+        emoji: true
+      },
+      action_id: "open_daily_job", // You'll handle this in your listener
+      value: "daily_job"
+    }
+  ]
+});
   if (managerUsers.includes(user)) {
   blocks.push({
     type: "section",
