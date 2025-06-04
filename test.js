@@ -4,20 +4,29 @@ const keys = require('./google_calendar_key.json'); // Your service account key
 
 async function fetchEvents() {
   try {
+    console.log('🔧 Setting up auth...');
     const authClient = await auth.fromJSON(keys);
+
+    console.log('🔑 Scopes assigned...');
     authClient.scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
 
+    console.log('📅 Initializing calendar...');
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
+    console.log('📥 Fetching events...');
+    console.log('⏳ TimeMin:', new Date().toISOString());
     const res = await calendar.events.list({
-      calendarId: 'rizopiamaintenance@gmail.com', // calendar owner's email
+      calendarId: 'rizopiamaintenance@gmail.com', // Not 'primary'
       timeMin: new Date().toISOString(),
       maxResults: 10,
       singleEvents: true,
       orderBy: 'startTime',
     });
 
-    const events = res.data.items;
+    console.log('✅ Response received');
+
+    const events = res.data.items || [];
+    console.log(`📌 ${events.length} events fetched`);
     if (events.length) {
       events.forEach(e =>
         console.log(`${e.start.dateTime || e.start.date}: ${e.summary}`)
@@ -29,3 +38,4 @@ async function fetchEvents() {
     console.error('Failed to fetch events:', err.message);
   }
 }
+fetchEvents()
