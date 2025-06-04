@@ -1,15 +1,18 @@
 const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
 
-function extractTimeFromISO(isoString) {
-  return isoString ? isoString.split('T')[1]?.slice(0, 5) || "N/A" : "N/A";
+// Extracts time from ISO or returns "(All day)" for date-only entries
+function extractTime(eventTime) {
+  if (!eventTime) return "N/A";
+  if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
+  if (eventTime.date) return "(All day)";
+  return "N/A";
 }
 
 async function openModal_daily_job(trigger_id) {
   const now = new Date();
 
   try {
-    // List of calendar IDs and their respective assignees
     const calendarAssignments = [
       {
         calendarId: '3c900c9ad4cfa608582d351a1cffae1c54c08ad48cab7be68eb3921305a88352@group.calendar.google.com',
@@ -25,10 +28,8 @@ async function openModal_daily_job(trigger_id) {
       }
     ];
 
-    // Date formatting for the Job ID
     const jobDate = now.toISOString().split('T')[0].replace(/-/g, '');
 
-    // Initial Slack modal blocks
     let blocks = [
       {
         type: "header",
@@ -41,22 +42,16 @@ async function openModal_daily_job(trigger_id) {
       { type: "divider" }
     ];
 
-    // Loop through each calendar to fetch events
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
-      console.log(`Fetched events from ${calendarId}:`, events);  // Debug log
+      console.log(`Fetched ${events.length} events for ${assignedTo}`);
 
-      if (!events || events.length === 0) {
-        console.log(`No events found in calendar: ${calendarId}`);
-        continue; // Skip if no events found for the calendar
-      }
+      if (!events || events.length === 0) continue;
 
-      // Loop through each event and create blocks for each event
       for (const job of events) {
-        console.log(job)
-        const jobId = `JOB-${jobDate}-${job.etag.slice(1, 7)}`;
-        const startTime = job.start.dateTime ? extractTimeFromISO(job.start.dateTime) : "N/A";
-        const endTime = job.end.dateTime ? extractTimeFromISO(job.end.dateTime) : "N/A";
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-5, -1) || Math.random().toString(36).substring(2, 6)}`;
+        const startTime = extractTime(job.start);
+        const endTime = extractTime(job.end);
 
         blocks.push(
           {
@@ -71,10 +66,6 @@ async function openModal_daily_job(trigger_id) {
       }
     }
 
-    // Log total blocks before sending
-    console.log('Total blocks created:', blocks.length);
-
-    // Define the modal structure
     const modal = {
       type: "modal",
       callback_id: "daily_job_modal",
@@ -91,7 +82,6 @@ async function openModal_daily_job(trigger_id) {
       blocks
     };
 
-    // Send the modal to Slack
     await axios.post(
       'https://slack.com/api/views.open',
       {
@@ -106,7 +96,7 @@ async function openModal_daily_job(trigger_id) {
       }
     );
   } catch (error) {
-    console.error("Error fetching calendars or opening modal:", error.message);
+    console.error("Error fetching calendars or opening modal:", error.response?.data || error.message);
   }
 }
 

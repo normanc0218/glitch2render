@@ -22,7 +22,9 @@ async function fetchCalendar(cId) {
     timeMax: endOfDay.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
+    timeZone: 'America/New_York' // Optional but recommended
   });
+
 
   return res.data.items;
 }
