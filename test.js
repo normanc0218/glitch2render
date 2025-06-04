@@ -16,7 +16,7 @@ async function fetchEvents() {
     console.log('📥 Fetching events...');
     console.log('⏳ TimeMin:', new Date().toISOString());
     const res = await calendar.events.list({
-      calendarId: 'rizopiamaintenance@gmail.com', // Not 'primary'
+      calendarId: '8f1e07292ce07989c47cbacd57096717820a1eeeeb2426be8b58232fd7d01bc8@group.calendar.google.com', // Not 'primary'
       timeMin: new Date().toISOString(),
       maxResults: 10,
       singleEvents: true,
