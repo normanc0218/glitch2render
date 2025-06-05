@@ -334,6 +334,7 @@ app.post("/slack/actions", async (req, res) => {
             //Open modal for update progress
             const jobId = action.value
             console.log(jobId)
+            console.log(trigger_id)
             await open_general_update(trigger_id,jobId);
           }
           else if (action.action_id.match(/add_/)) 

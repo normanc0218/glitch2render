@@ -25,117 +25,119 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   },
   value: value
 }));
-const open_general_update = async(trigger_id,JobId) => {
-  const modal = {
-	"type": "modal",
-  "callback_id":"open_general_update",
-  "private_metadata":JobId,
-	"title": {
-		"type": "plain_text",
-		"text": "Update Your Job",
-		"emoji": true
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "Submit",
-		"emoji": true
-	},
-	"close": {
-		"type": "plain_text",
-		"text": "Cancel",
-		"emoji": true
-	},
-	"blocks": [
-		
-		{
-			"type": "input",
-			"block_id": "picture",
-			"label": {
-				"type": "plain_text",
-				"text": "Picture of Your job Update"
-			},
-			"element": {
-				"type": "file_input",
-				"action_id": "file_general_input",
-				"filetypes": [
-					"jpg",
-					"png"
-				],
-				"max_files": 5
-			}
-		},
-//   {type: "input",
-//   block_id: "supervisor",
-//   label: {
-//     type: "plain_text",
-//     text: "Supervisor Approval",
-//     emoji: true
-//   },
-//   element: {
-//     type: "static_select",
-//     placeholder: {
-//       type: "plain_text",
-//       text: "Select approving supervisor",
-//       emoji: true
-//     },
-//     options: managerUsers.map(userId => ({
-//       text: {
-//         type: "plain_text",
-//         text: `Supervisor: ${userId}`, // You could resolve names if you want
-//         emoji: true
-//       },
-//       value: userId
-//     })),
-//     action_id: "supervisor_select"
-//   }
-// },
-		{
-			"type": "input",
-      "block_id":"date",
-			"element": {
-				"type": "datepicker",
-				"initial_date": initialDate,
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select a date",
-					"emoji": true
-				},
-				"action_id": "datepickeraction"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Start date",
-				"emoji": true
-			}
-		},
-		{
-			"type": "input",
-      "block_id":"time",
-			"element": {
-				"type": "timepicker",
-				"initial_time": initialTime,
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select time",
-					"emoji": true
-				},
-				"action_id": "timepickeraction"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Start time",
-				"emoji": true
-			}
-		}
-	]
-};
+//Close current Modal
+const closeOpenModal = async (trigger_id) => {
+  try {
+    const args = {
+      token: process.env.SLACK_BOT_TOKEN,
+      trigger_id: trigger_id,
+    };
 
-  const args = {
-    token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: trigger_id,
-    view: JSON.stringify(modal)
+    const result = await axios.post('https://slack.com/api/views.close', qs.stringify(args));
+
+    if (result.data.ok) {
+      console.log('Modal closed successfully!');
+    } else {
+      console.error('Error closing modal:', result.data.error);
+    }
+  } catch (error) {
+    console.error('Error during modal close request:', error.message);
+  }
+};
+const open_general_update = async (trigger_id, JobId) => {
+  await closeOpenModal(trigger_id);
+  const modal = {
+    "type": "modal",
+    "callback_id": "open_general_update",
+    "private_metadata": JobId,  // Passing the JobId as private metadata
+    "title": {
+      "type": "plain_text",
+      "text": "Update Your Job",
+      "emoji": true
+    },
+    "submit": {
+      "type": "plain_text",
+      "text": "Submit",
+      "emoji": true
+    },
+    "close": {
+      "type": "plain_text",
+      "text": "Cancel",
+      "emoji": true
+    },
+    "blocks": [
+      {
+        "type": "input",
+        "block_id": "picture",
+        "label": {
+          "type": "plain_text",
+          "text": "Picture of Your job Update"
+        },
+        "element": {
+          "type": "file_input",
+          "action_id": "file_general_input",
+          "filetypes": ["jpg", "png"],
+          "max_files": 5
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "date",
+        "element": {
+          "type": "datepicker",
+          "initial_date": initialDate,  // Pass the correct initial date
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select a date",
+            "emoji": true
+          },
+          "action_id": "datepickeraction"
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "Start date",
+          "emoji": true
+        }
+      },
+      {
+        "type": "input",
+        "block_id": "time",
+        "element": {
+          "type": "timepicker",
+          "initial_time": initialTime,  // Pass the correct initial time
+          "placeholder": {
+            "type": "plain_text",
+            "text": "Select time",
+            "emoji": true
+          },
+          "action_id": "timepickeraction"
+        },
+        "label": {
+          "type": "plain_text",
+          "text": "Start time",
+          "emoji": true
+        }
+      }
+    ]
   };
-  
-  const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
+
+  // API call to open the modal
+  const args = {
+    token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
+    trigger_id: trigger_id,  // The trigger ID that comes from the button press
+    view: JSON.stringify(modal)  // Pass the modal structure as JSON
+  };
+
+  try {
+    const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
+    
+    if (result.data.ok) {
+      console.log('Modal opened successfully!');
+    } else {
+      console.error('Error opening modal:', result.data.error);  // Log any error response
+    }
+  } catch (error) {
+    console.error('Error during modal open request:', error.message);  // Handle network or other errors
+  }
 };
 module.exports = { open_general_update};
