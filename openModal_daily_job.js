@@ -50,7 +50,7 @@ async function openModal_daily_job(trigger_id) {
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-5, -1) || Math.random().toString(36).substring(2, 6)}`;
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
         const startTime = extractTime(job.start);
         const endTime = extractTime(job.end);
 
