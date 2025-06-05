@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { fetchCalendar } = require("./fetchCalendar");
-const { maintenanceStaff, managerUsers,superVi } = require("./userConfig");
+const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig");
 const db2 = require(`./db2`);
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
@@ -67,7 +67,7 @@ async function openModal_daily_job(trigger_id, userId) {
           await db2.push(`/jobs/${jobId}`, {
             jobId,
             assignedTo,
-            slackUserId: maintenanceStaff[assignedTo],
+            mStaff_id: maintenanceStaff[assignedTo],
             location: job.location || null,
             summary: job.summary || null,
             description: job.description || null,
@@ -84,7 +84,7 @@ async function openModal_daily_job(trigger_id, userId) {
 
     for (const jobId in allJobs) {
       const job = allJobs[jobId];
-      const assignedSlackId = job.slackUserId;
+      const assignedSlackId = job.mStaff_id;
 
       blocks.push({
         type: "section",
@@ -102,7 +102,7 @@ async function openModal_daily_job(trigger_id, userId) {
         },
       });
 
-      if (assignedSlackId === userId && job.status ==="Pending") {
+      if (managerUsers.includes(userId) && job.status ==="Pending") {
         blocks.push({
           type: "actions",
           elements: [
@@ -110,11 +110,11 @@ async function openModal_daily_job(trigger_id, userId) {
               type: "button",
               text: {
                 type: "plain_text",
-                text: "Update Job",
+                text: "Approve the Job?",
               },
               value: job.jobId,
               style: "primary",
-              action_id: "update_general",
+              action_id: "approve_daily",
             },
           ],
         });
