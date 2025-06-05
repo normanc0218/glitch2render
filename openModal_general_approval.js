@@ -1,4 +1,6 @@
 const axios = require('axios');
+const qs = require('qs');
+
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -17,10 +19,10 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 
 
 
-const openModal_general_approval = async (trigger_id, jobId) => {
+const openModal_general_approval = async (viewId, jobId) => {
   const modal ={
 	"type": "modal",
-	"callback_id": "review_progress",
+	"callback_id": "approve_general",
 	"private_metadata": jobId,
 	"title": {
 		"type": "plain_text",
@@ -175,27 +177,23 @@ const openModal_general_approval = async (trigger_id, jobId) => {
 }
 ;
 
+// API call to open the modal
+  const args = {
+    token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
+    view_id: viewId,  // The trigger ID that comes from the button press
+    view: JSON.stringify(modal)  // Pass the modal structure as JSON
+  };
+
   try {
-    const response = await axios.post(
-      'https://slack.com/api/views.open',
-      {
-        trigger_id: trigger_id,
-        view: modal
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`
-        }
-      }
-    );
-
-    if (!response.data.ok) {
-      console.error("Slack API error:", response.data);
+    const result = await axios.post('https://slack.com/api/views.update', qs.stringify(args));
+    
+    if (result.data.ok) {
+      console.log('Modal opened successfully!');
+    } else {
+      console.error('Error opening modal:', result.data.error);  // Log any error response
     }
-
-  } catch (err) {
-    console.error("Modal open error:", err.response?.data || err.message);
+  } catch (error) {
+    console.error('Error during modal open request:', error.message);  // Handle network or other errors
   }
 };
 

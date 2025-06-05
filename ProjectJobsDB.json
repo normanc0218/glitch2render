@@ -9,9 +9,12 @@
             "description": "easy job",
             "orderdate": "2025-06-05",
             "ordertime": "09:45",
-            "endDate": "2025-06-30",
-            "endTime": "12:00",
-            "status": "Pending"
+            "endDate": "2025-06-05",
+            "endTime": "17:34",
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/5/2025, 5:35:10 PM",
+            "remarks": "z",
+            "supervisorUser": "U06DSKC32E4"
         },
         "JOB-20250605-073950": {
             "jobId": "JOB-20250605-073950",

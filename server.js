@@ -355,7 +355,7 @@ app.post("/slack/actions", async (req, res) => {
           }
         }
         // Update progress for Project
-        else if (view.callback_id === "open_project_update") {
+        else if (view.callback_id === "update_finish_project") {
           const jobId = view.private_metadata;  // Job ID passed from the modal
           const ts = new Date();
 
@@ -473,7 +473,9 @@ app.post("/slack/actions", async (req, res) => {
           //Approval from supervisor
           else if (action.action_id === "approve_general") {
             //Open modal for update progress
-            await openModal_general_approval(trigger_id,user.id);
+            const jobId = action.value
+            console.log(jobId)
+            await openModal_general_approval(view.id,jobId);
           }
           else if (action.action_id.match(/add_/)) 
           {
