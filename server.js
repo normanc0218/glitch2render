@@ -9,7 +9,7 @@ const { openModal_daily_job } = require("./openModal_daily_job.js");
 const { openModal_projects} = require("./openModal_projects.js");
 const { open_general_update} = require("./open_general_update.js");
 const { update_finish_project} = require("./update_finish_project.js");
-const {db2} = require("./db2")
+const db2 = require("./db2")
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -292,7 +292,7 @@ app.post("/slack/actions", async (req, res) => {
 
           // Construct the job path for db2, making sure to include the jobId
           const jobPath = `/jobs/${jobId}`;
-
+          console.log(db2);
           try {
             // Try loading the existing job entry using the jobId
             const job = await db2.getData(jobPath).catch(() => null);
@@ -313,20 +313,21 @@ app.post("/slack/actions", async (req, res) => {
               approvedBy: state.supervisor?.supervisor_select?.selected_option?.value || null,
               plannedDate: state.date?.datepickeraction?.selected_date || null,
               plannedTime: state.time?.timepickeraction?.selected_time || null,
-              status: "Approved and Completed ✅"
+              status: "Waiting for Supervisor approval"
             };
 
             // Save the updated job to the DB (merge instead of overwrite)
             await db2.push(jobPath, updatedJob, false);  // false = merge
-
+            console.log(view)
             // Optional: Notify a Slack channel about the job completion
             try {
               const res = await axios.post(
                 "https://slack.com/api/chat.postMessage",
                 {
                   channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                  text: `✅ *Job ${jobId}* was completed by <@${view.user.id}>.`,
+                  text: `✅ *Daily Job ${jobId}* was completed.`,
                 },
+                 // <@${view.user.id}>
                 {
                   headers: {
                     Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,

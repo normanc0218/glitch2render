@@ -11,7 +11,12 @@
             "ordertime": "09:00",
             "endDate": "2025-06-05",
             "endTime": "09:30",
-            "status": "Pending"
+            "status": "Approved and Completed ✅",
+            "timestamp": "6/5/2025, 3:28:06 PM",
+            "remarks": "z",
+            "approvedBy": "U06DSKC32E4",
+            "plannedDate": "2025-06-05",
+            "plannedTime": "15:27"
         },
         "JOB-20250605-992798": {
             "jobId": "JOB-20250605-992798",
@@ -24,7 +29,12 @@
             "ordertime": "14:00",
             "endDate": "2025-06-05",
             "endTime": "14:30",
-            "status": "Pending"
+            "status": "Approved and Completed ✅",
+            "timestamp": "6/5/2025, 3:31:05 PM",
+            "remarks": "d",
+            "approvedBy": "U06DSKC32E4",
+            "plannedDate": "2025-06-05",
+            "plannedTime": "15:30"
         },
         "JOB-20250605-269726": {
             "jobId": "JOB-20250605-269726",
