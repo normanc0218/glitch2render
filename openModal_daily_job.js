@@ -1,13 +1,16 @@
 const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
 const { maintenanceStaff, managerUsers } = require('./userConfig');
-
+const db2 = require(`db2.js`)
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
-  if (eventTime.date) return "(All day)";
   return "N/A";
+}
+function extractDate(eventTime) {
+  if (!eventTime) return "N/A";
+  if (eventTime.dateTime) return eventTime.dateTime.split("T")[0].slice(0, 11);
 }
 
 async function openModal_daily_job(trigger_id,userId) {
@@ -52,15 +55,18 @@ async function openModal_daily_job(trigger_id,userId) {
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const startTime = extractTime(job.start);
+        const ordertime = extractTime(job.start);
         const endTime = extractTime(job.end);
+        const orderdate = extractDate(job.start);
+        const endDate = extractDate(job.end);
 
         blocks.push(
           {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
+              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}
+              \n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${orderdate} *Start Time:* ${ordertime}\n*End Date:* ${endDate} *End Time:* ${endTime}`
             }
           }
         );  // Conditionally add Update Job button for the assigned person
@@ -82,9 +88,9 @@ async function openModal_daily_job(trigger_id,userId) {
               }
             ]
           });
-        }};
+        };
         blocks.push(
-          { type: "divider" })};
+          { type: "divider" })};}
 
     const modal = {
       type: "modal",
