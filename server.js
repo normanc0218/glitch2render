@@ -149,51 +149,29 @@ app.post("/slack/actions", async (req, res) => {
             ordertime: view.state.values.time.timepickeraction.selected_time,
             status: "Pending"
           };
-                // Get Slack message timestamp
-                const messageTs = await notifyNewOrder(data, jobId);
-                data.messageTs = messageTs;
+          // Get Slack message timestamp
+          const messageTs = await notifyNewOrder(data, jobId);
+          data.messageTs = messageTs;
 
-                // Save job to DB (create or update)
-                let jobs = [];
-                try {
-                  jobs = await db.getData("/data/");
-                } catch {
-                  jobs = [];
-                }
+          // Save job to DB (create or update)
+          let jobs = [];
+          try {
+            jobs = await db.getData("/data/");
+          } catch {
+            jobs = [];
+          }
 
-                const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
-                if (jobIndex > -1) {
-                  jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-                } else {
-                  jobs.push(data);
-                }
-                await db.push("/data/", jobs, true);
+          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+          if (jobIndex > -1) {
+            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+          } else {
+            jobs.push(data);
+          }
+          await db.push("/data/", jobs, true);
 
-                // Now update user's home view (with full job info incl. messageTs)
-                await displayHome(user, data);
-              }
-//           await displayHome(user, data);
-
-//           const messageTs = await notifyNewOrder(data,jobId)
-          
-//           let jobs = [];
-//           try {
-//             jobs = await db.getData("/data/");
-//           } catch {
-//             jobs = [];
-//           }
-
-//           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
-//           if (jobIndex > -1) {
-//             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-//             await db.push("/data/", jobs, true);
-//           } else {
-//             // Fallback safety: shouldn't happen, but just in case
-//             jobs.push(data);
-//             await db.push("/data/", jobs, true);
-//           }
-        // }
-
+          // Now update user's home view (with full job info incl. messageTs)
+          await displayHome(user, data);
+        }
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
@@ -304,6 +282,63 @@ app.post("/slack/actions", async (req, res) => {
           await displayHome(user, updatedData);
           //Notify the channel
           await threadNotify(msg,job.messageTs);
+        }         
+        // Update progress for daily job and Projects
+        else if (view.callback_id === "open_general_update") {
+          // console.log('view is ')
+          // console.log(view.state.values)
+          const jobId = view.private_metadata;
+          const ts= new Date();
+          //from previous payloads (or from database)
+          const data = await db.getData("/data") || [];
+          const job = data.find(item => item.JobId === jobId);
+          
+          const updatedData = {
+            JobId: jobId,
+            timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+
+            toolsChecked:view.state.values.tool_id.Maitenance_tool.selected_option?.value || null,
+            extrahelp: view.state.values.clean_input.name_clean.value || null,
+            
+            supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
+
+            // Completion status
+            status: " 👍 *Approved and Completed*",
+            
+            checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
+            checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
+              };
+
+          await displayHome(user, updatedData);
+          //Notify the channel
+           try {
+            const res = await axios.post(
+              "https://slack.com/api/chat.postMessage",
+              {
+                channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+                blocks,
+                text: `New job completed by ${orderData.Orderedby}`,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            if (res.data.ok) {
+              return res.data.ts; // ✅ Return the message timestamp
+            } else {
+              console.error("Slack API error:", res.data.error);
+              return null;
+            }
+          } catch (err) {
+            console.error("Error sending Slack notification:", err);
+            return null;
+          }
+        }
+
         } 
       } else if (actions) {
           const action = actions[0];
