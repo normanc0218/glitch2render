@@ -63,32 +63,32 @@ const open_general_update = async(trigger_id,JobId) => {
 				],
 				"max_files": 5
 			}
-		},{
-  type: "input",
-  block_id: "supervisor",
-  label: {
-    type: "plain_text",
-    text: "Supervisor Approval",
-    emoji: true
-  },
-  element: {
-    type: "static_select",
-    placeholder: {
-      type: "plain_text",
-      text: "Select approving supervisor",
-      emoji: true
-    },
-    options: managerUsers.map(userId => ({
-      text: {
-        type: "plain_text",
-        text: `Supervisor: ${userId}`, // You could resolve names if you want
-        emoji: true
-      },
-      value: userId
-    })),
-    action_id: "supervisor_select"
-  }
-},
+		},
+//   {type: "input",
+//   block_id: "supervisor",
+//   label: {
+//     type: "plain_text",
+//     text: "Supervisor Approval",
+//     emoji: true
+//   },
+//   element: {
+//     type: "static_select",
+//     placeholder: {
+//       type: "plain_text",
+//       text: "Select approving supervisor",
+//       emoji: true
+//     },
+//     options: managerUsers.map(userId => ({
+//       text: {
+//         type: "plain_text",
+//         text: `Supervisor: ${userId}`, // You could resolve names if you want
+//         emoji: true
+//       },
+//       value: userId
+//     })),
+//     action_id: "supervisor_select"
+//   }
+// },
 		{
 			"type": "input",
       "block_id":"date",
