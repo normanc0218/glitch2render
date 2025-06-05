@@ -284,65 +284,74 @@ app.post("/slack/actions", async (req, res) => {
           //Notify the channel
           await threadNotify(msg,job.messageTs);
         }         
-// Update progress for daily job
-else if (view.callback_id === "open_general_update") {
-  const jobId = view.private_metadata;
-  const ts = new Date();
+        // Update progress for daily job
+        else if (view.callback_id === "open_general_update") {
+          const jobId = view.private_metadata;  // Job ID passed from the modal
+          const ts = new Date();
+          console.log(jobId);
 
-  // Construct job path for db2
-  const jobPath = `/jobs/${jobId}`;
+          // Construct the job path for db2, making sure to include the jobId
+          const jobPath = `/jobs/${jobId}`;
 
-  // Try loading the existing job entry
-  const job = await db2.getData(jobPath).catch(() => null);
+          try {
+            // Try loading the existing job entry using the jobId
+            const job = await db2.getData(jobPath).catch(() => null);
 
-  if (!job) {
-    console.error(`⚠️ Job ${jobId} not found in DB`);
-    return;
-  }
+            if (!job) {
+              console.error(`⚠️ Job ${jobId} not found in DB`);
+              return;  // If the job does not exist, exit the function
+            }
 
-  // Extract state values from modal submission
-  const state = view.state.values;
+            // Extract state values from the modal submission
+            const state = view.state.values;
 
-  const updatedJob = {
-    ...job,
-    timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-    remarks: state.comments?.remarks_input?.value || null,
-    approvedBy: state.supervisor?.supervisor_select?.selected_option?.value || null,
-    plannedDate: state.date?.datepickeraction?.selected_date || null,
-    plannedTime: state.time?.timepickeraction?.selected_time || null,
-    status: "Approved and Completed ✅"
-  };
+            // Construct the updated job object
+            const updatedJob = {
+              ...job,
+              timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+              remarks: state.comments?.remarks_input?.value || null,
+              approvedBy: state.supervisor?.supervisor_select?.selected_option?.value || null,
+              plannedDate: state.date?.datepickeraction?.selected_date || null,
+              plannedTime: state.time?.timepickeraction?.selected_time || null,
+              status: "Approved and Completed ✅"
+            };
 
-  // Save merged update to db2
-  await db2.push(jobPath, updatedJob, false); // false = merge (not overwrite)
+            // Save the updated job to the DB (merge instead of overwrite)
+            await db2.push(jobPath, updatedJob, false);  // false = merge
 
-  // Optional: Notify a Slack channel
-  try {
-    const res = await axios.post(
-      "https://slack.com/api/chat.postMessage",
-      {
-        channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-        text: `✅ *Job ${jobId}* was completed by <@${user.id}>.`,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+            // Optional: Notify a Slack channel about the job completion
+            try {
+              const res = await axios.post(
+                "https://slack.com/api/chat.postMessage",
+                {
+                  channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+                  text: `✅ *Job ${jobId}* was completed by <@${view.user.id}>.`,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
 
-    if (res.data.ok) {
-      return res.data.ts;
-    } else {
-      console.error("Slack API error:", res.data.error);
-      return null;
-    }
-  } catch (err) {
-    console.error("Error sending Slack notification:", err.message || err);
-    return null;
-  }
-}
+              if (res.data.ok) {
+                return res.data.ts;  // Return the Slack message timestamp
+              } else {
+                console.error("Slack API error:", res.data.error);
+                return null;
+              }
+            } catch (err) {
+              console.error("Error sending Slack notification:", err.message || err);
+              return null;
+            }
+
+          } catch (error) {
+            console.error("Error updating job:", error.message || error);
+            return null;
+          }
+        }
+
 
       }
         else if (actions) {
