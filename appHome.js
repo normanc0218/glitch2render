@@ -41,7 +41,7 @@ const updateView = async (user) => {
         emoji: true
       },
       action_id: "long_project", // You'll handle this in your listener
-      value: "daily_job"
+      value: "long_project"
     }
   ]
 });

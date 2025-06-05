@@ -68,10 +68,10 @@ async function openModal_projects(trigger_id) {
 
     const modal = {
       type: "modal",
-      callback_id: "daily_job_modal",
+      callback_id: "job_modal",
       title: {
         type: "plain_text",
-        text: "Daily Job",
+        text: "Maitenance Project",
         emoji: true
       },
       close: {

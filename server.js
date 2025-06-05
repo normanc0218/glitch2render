@@ -6,6 +6,7 @@ const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 const { openModal_daily_job } = require("./openModal_daily_job.js");
+const { openModal_projects} = require("./openModal_projects.js");
 
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
@@ -327,7 +328,7 @@ app.post("/slack/actions", async (req, res) => {
             await openModal_daily_job(trigger_id);
           }else if (action.action_id === "long_project") {
             //Open modal for update progress
-            await openModal_daily_job(trigger_id);
+            await openModal_projects(trigger_id);
           }
           else if (action.action_id.match(/add_/)) 
           {
