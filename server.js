@@ -7,8 +7,10 @@ const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 const { openModal_daily_job } = require("./openModal_daily_job.js");
 const { openModal_projects} = require("./openModal_projects.js");
+const { openModal_finish_project} = require("./openModal_finish_project.js");
 const { open_general_update} = require("./open_general_update.js");
-const { update_finish_project} = require("./update_finish_project.js");
+const { openModal_general_approval} = require("./openModal_general_approval.js");
+
 const db2 = require("./db2")
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
@@ -288,7 +290,6 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "open_general_update") {
           const jobId = view.private_metadata;  // Job ID passed from the modal
           const ts = new Date();
-          console.log(jobId);
 
           // Construct the job path for db2, making sure to include the jobId
           const jobPath = `/jobs/${jobId}`;
@@ -374,30 +375,38 @@ app.post("/slack/actions", async (req, res) => {
             //Open modal for Daily jobs
             await openModal_supervisor_approval(trigger_id,jobId);
           }
-          //Update for daily and project are general
-          else if (action.action_id === "update_general") {
-            
+
+          //
+          // Daily section
+          //
+          else if (action.action_id === "open_daily_job") {
+            //Open home modal for Daily job
+            await openModal_daily_job(trigger_id,user.id);
+          }
+          else if (action.action_id === "update_daily") {
           //Open modal for update progress
             const jobId = action.value
-            await open_general_update(view.id,jobId)}
-          // Daily section
-          else if (action.action_id === "open_daily_job") {
-            //Open modal for update progress
-            await openModal_daily_job(trigger_id,user.id);
-          }else if (action.action_id === "approve_daily") {
-            //Open modal for update progress
-            await openModal_projects(trigger_id,user.id);
+            console.log(`${jobId} is updated`)
+            await open_general_update(view.id,jobId)
           }
-                    // Daily section
+          //
+          // Project section
+          //
           else if (action.action_id === "long_project") {
-            //Open modal for update progress
+            //Open home modal for update progress
             await openModal_projects(trigger_id,user.id);
           }
-          }else if (action.action_id === "update_finish_project") {
+          else if (action.action_id === "update_finish_project") {
             //Open modal for update progress
             const jobId = action.value
-
-            await update_finish_project(view.id,jobId);
+            console.log(`${jobId} is updated`)
+            await openModal_finish_project(view.id,jobId);
+          }
+          //
+          //Approval from supervisor
+          else if (action.action_id === "approve_general") {
+            //Open modal for update progress
+            await openModal_general_approval(trigger_id,user.id);
           }
           else if (action.action_id.match(/add_/)) 
           {

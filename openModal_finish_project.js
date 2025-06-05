@@ -22,7 +22,7 @@ const projectManagers={
   Norman: "U06DSKC32E4"
 };
 
-const update_finish_project = async (viewId, JobId) => {
+const openModal_finish_project = async (viewId, JobId) => {
   const modal = {
     "type": "modal",
     "callback_id": "update_finish_project",
@@ -257,4 +257,4 @@ const update_finish_project = async (viewId, JobId) => {
     console.error('Error during modal open request:', error.message);  // Handle network or other errors
   }
 };
-module.exports = { update_finish_project};
+module.exports = { openModal_finish_project};
