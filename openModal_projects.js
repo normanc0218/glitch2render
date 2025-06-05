@@ -2,12 +2,17 @@ const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
 const { maintenanceStaff, managerUsers } = require('./userConfig');
 // Extracts time from ISO or returns "(All day)" for date-only entries
+const db3 = require(`./db3`);
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
-  if (eventTime.date) return "(All day)";
   return "N/A";
 }
+function extractDate(eventTime) {
+  if (!eventTime) return "N/A";
+  if (eventTime.dateTime) return eventTime.dateTime.split("T")[0];
+}
+
 
 async function openModal_projects(trigger_id,userId) {
   const now = new Date();
@@ -53,39 +58,91 @@ async function openModal_projects(trigger_id,userId) {
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const startTime = extractTime(job.start);
-        const endTime = extractTime(job.end);
+        const existingJob = await db2
+          .getData(`/jobs/${jobId}`)
+          .catch(() => null);
 
-        blocks.push(
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
-            }
-          },
-        );
-            
-      const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
-      if (assignedSlackId === userId) { // <-- Pass this from trigger context
-          blocks.push({
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Finish long term project"
-                },
-                value: jobId,
-                style: "primary",
-                action_id: "update_finish_project"
-              }
-            ]
+        if (!existingJob) {
+          const ordertime = extractTime(job.start);
+          const endTime = extractTime(job.end);
+          const orderdate = extractDate(job.start);
+          const endDate = extractDate(job.end);
+
+          await db2.push(`/jobs/${jobId}`, {
+            jobId,
+            assignedTo,
+            mStaff_id: maintenanceStaff[assignedTo],
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate: orderdate,
+            ordertime: ordertime,
+            endDate: endDate,
+            endTime: endTime,
+            status: "Pending",
           });
-        };
-        blocks.push(
-          { type: "divider" })};}
+        }
+      }
+    }
+    const allJobs = await db3.getData("/jobs").catch(() => ({}));
+
+    for (const jobId in allJobs) {
+      const job = allJobs[jobId];
+      const assignedSlackId = job.mStaff_id;
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Job ID:* ${job.jobId}\n*Assigned To:* ${
+            job.assignedTo
+          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
+            job.summary || "(No summary)"
+          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
+            job.orderdate
+          } *Start Time:* ${job.ordertime}\n*End Date:* ${
+            job.endDate
+          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`,
+        },
+      });
+
+      if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
+        blocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Approve the Job?",
+              },
+              value: job.jobId,
+              style: "primary",
+              action_id: "approve_daily",
+            },
+          ],
+        });
+      }
+      if (assignedSlackId === userId && job.status ==="Pending") {
+        blocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Update Job",
+              },
+              value: job.jobId,
+              style: "primary",
+              action_id: "update_general",
+            },
+          ],
+        });
+      }
+      blocks.push({ type: "divider" });
+    }
+
 
     const modal = {
       type: "modal",

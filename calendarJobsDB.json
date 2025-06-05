@@ -3,7 +3,7 @@
         "JOB-20250605-500382": {
             "jobId": "JOB-20250605-500382",
             "assignedTo": "Fai",
-            "slackUserId": "U08V4M4RT8R",
+            "mStaff_id": "U08V4M4RT8R",
             "location": "Boiler room #1 #2 Boiler and #1 #2 Superheat",
             "summary": "Boiler room blow down",
             "description": "Daily Check",
@@ -11,17 +11,17 @@
             "ordertime": "09:00",
             "endDate": "2025-06-05",
             "endTime": "09:30",
-            "status": "Approved and Completed ✅",
-            "timestamp": "6/5/2025, 3:28:06 PM",
-            "remarks": "z",
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/5/2025, 4:28:22 PM",
+            "remarks": "c",
             "approvedBy": "U06DSKC32E4",
             "plannedDate": "2025-06-05",
-            "plannedTime": "15:27"
+            "plannedTime": "16:27"
         },
         "JOB-20250605-992798": {
             "jobId": "JOB-20250605-992798",
             "assignedTo": "Fai",
-            "slackUserId": "U08V4M4RT8R",
+            "mStaff_id": "U08V4M4RT8R",
             "location": "Boiler room #1 #2 Boiler and #1 #2 Superheat",
             "summary": "Boiler room blow down",
             "description": "Daily check",
@@ -29,17 +29,12 @@
             "ordertime": "14:00",
             "endDate": "2025-06-05",
             "endTime": "14:30",
-            "status": "Approved and Completed ✅",
-            "timestamp": "6/5/2025, 3:31:05 PM",
-            "remarks": "d",
-            "approvedBy": "U06DSKC32E4",
-            "plannedDate": "2025-06-05",
-            "plannedTime": "15:30"
+            "status": "Pending"
         },
         "JOB-20250605-269726": {
             "jobId": "JOB-20250605-269726",
             "assignedTo": "Sam",
-            "slackUserId": "value-2",
+            "mStaff_id": "value-2",
             "location": "#8 Miller",
             "summary": "Check mill temperature and current",
             "description": "Check the temperature and the current",
@@ -52,13 +47,39 @@
         "JOB-20250605-700574": {
             "jobId": "JOB-20250605-700574",
             "assignedTo": "Sam",
-            "slackUserId": "value-2",
+            "mStaff_id": "value-2",
             "location": "#2,#4,#5,#6 Compressor",
             "summary": "Check compressor temperature and pressure",
             "description": "Check temperature and the pressure",
             "orderdate": "2025-06-05",
             "ordertime": "14:00",
             "endDate": "2025-06-05",
+            "endTime": "18:00",
+            "status": "Pending"
+        },
+        "JOB-20250605-259294": {
+            "jobId": "JOB-20250605-259294",
+            "assignedTo": "Fai",
+            "mStaff_id": "U08V4M4RT8R",
+            "location": "boiler",
+            "summary": "new project",
+            "description": "easy job",
+            "orderdate": "2025-06-05",
+            "ordertime": "09:45",
+            "endDate": "2025-06-30",
+            "endTime": "12:00",
+            "status": "Pending"
+        },
+        "JOB-20250605-073950": {
+            "jobId": "JOB-20250605-073950",
+            "assignedTo": "Steven",
+            "mStaff_id": "value-1",
+            "location": "#11 Machine",
+            "summary": "#11 Electrical Cabinet Installation",
+            "description": "Need to install the wire and electrical connection to the PLC",
+            "orderdate": "2025-06-05",
+            "ordertime": "09:00",
+            "endDate": "2025-06-30",
             "endTime": "18:00",
             "status": "Pending"
         }

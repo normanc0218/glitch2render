@@ -102,7 +102,7 @@ async function openModal_daily_job(trigger_id, userId) {
         },
       });
 
-      if (managerUsers.includes(userId) && job.status ==="Pending") {
+      if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
         blocks.push({
           type: "actions",
           elements: [
@@ -119,7 +119,7 @@ async function openModal_daily_job(trigger_id, userId) {
           ],
         });
       }
-      if (assignedSlackId === userId && job.status ==="Waiting for approval") {
+      if (assignedSlackId === userId && job.status ==="Pending") {
         blocks.push({
           type: "actions",
           elements: [
