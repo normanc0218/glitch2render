@@ -8,7 +8,11 @@ function extractTime(eventTime) {
   if (eventTime.date) return "(All day)";
   return "N/A";
 }
-
+const maintenanceStaff = {
+  "Fai": "U08V4M4RT8R",
+  "Steven": "value-1",
+  "Sam": "value-2"
+};
 async function openModal_daily_job(trigger_id) {
   const now = new Date();
 
