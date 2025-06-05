@@ -16,11 +16,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
-const maintenanceStaff = {
-  "Fai": "U08V4M4RT8R",
-  "Steven": "value-1",
-  "Sam": "value-2"
-};
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   text: {
     type: "plain_text",

@@ -5,13 +5,7 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 
 const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
  // Slack supervisor user ID
-const managerUsers = [
-  "U06D0NAAL5N",// Chris
-  "U06DSKC32E4",// Norman
-  "U06D0NA0H16", // Justin
-  "U06CBUTM4JW",// Tim
-  "U0"//Grace
-];
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 
 //Update the view
 const updateView = async (user) => {

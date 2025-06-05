@@ -8,11 +8,7 @@ function extractTime(eventTime) {
   if (eventTime.date) return "(All day)";
   return "N/A";
 }
-const maintenanceStaff = {
-  "Fai": "U08V4M4RT8R",
-  "Steven": "value-1",
-  "Sam": "value-2"
-};
+
 async function openModal_daily_job(trigger_id) {
   const now = new Date();
 
@@ -69,7 +65,26 @@ async function openModal_daily_job(trigger_id) {
           { type: "divider" }
         );
       }
-    }
+    }  // Conditionally add Update Job button for the assigned person
+  const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
+
+  if (assignedSlackId === currentUserSlackId) { // <-- Pass this from trigger context
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "Update Job"
+          },
+          value: jobId,
+          action_id: "update_job"
+        }
+      ]
+    });
+  }
+
 
     const modal = {
       type: "modal",
