@@ -16,7 +16,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
-const { maintenanceStaff, managerUsers } = require('./userConfig');
+const { maintenanceStaff, Supervisors } = require('./userConfig');
 const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   text: {
     type: "plain_text",
@@ -99,14 +99,15 @@ const open_general_update = async (viewId, JobId) => {
             "text": "Select approving supervisor",
             "emoji": true
           },
-          "options": managerUsers.map(userId => ({
-            "text": {
-              "type": "plain_text",
-              "text": `Supervisor: ${userId}`, // You can resolve userId to actual names if needed
-              "emoji": true
+          "options": Object.entries(Supervisors).map(([name, userId]) => ({
+            text: {
+              type: "plain_text",
+              text: `Supervisor: ${name}`,
+              emoji: true
             },
-            "value": userId
-          })),
+            value: userId
+          }))
+          ,
           "action_id": "supervisor_select"
         }
       },

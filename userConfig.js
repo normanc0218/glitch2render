@@ -13,8 +13,14 @@ const managerUsers = [
   "U06CBUTM4JW", // Tim
   "U0"           // Grace (confirm ID)
 ];
-
+const Supervisors = {
+  Chris: "U06D0NAAL5N",
+  Norman: "U06DSKC32E4",
+  Justin: "U06D0NA0H16",
+  Tim: "U06CBUTM4JW",
+  Grace: "U0" // Confirm Grace's actual ID
+};
 module.exports = {
   maintenanceStaff,
-  managerUsers
+  managerUsers,Supervisors
 };

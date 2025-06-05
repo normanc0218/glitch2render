@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
-
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
@@ -9,7 +9,7 @@ function extractTime(eventTime) {
   return "N/A";
 }
 
-async function openModal_projects(trigger_id) {
+async function openModal_projects(trigger_id,userId) {
   const now = new Date();
 
   try {
@@ -63,8 +63,28 @@ async function openModal_projects(trigger_id) {
           },
           { type: "divider" }
         );
-      }
-    }
+            
+      const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
+
+      if (assignedSlackId === userId) { // <-- Pass this from trigger context
+          blocks.push({
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "Update Job"
+                },
+                value: jobId,
+                style: "primary",
+                action_id: "update_daily"
+              }
+            ]
+          });
+        };
+        blocks.push(
+          { type: "divider" })};}
 
     const modal = {
       type: "modal",

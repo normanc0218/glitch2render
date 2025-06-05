@@ -82,9 +82,9 @@ async function openModal_daily_job(trigger_id,userId) {
               }
             ]
           });
-        }}};
+        }};
         blocks.push(
-          { type: "divider" });
+          { type: "divider" })};
 
     const modal = {
       type: "modal",
