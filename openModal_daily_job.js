@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { fetchCalendar } = require("./fetchCalendar");
-const { maintenanceStaff, managerUsers } = require("./userConfig");
+const { maintenanceStaff, managerUsers,superVi } = require("./userConfig");
 const db2 = require(`./db2`);
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
@@ -119,7 +119,23 @@ async function openModal_daily_job(trigger_id, userId) {
           ],
         });
       }
-
+      if (assignedSlackId === userId && job.status ==="Waiting for approval") {
+        blocks.push({
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Update Job",
+              },
+              value: job.jobId,
+              style: "primary",
+              action_id: "update_general",
+            },
+          ],
+        });
+      }
       blocks.push({ type: "divider" });
     }
 
