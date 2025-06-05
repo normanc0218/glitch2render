@@ -93,7 +93,7 @@ const updateView = async (user) => {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Machine:* ${o.machineLocation || "N/A"}`,
+            text: `*Machine Location:* ${o.machineLocation || "N/A"}`,
           },
         },
         {

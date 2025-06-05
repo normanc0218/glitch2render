@@ -59,7 +59,7 @@ async function openModal_daily_job(trigger_id) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
+              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
             }
           },
           { type: "divider" }
