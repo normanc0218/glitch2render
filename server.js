@@ -292,21 +292,21 @@ app.post("/slack/actions", async (req, res) => {
           //from previous payloads (or from database)
           const data = await db.getData("/data") || [];
           const job = data.find(item => item.JobId === jobId);
-          
+          console.log(view)
           const updatedData = {
             JobId: jobId,
             timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
 
-            toolsChecked:view.state.values.tool_id.Maitenance_tool.selected_option?.value || null,
-            extrahelp: view.state.values.clean_input.name_clean.value || null,
+//             toolsChecked:view.state.values.tool_id.Maitenance_tool.selected_option?.value || null,
+//             extrahelp: view.state.values.clean_input.name_clean.value || null,
             
-            supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
+//             supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
 
-            // Completion status
-            status: " 👍 *Approved and Completed*",
+//             // Completion status
+//             status: " 👍 *Approved and Completed*",
             
-            checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
-            checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
+//             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
+//             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
               };
 
           await displayHome(user, updatedData);
@@ -316,8 +316,7 @@ app.post("/slack/actions", async (req, res) => {
               "https://slack.com/api/chat.postMessage",
               {
                 channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                blocks,
-                text: `New job completed by ${orderData.Orderedby}`,
+                text: `New job${jobId} completed by `,
               },
               {
                 headers: {
@@ -338,9 +337,8 @@ app.post("/slack/actions", async (req, res) => {
             return null;
           }
         }
-
-        } 
-      } else if (actions) {
+      }
+        else if (actions) {
           const action = actions[0];
           if (action.action_id === "accept_task") {
             const jobId = action.value
