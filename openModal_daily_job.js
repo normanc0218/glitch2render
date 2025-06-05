@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
 const { maintenanceStaff, managerUsers } = require('./userConfig');
-const db2 = require(`db2.js`)
+const db2 = require(`./db2`)
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
@@ -45,6 +45,36 @@ async function openModal_daily_job(trigger_id,userId) {
       },
       { type: "divider" }
     ];
+    for (const { calendarId, assignedTo } of calendarAssignments) {
+      const events = await fetchCalendar(calendarId);
+      if (!events || events.length === 0) continue;
+
+      for (const job of events) {
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+        const existingJob = await db2.getData(`/jobs/${jobId}`).catch(() => null);
+
+        if (!existingJob) {
+          const ordertime = extractTime(job.start);
+          const endTime = extractTime(job.end);
+          const orderdate = extractDate(job.start);
+          const endDate = extractDate(job.end);
+
+          await db2.push(`/jobs/${jobId}`, {
+            jobId,
+            assignedTo,
+            slackUserId: maintenanceStaff[assignedTo],
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate,
+            ordertime,
+            endDate,
+            endTime,
+            status: "Pending"
+          });
+        }
+      }
+    }
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
@@ -60,6 +90,23 @@ async function openModal_daily_job(trigger_id,userId) {
         const orderdate = extractDate(job.start);
         const endDate = extractDate(job.end);
 
+//I wan to make the modal read the db entries here
+        const existingJob = await db2.getData(`/jobs/${jobId}`).catch(() => null);
+        if (!existingJob) {
+          await db2.push(`/jobs/${jobId}`, {
+            jobId,
+            assignedTo,
+            slackUserId: maintenanceStaff[assignedTo],
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate: orderdate,
+            ordertime: ordertime,
+            endDate: endDate,
+            endTime: endTime,
+            status: "Pending"
+          });
+        
         blocks.push(
           {
             type: "section",
@@ -69,7 +116,8 @@ async function openModal_daily_job(trigger_id,userId) {
               \n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${orderdate} *Start Time:* ${ordertime}\n*End Date:* ${endDate} *End Time:* ${endTime}`
             }
           }
-        );  // Conditionally add Update Job button for the assigned person
+        );
+        // Conditionally add Update Job button for the assigned person
         const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
 
         if (assignedSlackId === userId) { // <-- Pass this from trigger context
@@ -88,7 +136,7 @@ async function openModal_daily_job(trigger_id,userId) {
               }
             ]
           });
-        };
+        }
         blocks.push(
           { type: "divider" })};}
 
