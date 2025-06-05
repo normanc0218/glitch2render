@@ -234,9 +234,7 @@ const displayHome = async (user, data) => {
         console.log(`Creating new job with JobId: ${data.JobId}`);
         jobs.push(data);
       }
-      console.log("printing")
-      console.log(jobs)
-      console.log(data)
+
       await db.push(path, jobs, true);
     }
   const userId = user.id || user;
