@@ -45,11 +45,11 @@ async function openModal_projects(trigger_id) {
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
       console.log(`Fetched ${events.length} events for ${assignedTo}`);
-
+      console.log(events)
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-5, -1) || Math.random().toString(36).substring(2, 6)}`;
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
         const startTime = extractTime(job.start);
         const endTime = extractTime(job.end);
 
@@ -58,7 +58,7 @@ async function openModal_projects(trigger_id) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Summary:* ${job.summary || "(No summary)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
+              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
             }
           },
           { type: "divider" }

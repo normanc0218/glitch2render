@@ -44,6 +44,7 @@ async function openModal_daily_job(trigger_id) {
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
+
       console.log(`Fetched ${events.length} events for ${assignedTo}`);
 
       if (!events || events.length === 0) continue;
@@ -58,7 +59,7 @@ async function openModal_daily_job(trigger_id) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Summary:* ${job.summary || "(No summary)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
+              text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
             }
           },
           { type: "divider" }
