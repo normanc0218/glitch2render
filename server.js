@@ -284,7 +284,7 @@ app.post("/slack/actions", async (req, res) => {
           //Notify the channel
           await threadNotify(msg,job.messageTs);
         }         
-        // Update progress for daily job and Projects
+        // Update progress for daily job
         else if (view.callback_id === "open_general_update") {
           // console.log('view is ')
           // console.log(view.state.values)
@@ -337,6 +337,10 @@ app.post("/slack/actions", async (req, res) => {
             console.error("Error sending Slack notification:", err);
             return null;
           }
+        } 
+        // Submit finished long term project
+        else if (view.callback_id === "update_finish_project"){
+          console.log(view)
         }
       }
         else if (actions) {
@@ -373,8 +377,7 @@ app.post("/slack/actions", async (req, res) => {
           }else if (action.action_id === "update_finish_project") {
             //Open modal for update progress
             const jobId = action.value
-            console.log(jobId)
-            console.log(view.id)
+
             await update_finish_project(view.id,jobId);
           }
           else if (action.action_id.match(/add_/)) 
