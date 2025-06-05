@@ -8,10 +8,12 @@ const { openModal_supervisor_approval } = require("./openModal_supervisor_approv
 const { openModal_daily_job } = require("./openModal_daily_job.js");
 const { openModal_projects} = require("./openModal_projects.js");
 const { openModal_finish_project} = require("./openModal_finish_project.js");
-const { open_general_update} = require("./open_general_update.js");
 const { openModal_general_approval} = require("./openModal_general_approval.js");
 
+const { open_general_update} = require("./open_general_update.js");
+
 const db2 = require("./db2")
+const db3 = require("./db3")
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -293,7 +295,7 @@ app.post("/slack/actions", async (req, res) => {
 
           // Construct the job path for db2, making sure to include the jobId
           const jobPath = `/jobs/${jobId}`;
-          console.log(db2);
+          console.log(view);
           try {
             // Try loading the existing job entry using the jobId
             const job = await db2.getData(jobPath).catch(() => null);
@@ -352,7 +354,72 @@ app.post("/slack/actions", async (req, res) => {
             return null;
           }
         }
+        // Update progress for Project
+        else if (view.callback_id === "open_project_update") {
+          const jobId = view.private_metadata;  // Job ID passed from the modal
+          const ts = new Date();
 
+          // Construct the job path for db3, making sure to include the jobId
+          const jobPath = `/jobs/${jobId}`;
+          console.log(db3);
+          try {
+            // Try loading the existing job entry using the jobId
+            const job = await db3.getData(jobPath).catch(() => null);
+
+            if (!job) {
+              console.error(`⚠️ Job ${jobId} not found in DB`);
+              return;  // If the job does not exist, exit the function
+            }
+
+            // Extract state values from the modal submission
+            const state = view.state.values;
+
+            // Construct the updated job object
+            const updatedJob = {
+              ...job,
+              timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+              remarks: state.comments?.remarks_input?.value || null,
+              supervisorUser: state.supervisor?.supervisor_select?.selected_option?.value || null,
+              endDate: state.date?.datepickeraction?.selected_date || null,
+              endTime: state.time?.timepickeraction?.selected_time || null,
+              status: "Waiting for Supervisor approval"
+            };
+
+            // Save the updated job to the DB (merge instead of overwrite)
+            await db3.push(jobPath, updatedJob, false);  // false = merge
+            // Optional: Notify a Slack channel about the job completion
+            try {
+              const res = await axios.post(
+                "https://slack.com/api/chat.postMessage",
+                {
+                  channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+                  text: `✅ *Daily Job ${jobId}* was completed.`,
+                },
+                 // <@${view.user.id}>
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              if (res.data.ok) {
+                return res.data.ts;  // Return the Slack message timestamp
+              } else {
+                console.error("Slack API error:", res.data.error);
+                return null;
+              }
+            } catch (err) {
+              console.error("Error sending Slack notification:", err.message || err);
+              return null;
+            }
+
+          } catch (error) {
+            console.error("Error updating job:", error.message || error);
+            return null;
+          }
+        }
 
       }
         else if (actions) {
@@ -386,7 +453,7 @@ app.post("/slack/actions", async (req, res) => {
           else if (action.action_id === "update_daily") {
           //Open modal for update progress
             const jobId = action.value
-            console.log(`${jobId} is updated`)
+            console.log(view)
             await open_general_update(view.id,jobId)
           }
           //
@@ -399,7 +466,7 @@ app.post("/slack/actions", async (req, res) => {
           else if (action.action_id === "update_finish_project") {
             //Open modal for update progress
             const jobId = action.value
-            console.log(`${jobId} is updated`)
+            console.log(view)
             await openModal_finish_project(view.id,jobId);
           }
           //
