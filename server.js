@@ -7,6 +7,7 @@ const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 const { openModal_daily_job } = require("./openModal_daily_job.js");
 const { openModal_projects} = require("./openModal_projects.js");
+const { open_general_update} = require("./open_general_update.js");
 
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
@@ -329,6 +330,11 @@ app.post("/slack/actions", async (req, res) => {
           }else if (action.action_id === "long_project") {
             //Open modal for update progress
             await openModal_projects(trigger_id);
+          }else if (action.action_id === "update_daily") {
+            //Open modal for update progress
+            const jobId = action.value
+            console.log(jobId)
+            await open_general_update(trigger_id,jobId);
           }
           else if (action.action_id.match(/add_/)) 
           {
