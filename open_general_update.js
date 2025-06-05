@@ -29,7 +29,7 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
 const open_general_update = async (viewId, JobId) => {
   const modal = {
     "type": "modal",
-    "callback_id": "open_general_update",
+    "callback_id": call_back_id,
     "private_metadata": JobId, // Store the Job ID in private metadata
     "title": {
       "type": "plain_text",

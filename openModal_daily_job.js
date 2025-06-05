@@ -131,7 +131,7 @@ async function openModal_daily_job(trigger_id, userId) {
               },
               value: job.jobId,
               style: "primary",
-              action_id: "update_general",
+              action_id: "update_daily",
             },
           ],
         });
