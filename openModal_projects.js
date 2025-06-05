@@ -118,7 +118,7 @@ async function openModal_projects(trigger_id,userId) {
               },
               value: job.jobId,
               style: "primary",
-              action_id: "approve_daily",
+              action_id: "approve_general",
             },
           ],
         });
@@ -135,7 +135,7 @@ async function openModal_projects(trigger_id,userId) {
               },
               value: job.jobId,
               style: "primary",
-              action_id: "update_general",
+              action_id: "update_finish_project",
             },
           ],
         });

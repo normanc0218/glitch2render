@@ -373,18 +373,26 @@ app.post("/slack/actions", async (req, res) => {
             const jobId = action.value
             //Open modal for Daily jobs
             await openModal_supervisor_approval(trigger_id,jobId);
-          }else if (action.action_id === "open_daily_job") {
+          }
+          //Update for daily and project are general
+          else if (action.action_id === "update_general") {
+            
+          //Open modal for update progress
+            const jobId = action.value
+            await open_general_update(view.id,jobId)}
+          // Daily section
+          else if (action.action_id === "open_daily_job") {
             //Open modal for update progress
             await openModal_daily_job(trigger_id,user.id);
-          }else if (action.action_id === "long_project") {
+          }else if (action.action_id === "approve_daily") {
             //Open modal for update progress
             await openModal_projects(trigger_id,user.id);
-          }else if (action.action_id === "update_general") {
+          }
+                    // Daily section
+          else if (action.action_id === "long_project") {
             //Open modal for update progress
-            const jobId = action.value
-            console.log(jobId)
-            console.log(view.id)
-            await open_general_update(view.id,jobId)
+            await openModal_projects(trigger_id,user.id);
+          }
           }else if (action.action_id === "update_finish_project") {
             //Open modal for update progress
             const jobId = action.value
