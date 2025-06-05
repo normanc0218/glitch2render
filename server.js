@@ -310,15 +310,14 @@ app.post("/slack/actions", async (req, res) => {
               ...job,
               timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
               remarks: state.comments?.remarks_input?.value || null,
-              approvedBy: state.supervisor?.supervisor_select?.selected_option?.value || null,
-              plannedDate: state.date?.datepickeraction?.selected_date || null,
-              plannedTime: state.time?.timepickeraction?.selected_time || null,
+              supervisorUser: state.supervisor?.supervisor_select?.selected_option?.value || null,
+              endDate: state.date?.datepickeraction?.selected_date || null,
+              endTime: state.time?.timepickeraction?.selected_time || null,
               status: "Waiting for Supervisor approval"
             };
 
             // Save the updated job to the DB (merge instead of overwrite)
             await db2.push(jobPath, updatedJob, false);  // false = merge
-            console.log(view)
             // Optional: Notify a Slack channel about the job completion
             try {
               const res = await axios.post(

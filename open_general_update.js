@@ -73,10 +73,6 @@ const open_general_update = async (viewId, JobId) => {
           action_id: "remarks_input"
         }
       },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Plan to Start Date", emoji: true }
-      },
       // Supervisor Approval (static select dropdown)
       {
         "type": "input",
@@ -121,7 +117,7 @@ const open_general_update = async (viewId, JobId) => {
         },
         "label": {
           "type": "plain_text",
-          "text": "Start date",
+          "text": "End date",
           "emoji": true
         }
       },
@@ -141,7 +137,7 @@ const open_general_update = async (viewId, JobId) => {
         },
         "label": {
           "type": "plain_text",
-          "text": "Start time",
+          "text": "End time",
           "emoji": true
         }
       }

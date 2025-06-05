@@ -16,15 +16,9 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 
 // list of managerUser IDs
-const supervisors = {
-  // "Chris" : "U06D0NAAL5N",// Chris
-  "Norman":  "U06DSKC32E4",// Norman
-  "Justin": "U06D0NA0H16", // Justin
-  "Tim": "U06CBUTM4JW",// Tim
-  "Grace":"U0"
-};
+const {Supervisors} = require('./userConfig');
 
-const superOptions = Object.entries(supervisors).map(([name, value]) => ({
+const superOptions = Object.entries(Supervisors).map(([name, value]) => ({
   text: {
     type: "mrkdwn",
     text: name

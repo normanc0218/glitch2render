@@ -58,7 +58,7 @@ async function openModal_projects(trigger_id,userId) {
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const existingJob = await db2
+        const existingJob = await db3
           .getData(`/jobs/${jobId}`)
           .catch(() => null);
 
@@ -68,7 +68,7 @@ async function openModal_projects(trigger_id,userId) {
           const orderdate = extractDate(job.start);
           const endDate = extractDate(job.end);
 
-          await db2.push(`/jobs/${jobId}`, {
+          await db3.push(`/jobs/${jobId}`, {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
