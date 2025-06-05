@@ -26,24 +26,6 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   value: value
 }));
 
-const closeOpenModal = async (trigger_id) => {
-  try {
-    const args = {
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id: trigger_id,
-    };
-
-    const result = await axios.post('https://slack.com/api/views.close', qs.stringify(args));
-
-    if (result.data.ok) {
-      console.log('Modal closed successfully!');
-    } else {
-      console.error('Error closing modal:', result.data.error);
-    }
-  } catch (error) {
-    console.error('Error during modal close request:', error.message);
-  }
-};
 const open_general_update = async (viewId, JobId) => {
   const modal = {
     "type": "modal",

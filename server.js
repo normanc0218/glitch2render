@@ -9,7 +9,7 @@ const { openModal_daily_job } = require("./openModal_daily_job.js");
 const { openModal_projects} = require("./openModal_projects.js");
 const { open_general_update} = require("./open_general_update.js");
 const { update_finish_project} = require("./update_finish_project.js");
-
+const {db2} = require("./db2")
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -284,64 +284,66 @@ app.post("/slack/actions", async (req, res) => {
           //Notify the channel
           await threadNotify(msg,job.messageTs);
         }         
-        // Update progress for daily job
-        else if (view.callback_id === "open_general_update") {
-          // console.log('view is ')
-          // console.log(view.state.values)
-          const jobId = view.private_metadata;
-          const ts= new Date();
-          //from previous payloads (or from database)
-          const data = await db.getData("/data") || [];
-          const job = data.find(item => item.JobId === jobId);
-          console.log(view)
-          const updatedData = {
-            JobId: jobId,
-            timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+// Update progress for daily job
+else if (view.callback_id === "open_general_update") {
+  const jobId = view.private_metadata;
+  const ts = new Date();
 
-//             toolsChecked:view.state.values.tool_id.Maitenance_tool.selected_option?.value || null,
-//             extrahelp: view.state.values.clean_input.name_clean.value || null,
-            
-//             supervisorcomment: view.state.values.other_reason_input.detailOfJob.value || null,
+  // Construct job path for db2
+  const jobPath = `/jobs/${jobId}`;
 
-//             // Completion status
-//             status: " 👍 *Approved and Completed*",
-            
-//             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
-//             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
-              };
+  // Try loading the existing job entry
+  const job = await db2.getData(jobPath).catch(() => null);
 
-          await displayHome(user, updatedData);
-          //Notify the channel
-           try {
-            const res = await axios.post(
-              "https://slack.com/api/chat.postMessage",
-              {
-                channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                text: `New job${jobId} completed by `,
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
+  if (!job) {
+    console.error(`⚠️ Job ${jobId} not found in DB`);
+    return;
+  }
 
-            if (res.data.ok) {
-              return res.data.ts; // ✅ Return the message timestamp
-            } else {
-              console.error("Slack API error:", res.data.error);
-              return null;
-            }
-          } catch (err) {
-            console.error("Error sending Slack notification:", err);
-            return null;
-          }
-        } 
-        // Submit finished long term project
-        else if (view.callback_id === "update_finish_project"){
-          console.log(view)
-        }
+  // Extract state values from modal submission
+  const state = view.state.values;
+
+  const updatedJob = {
+    ...job,
+    timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
+    remarks: state.comments?.remarks_input?.value || null,
+    approvedBy: state.supervisor?.supervisor_select?.selected_option?.value || null,
+    plannedDate: state.date?.datepickeraction?.selected_date || null,
+    plannedTime: state.time?.timepickeraction?.selected_time || null,
+    status: "Approved and Completed ✅"
+  };
+
+  // Save merged update to db2
+  await db2.push(jobPath, updatedJob, false); // false = merge (not overwrite)
+
+  // Optional: Notify a Slack channel
+  try {
+    const res = await axios.post(
+      "https://slack.com/api/chat.postMessage",
+      {
+        channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+        text: `✅ *Job ${jobId}* was completed by <@${user.id}>.`,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (res.data.ok) {
+      return res.data.ts;
+    } else {
+      console.error("Slack API error:", res.data.error);
+      return null;
+    }
+  } catch (err) {
+    console.error("Error sending Slack notification:", err.message || err);
+    return null;
+  }
+}
+
       }
         else if (actions) {
           const action = actions[0];
