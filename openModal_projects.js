@@ -38,7 +38,12 @@ async function openModal_projects(trigger_id,userId) {
           text: "Maintenance Projects",
           emoji: true
         }
-      },
+      },{
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "This is the long term project list, you just need to submit th.",
+    }},
       { type: "divider" }
     ];
 
