@@ -3,7 +3,7 @@ const qs = require("qs");
 const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 
-const db = new JsonDB(new Config("myDatabase", true, false, "/")); // Adjust name and config as needed
+const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
  // Slack supervisor user ID
 const { maintenanceStaff, managerUsers } = require('./userConfig');
 
