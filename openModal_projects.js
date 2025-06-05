@@ -44,8 +44,6 @@ async function openModal_projects(trigger_id,userId) {
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
-      console.log(`Fetched ${events.length} events for ${assignedTo}`);
-      console.log(events)
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
@@ -61,11 +59,9 @@ async function openModal_projects(trigger_id,userId) {
               text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
             }
           },
-          { type: "divider" }
         );
             
       const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
-
       if (assignedSlackId === userId) { // <-- Pass this from trigger context
           blocks.push({
             type: "actions",
@@ -78,7 +74,7 @@ async function openModal_projects(trigger_id,userId) {
                 },
                 value: jobId,
                 style: "primary",
-                action_id: "update_daily"
+                action_id: "update_general"
               }
             ]
           });

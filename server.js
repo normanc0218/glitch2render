@@ -329,8 +329,8 @@ app.post("/slack/actions", async (req, res) => {
             await openModal_daily_job(trigger_id,user.id);
           }else if (action.action_id === "long_project") {
             //Open modal for update progress
-            await openModal_projects(trigger_id);
-          }else if (action.action_id === "update_daily") {
+            await openModal_projects(trigger_id,user.id);
+          }else if (action.action_id === "update_general") {
             //Open modal for update progress
             const jobId = action.value
             console.log(jobId)

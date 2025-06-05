@@ -78,7 +78,7 @@ async function openModal_daily_job(trigger_id,userId) {
                 },
                 value: jobId,
                 style: "primary",
-                action_id: "update_daily"
+                action_id: "update_general"
               }
             ]
           });
