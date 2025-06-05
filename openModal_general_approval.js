@@ -37,6 +37,7 @@ const openModal_general_approval = async (viewId, jobId) => {
 		"text": "Cancel"
 	},
 	"blocks": [
+
 		{
 			"type": "section",
       "block_id":"tool_id",

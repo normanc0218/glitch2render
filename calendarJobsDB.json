@@ -82,6 +82,84 @@
             "endDate": "2025-06-30",
             "endTime": "18:00",
             "status": "Pending"
+        },
+        "JOB-20250605-368286": {
+            "jobId": "JOB-20250605-368286",
+            "assignedTo": "Fai",
+            "mStaff_id": "U08V4M4RT8R",
+            "location": "Boiler room - #1,#2 Boiler, #1,#2 Superheat",
+            "summary": "Weekly PM on Boiler room",
+            "description": null,
+            "orderdate": "2025-06-06",
+            "ordertime": "15:00",
+            "endDate": "2025-06-06",
+            "endTime": "17:00",
+            "status": "Pending"
+        },
+        "JOB-20250605-137662": {
+            "jobId": "JOB-20250605-137662",
+            "assignedTo": "Fai",
+            "mStaff_id": "U08V4M4RT8R",
+            "location": "#8 Extruder",
+            "summary": "Weekly PM on #8 Extruder",
+            "description": "Check and add gear oil.",
+            "orderdate": "2025-06-06",
+            "ordertime": "17:00",
+            "endDate": "2025-06-06",
+            "endTime": "17:30",
+            "status": "Pending"
+        },
+        "JOB-20250605-423422": {
+            "jobId": "JOB-20250605-423422",
+            "assignedTo": "Fai",
+            "mStaff_id": "U08V4M4RT8R",
+            "location": "#7 Extruder",
+            "summary": "Weekly PM on #7 Extruder",
+            "description": "Check and add gear oil.",
+            "orderdate": "2025-06-06",
+            "ordertime": "17:30",
+            "endDate": "2025-06-06",
+            "endTime": "18:00",
+            "status": "Pending"
+        },
+        "JOB-20250605-887390": {
+            "jobId": "JOB-20250605-887390",
+            "assignedTo": "Sam",
+            "mStaff_id": "value-2",
+            "location": "#7,#8 Vacuum pump",
+            "summary": "#7, #8 Vacuum pump cleaning strainer",
+            "description": "Clean the strainer",
+            "orderdate": "2025-06-06",
+            "ordertime": "11:00",
+            "endDate": "2025-06-06",
+            "endTime": "11:30",
+            "status": "Pending"
+        },
+        "JOB-20250605-031166": {
+            "jobId": "JOB-20250605-031166",
+            "assignedTo": "Sam",
+            "mStaff_id": "value-2",
+            "location": "#2,#4,#5,#6 Compressor",
+            "summary": "Check compressor oil level and add oil",
+            "description": "Check oil level and add oil",
+            "orderdate": "2025-06-06",
+            "ordertime": "11:30",
+            "endDate": "2025-06-06",
+            "endTime": "13:00",
+            "status": "Pending"
+        },
+        "JOB-20250605-083646": {
+            "jobId": "JOB-20250605-083646",
+            "assignedTo": "Sam",
+            "mStaff_id": "value-2",
+            "location": "#7,#8 Dust collector",
+            "summary": "#7,#8 Clean Dust collector",
+            "description": "Clean the dust collector",
+            "orderdate": "2025-06-06",
+            "ordertime": "13:30",
+            "endDate": "2025-06-06",
+            "endTime": "14:30",
+            "status": "Pending"
         }
     }
 }
