@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { fetchCalendar } = require('./fetchCalendar');
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
@@ -9,7 +10,7 @@ function extractTime(eventTime) {
   return "N/A";
 }
 
-async function openModal_daily_job(trigger_id) {
+async function openModal_daily_job(trigger_id,userId) {
   const now = new Date();
 
   try {
@@ -61,30 +62,29 @@ async function openModal_daily_job(trigger_id) {
               type: "mrkdwn",
               text: `*Job ID:* ${jobId}\n*Assigned To:* ${assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start:* ${startTime}\n*End:* ${endTime}`
             }
-          },
-          { type: "divider" }
-        );
-      }
-    }  // Conditionally add Update Job button for the assigned person
-  const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
+          }
+        );  // Conditionally add Update Job button for the assigned person
+        const assignedSlackId = maintenanceStaff[assignedTo]; // make sure this is imported
 
-  if (assignedSlackId === currentUserSlackId) { // <-- Pass this from trigger context
-    blocks.push({
-      type: "actions",
-      elements: [
-        {
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Update Job"
-          },
-          value: jobId,
-          action_id: "update_job"
-        }
-      ]
-    });
-  }
-
+        if (assignedSlackId === userId) { // <-- Pass this from trigger context
+          blocks.push({
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "Update Job"
+                },
+                value: jobId,
+                style: "primary",
+                action_id: "update_daily"
+              }
+            ]
+          });
+        }}};
+        blocks.push(
+          { type: "divider" });
 
     const modal = {
       type: "modal",
