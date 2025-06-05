@@ -42,7 +42,7 @@ async function openModal_projects(trigger_id,userId) {
     type: "section",
     text: {
       type: "mrkdwn",
-      text: "This is the long term project list, you just need to submit th.",
+      text: `This is the long term project list, you just need to click "Finish" button when finished the job and upload the picture of your job for Chris to approve.`,
     }},
       { type: "divider" }
     ];
@@ -75,11 +75,11 @@ async function openModal_projects(trigger_id,userId) {
                 type: "button",
                 text: {
                   type: "plain_text",
-                  text: "Update Job"
+                  text: "Finish long term project"
                 },
                 value: jobId,
                 style: "primary",
-                action_id: "update_general"
+                action_id: "update_finish_project"
               }
             ]
           });

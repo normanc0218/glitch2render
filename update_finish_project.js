@@ -16,38 +16,16 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
-const { maintenanceStaff, Supervisors } = require('./userConfig');
-const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
-  text: {
-    type: "plain_text",
-    text: name,
-    emoji: true
-  },
-  value: value
-}));
-
-const closeOpenModal = async (trigger_id) => {
-  try {
-    const args = {
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id: trigger_id,
-    };
-
-    const result = await axios.post('https://slack.com/api/views.close', qs.stringify(args));
-
-    if (result.data.ok) {
-      console.log('Modal closed successfully!');
-    } else {
-      console.error('Error closing modal:', result.data.error);
-    }
-  } catch (error) {
-    console.error('Error during modal close request:', error.message);
-  }
+const { maintenanceStaff } = require('./userConfig');
+const projectManagers={
+  Chris: "U06D0NAAL5N",
+  Norman: "U06DSKC32E4"
 };
-const open_general_update = async (viewId, JobId) => {
+
+const update_finish_project = async (viewId, JobId) => {
   const modal = {
     "type": "modal",
-    "callback_id": "open_general_update",
+    "callback_id": "update_finish_project",
     "private_metadata": JobId, // Store the Job ID in private metadata
     "title": {
       "type": "plain_text",
@@ -71,7 +49,7 @@ const open_general_update = async (viewId, JobId) => {
         "block_id": "picture",
         "label": {
           "type": "plain_text",
-          "text": "Picture of Your Job Update"
+          "text": "Pictures of Your Project"
         },
         "element": {
           "type": "file_input",
@@ -91,10 +69,104 @@ const open_general_update = async (viewId, JobId) => {
           action_id: "remarks_input"
         }
       },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Plan to Start Date", emoji: true }
-      },
+		{
+			"type": "rich_text",
+			"elements": [
+				{
+					"type": "rich_text_section",
+					"elements": [
+						{
+							"type": "text",
+							"text": "Clean-up Checklist",
+							"style": {
+								"bold": true
+							}
+						}
+					]
+				}
+			]
+		},
+				{"type": "input",
+				"block_id": "select_tools",
+				"element": {
+					"type": "static_select",
+          "placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Yes"
+						},
+						"value": "yes"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "No"
+						},
+						"value": "no"
+					}
+				],
+          "action_id":"tool_collected"
+			}	,
+    "label": {
+				"type": "plain_text",
+				"text": "All tools have been returned and collected",
+				"emoji": true}
+        },
+				{"type": "input",
+				"block_id": "resetbuttons",
+				"element": {
+					"type": "static_select",
+          "placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": true
+				},
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "Yes"
+						},
+						"value": "yes"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "No"
+						},
+						"value": "no"
+					}
+				],
+          "action_id":"tool_collected"
+			}	,
+    "label": {
+				"type": "plain_text",
+				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
+				"emoji": true}
+        },
+		{
+			"type": "rich_text",
+			"elements": [
+				{
+					"type": "rich_text_section",
+					"elements": [
+						{
+							"type": "text",
+							"text": "Call Supervisor to notify them of the Job",
+							"style": {
+								"bold": true
+							}
+						}
+					]
+				}
+			]
+		},
       // Supervisor Approval (static select dropdown)
       {
         "type": "input",
@@ -111,7 +183,7 @@ const open_general_update = async (viewId, JobId) => {
             "text": "Select approving supervisor",
             "emoji": true
           },
-          "options": Object.entries(Supervisors).map(([name, userId]) => ({
+          "options": Object.entries(projectManagers).map(([name, userId]) => ({
             text: {
               type: "plain_text",
               text: `Supervisor: ${name}`,
@@ -185,4 +257,4 @@ const open_general_update = async (viewId, JobId) => {
     console.error('Error during modal open request:', error.message);  // Handle network or other errors
   }
 };
-module.exports = { open_general_update};
+module.exports = { update_finish_project};
