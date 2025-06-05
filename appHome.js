@@ -30,6 +30,20 @@ const updateView = async (user) => {
       value: "daily_job"
     }
   ]
+},{
+  type: "actions",
+  elements: [
+    {
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: ` :dart:Projects:dart:`,
+        emoji: true
+      },
+      action_id: "long_project", // You'll handle this in your listener
+      value: "daily_job"
+    }
+  ]
 });
   if (managerUsers.includes(user)) {
   blocks.push({
