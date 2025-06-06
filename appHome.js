@@ -5,25 +5,32 @@ const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const {
   createButton,
   createDivider,
-  createInputBlock_select,
   createTextSection,
-  createInputBlock_date,
-  createInputBlock_time,
-} = require('./blockBuilder');
+} = require("./blockBuilder");
 const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
- // Slack supervisor user ID
-const { maintenanceStaff, managerUsers } = require('./userConfig');
+// Slack supervisor user ID
+const { maintenanceStaff, managerUsers } = require("./userConfig");
 
 //Update the view
 const updateView = async (user) => {
-  const blocks=[createButton("📅 Daily Job", "daily_job", "open_daily_job"),
-                createButton(":dart:Projects:dart:", "long_project", "long_project")]
+  let blocks = [
+    createButton("📅 Daily Job", "daily_job", "open_daily_job"),
+    createButton(":dart:Projects:dart:", "long_project", "long_project"),
+  ];
   if (managerUsers.includes(user)) {
-  blocks.push(createTextSection("This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people."),
-              createButton("Submit an order", "order", "add_note"))
+    blocks.push(
+      createTextSection(
+        "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people."
+      ),
+      createButton("Submit an order", "order", "add_note")
+    );
   } else {
-  blocks.push(createTextSection(`*Instruction:* Please find below the list of orders assigned to you by your supervisors. We kindly ask that you accept each task.\n If you have other engagements—just update your planned time and date as needed. Rejections should only be made under special or exceptional circumstances.`),
-              createDivider())
+    blocks.push(
+      createTextSection(
+        `*Instruction:* Please find below the list of orders assigned to you by your supervisors. We kindly ask that you accept each task.\n If you have other engagements—just update your planned time and date as needed. Rejections should only be made under special or exceptional circumstances.`
+      ),
+      createDivider()
+    );
   }
 
   let newData = [];
@@ -39,20 +46,20 @@ const updateView = async (user) => {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
       const isAssignedToUser = o.mStaff_id.includes(user);
-      
+
       const noteBlocks = [
+        createTextSection(`*Machine Location:* ${o.machineLocation || "N/A"}`),
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Machine Location:* ${o.machineLocation || "N/A"}`,
-          },
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Job ID:* ${o.JobId}\n*Ordered by:* ${o.Orderedby}\n*Description:* ${des}\n*Assign To:* ${o.maintenanceStaff || "N/A"}\n*Order date:* ${o.orderdate}\n*Order time:* ${o.ordertime}\n*Status:* ${o.status}`,
+            text: `*Job ID:* ${o.JobId}\n*Ordered by:* ${
+              o.Orderedby
+            }\n*Description:* ${des}\n*Assign To:* ${
+              o.maintenanceStaff || "N/A"
+            }\n*Order date:* ${o.orderdate}\n*Order time:* ${
+              o.ordertime
+            }\n*Status:* ${o.status}`,
           },
           accessory: {
             type: "image",
@@ -64,75 +71,21 @@ const updateView = async (user) => {
 
       if (isAssignedToUser) {
         if (o.status === "Pending") {
-          noteBlocks.push({
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: { type: "plain_text", text: "Accept", emoji: true },
-                style: "primary",
-                action_id: "accept_task",
-                value: o.JobId,
-              },
-              {
-                type: "button",
-                text: { type: "plain_text", text: `Reject`, emoji: true },
-                style: "danger",
-                action_id: "reject_task",
-                value: o.JobId,
-              },
-            ],
-          });
+          noteBlocks.push(
+            createButton("Accept", o.JobId, "accept_task"),
+            createButton("Reject", o.JobId, "reject_task", "danger")
+          );
         } else if (o.status.match("Accepted")) {
-          noteBlocks.push({
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: { type: "plain_text", text: "Update Progress", emoji: true },
-                style: "primary",
-                action_id: "update_progress",
-                value: o.JobId,
-              },
-            ],
-          });
+          noteBlocks.push(
+            createButton("Update Progress", o.JobId, "update_progress")
+          );
         }
-      };
+      }
       // the work is done and ask Supervisor for approal
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
-        noteBlocks.push({
-          type: "actions",
-          elements: [
-            {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Supervisor Approve?",
-                emoji: true,
-              },
-              style: "primary",
-              action_id: "review_progress",
-              value: o.JobId,
-            }
-          ]
-        });
-      };
-      noteBlocks.push(
-        {
-          type: "actions",
-          elements: [
-            {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "View Details",
-                emoji: true,
-              },
-              action_id: "view_detail",
-              value: o.JobId,
-            },
-          ],
-        },
+        noteBlocks.push(createButton("Supervisor Approve?", o.JobId, "review_progress"))
+      }
+      noteBlocks.push(createButton("View Details", o.JobId, "view_detail"),
         {
           type: "context",
           elements: [
@@ -142,9 +95,7 @@ const updateView = async (user) => {
             },
           ],
         },
-        {
-          type: "divider",
-        }
+        createDivider()
       );
 
       blocks = blocks.concat(noteBlocks);
@@ -162,39 +113,37 @@ const updateView = async (user) => {
 
   return JSON.stringify(view);
 };
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection:", reason);
 });
 /* Display App Home */
 const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
   if (data) {
-      const userId = user.id || user; // handle if user is string
-      const path = `/data`;
+    const userId = user.id || user; // handle if user is string
+    const path = `/data`;
 
-      let jobs = [];
+    let jobs = [];
 
-      try {
-        jobs = await db.getData(path);
-      } catch (err) {
-        // No existing data
-        jobs = [];
-      }
-
-
-
-      const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
-
-      if (jobIndex > -1) {
-        console.log(`Updating JobId: ${data.JobId}`);
-        jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-      } else {
-        console.log(`Creating new job with JobId: ${data.JobId}`);
-        jobs.push(data);
-      }
-
-      await db.push(path, jobs, true);
+    try {
+      jobs = await db.getData(path);
+    } catch (err) {
+      // No existing data
+      jobs = [];
     }
+
+    const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+
+    if (jobIndex > -1) {
+      console.log(`Updating JobId: ${data.JobId}`);
+      jobs[jobIndex] = { ...jobs[jobIndex], ...data };
+    } else {
+      console.log(`Creating new job with JobId: ${data.JobId}`);
+      jobs.push(data);
+    }
+
+    await db.push(path, jobs, true);
+  }
   const userId = user.id || user;
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
@@ -215,4 +164,4 @@ const displayHome = async (user, data) => {
   }
 };
 
-module.exports = { db,displayHome };
+module.exports = { db, displayHome };
