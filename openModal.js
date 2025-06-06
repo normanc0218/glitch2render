@@ -29,7 +29,11 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
 }));
 const openModal = async(trigger_id) => {
   const blocks=[]
-  blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,'reporter',`Name of the `))
+  //block_id,label,action_id,placeholder
+  blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,`reporter`,`Name of the Finder`));
+  blocks.push(createInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
+  blocks.push(createInputBlock(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`));
+
   const modal = {
 	"type": "modal",
   "callback_id":"new_job_form",
