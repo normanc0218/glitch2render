@@ -138,16 +138,32 @@ function createInputBlock_checkboxes({ block_id, label, action_id, options=[]}) 
     type: "input",
     block_id,
     label: {
-      type: "checkboxes",
+      type: "plain_text",
       text: label,
     },
     element: {
-      type: "static_select",
+      type: "checkboxes",
       action_id,
       options: options.map(opt => ({
         text: { type: "mrkdwn", text: opt },
         value: opt,
       })),
+    },
+  };
+}
+
+function createInputBlock_radio({ block_id, label, action_id, options=[]}) {
+  return {
+    type: "input",
+    block_id,
+    label: {
+      type: "plain_text",
+      text: label,
+    },
+    element: {
+      type: "radio_buttons",
+      action_id,
+      options: options
     },
   };
 }
@@ -164,5 +180,6 @@ module.exports = {
   createInputBlock_time,
   createInputBlock_select,
   createInputBlock_checkboxes,
+  createInputBlock_radio,
   createDivider
 };

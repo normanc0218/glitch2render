@@ -52,7 +52,32 @@ const openModal_update_progress = async (trigger_id, jobId) => {
     options: ["Wear or Tear","Operator error","No issue","Unknown issue","Other"], // <-- make sure this is passed in like this
   }));
   blocks.push(createInputBlock("other_reason_input", "*Specify the other reason if any?", "otherreason", "Enter other reason", true));
-
+  blocks.push(createTextSection("Clean-up Checklist"));
+  blocks.push(createInputBlock_select({
+    block_id: "select_tools",
+    label: "All tools have been returned and collected",
+    action_id: "tool_collected",
+    options: ["Yes","No"], // <-- make sure this is passed in like this
+  }));
+  blocks.push(createInputBlock_select({
+    block_id: "resetbuttons",
+    label: "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
+    action_id: "reset_buttons",
+    options: ["Yes","No"], // <-- make sure this is passed in like this
+  }));
+  blocks.push(createTextSection("Call Supervisor to notify them of the Job"));
+  blocks.push(createInputBlock_radio({
+    block_id: "supervisor_notify",
+    label: "Notify the supervisor",
+    action_id: "notify_supervisor",
+    options: superOptions
+  }));
+  blocks.push(createInputBlock_checkboxes({
+    block_id: "other_status_block",
+    label: "Other Job Status (if not completed)",
+    action_id: "reason_defect",
+    options: ["Waiting for parts","Temporarily fixed","Other"], // <-- make sure this is passed in like this
+  }));
   const modal ={
 	"type": "modal",
 	"callback_id": "update_progress",
@@ -70,120 +95,8 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 		"text": "Cancel"
 	},
 	"blocks": [
+
 		
-	
-		
-		{
-			"type": "rich_text",
-			"elements": [
-				{
-					"type": "rich_text_section",
-					"elements": [
-						{
-							"type": "text",
-							"text": "Clean-up Checklist",
-							"style": {
-								"bold": true
-							}
-						}
-					]
-				}
-			]
-		},
-				{"type": "input",
-				"block_id": "select_tools",
-				"element": {
-					"type": "static_select",
-          "placeholder": {
-					"type": "plain_text",
-					"text": "Select an item",
-					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Yes"
-						},
-						"value": "yes"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "No"
-						},
-						"value": "no"
-					}
-				],
-          "action_id":"tool_collected"
-			}	,
-    "label": {
-				"type": "plain_text",
-				"text": "All tools have been returned and collected",
-				"emoji": true}
-        },
-				{"type": "input",
-				"block_id": "resetbuttons",
-				"element": {
-					"type": "static_select",
-          "placeholder": {
-					"type": "plain_text",
-					"text": "Select an item",
-					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Yes"
-						},
-						"value": "yes"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "No"
-						},
-						"value": "no"
-					}
-				],
-          "action_id":"tool_collected"
-			}	,
-    "label": {
-				"type": "plain_text",
-				"text": "Verified that power supplies, water supplies, and emergency stop buttons are properly reset and secure before resuming operation.",
-				"emoji": true}
-        },
-		{
-			"type": "rich_text",
-			"elements": [
-				{
-					"type": "rich_text_section",
-					"elements": [
-						{
-							"type": "text",
-							"text": "Call Supervisor to notify them of the Job",
-							"style": {
-								"bold": true
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "input",
-			"block_id": "supervisor_notify",
-			"element": {
-				"type": "radio_buttons",
-				"options": superOptions,
-				"action_id": "notify_supervisor"},
-			"label": {
-				"type": "plain_text",
-				"text": "Notify the supervisor",
-				"emoji": true
-			}
-    },
 		{
 			"type": "input",
 			"block_id": "supervisor_message",
