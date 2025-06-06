@@ -67,7 +67,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 	},
 	blocks
 }
-;
+
 
   try {
     const response = await axios.post(

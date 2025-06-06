@@ -12,13 +12,14 @@
             "endDate": null,
             "endTime": null,
             "status": "Waiting for Supervisor approval",
-            "timestamp": "6/6/2025, 3:00:21 PM",
-            "remarks": "S",
+            "timestamp": "6/6/2025, 3:13:36 PM",
+            "remarks": "g good",
             "supervisorUser": "U06DSKC32E4",
             "startDate": null,
             "startTime": null,
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090E79PH6E/img_3748.jpg"
+                "https://files.slack.com/files-pri/TH1AQELNT-F090E79PH6E/img_3748.jpg",
+                "https://files.slack.com/files-pri/TH1AQELNT-F090EFY744U/img_3748.jpg"
             ]
         },
         "JOB-558073950": {

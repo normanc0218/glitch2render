@@ -56,8 +56,8 @@ const openModal_daily_update = async (viewId, JobId) => {
         action_id: "notify_supervisor",
         options: superOption.slice(1,5) //Skip Chris
       }),
-      createInputBlock_date("sdate", "Actual Start Date", "datepickeraction", initialDate),
-      createInputBlock_time("stime", "Actual Start Time", "timepickeraction", initialTime),
+      createInputBlock_date("sdate", "Actual Start Date", "datepickeraction"),
+      createInputBlock_time("stime", "Actual Start Time", "timepickeraction"),
       createInputBlock_date("edate", "Actual End Date", "datepickeraction", initialDate),
       createInputBlock_time("etime", "Actual End Time", "timepickeraction", initialTime)
     ]
