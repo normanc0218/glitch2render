@@ -8,7 +8,7 @@ function createTextSection(text) {
   };
 }
 
-function createInputBlock(block_id, label, action_id, placeholder = "") {
+function createInputBlock(block_id, label, action_id, placeholder = "",multiline=false) {
   return {
     type: "input",
     block_id,
@@ -22,7 +22,9 @@ function createInputBlock(block_id, label, action_id, placeholder = "") {
       placeholder: {
         type: "plain_text",
         text: placeholder
-      }
+      },
+    multiline: multiline
+
     }
   };
 }

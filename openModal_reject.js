@@ -1,4 +1,11 @@
 const axios = require('axios');
+const {
+  createInputBlock,
+  createInputBlock_select,
+  createTextSection,
+  createInputBlock_date,
+  createInputBlock_time,
+} = require('./blockBuilder');
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -17,6 +24,19 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 
 
 const openModal_reject = async (trigger_id, jobId) => {
+  const blocks=[]
+  blocks.push(createInputBlock_select({
+    block_id: "reject_block",
+    label: "Your Name",
+    action_id: "whoreject",
+    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+  }));
+  blocks.push(createInputBlock("reason", "Specify Your Reason To Reject", "reason_input", "Enter your reason here"));
+  blocks.push(createInputBlock("signature", "Reject the Job and Sign", "remarks_input", "Enter your signature here"));
+  blocks.push(createTextSection("Date"));
+  blocks.push(createInputBlock_date("datepicker", "Select a Date", "reject_date", initialDate));
+  blocks.push(createTextSection("Time"));
+  blocks.push(createInputBlock_time("timepicker", "Select a Time", "reject_time", initialTime));
   const modal = {
     type: "modal",
     callback_id: "reject_form",
@@ -33,79 +53,7 @@ const openModal_reject = async (trigger_id, jobId) => {
       type: "plain_text",
       text: "Cancel"
     },
-    blocks: [
-       {
-        type: "input",
-        block_id:"reject_block",
-        label: {
-            type: "plain_text",
-            text: "Your Name"
-          },
-        element: {
-          type: "static_select",
-          placeholder: { type: "plain_text", text: "name ", emoji: true },
-          options: [
-            { text: { type: "plain_text", text: "Fai", emoji: true }, value: "value-0" },
-            { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },
-            { text: { type: "plain_text", text: "Sam", emoji: true }, value: "value-2" }
-          ],
-          action_id: "whoreject"
-        }
-      },
-      {
-        type: "input",
-        block_id: "reason",
-        label: { type: "plain_text", text: "Specify Your Reason To Reject" },
-        element: {
-          type: "plain_text_input",
-          action_id: "reason_input",
-          multiline: true
-        },
-
-      },
-      {
-        type: "input",
-        block_id: "signature",
-        label: { type: "plain_text", text: "Reject the Job and Sign" },
-        element: {
-          type: "plain_text_input",
-          action_id: "remarks_input"
-        }
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Date", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "datepicker",
-        elements: [
-          {
-            type: "datepicker",
-            initial_date: initialDate,
-            placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "reject_date"
-          }
-        ]
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Time", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "timepicker",
-        elements: [
-          {
-            type: "timepicker",
-            initial_time: initialTime,
-            placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "reject_time"
-          }
-          
-        ]
-      }
-    ]
+    blocks
   };
 
   try {

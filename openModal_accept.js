@@ -21,18 +21,15 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   hour12: false,
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
-const { maintenanceStaff, managerUsers } = require('./userConfig');
-const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
-  text: {
-    type: "plain_text",
-    text: name,
-    emoji: true
-  },
-  value: value
-}));
+
 const openModal_accept = async (trigger_id, jobId) => {
   const blocks=[]
-  blocks.push(createInputBlock_select("accept_block", "Your Name", "whoaccept",staffOptions));
+  blocks.push(createInputBlock_select({
+    block_id: "accept_block",
+    label: "Your Name",
+    action_id: "whoaccept",
+    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+  }));
   blocks.push(createInputBlock("signature", "Specify the reason if you are currently occupied.", "remarks_input", "Enter your remarks here"));
   blocks.push(createTextSection("Plan to Start Date"));
   blocks.push(createInputBlock_date("datepicker", "Select a Date", "accept_date", initialDate));
