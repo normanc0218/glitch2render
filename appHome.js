@@ -2,14 +2,20 @@ const axios = require("axios");
 const qs = require("qs");
 const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
-
+const {
+  createInputBlock,
+  createInputBlock_select,
+  createTextSection,
+  createInputBlock_date,
+  createInputBlock_time,
+} = require('./blockBuilder');
 const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
  // Slack supervisor user ID
 const { maintenanceStaff, managerUsers } = require('./userConfig');
 
 //Update the view
 const updateView = async (user) => {
-  let blocks=[];
+  const blocks=[];
   blocks.push({
   type: "actions",
   elements: [

@@ -435,7 +435,6 @@ app.post("/slack/actions", async (req, res) => {
           const action = actions[0];
           if (action.action_id === "accept_task") {
             const jobId = action.value
-
             // Open modal for Accept form
             await openModal_accept(trigger_id,jobId);
           } else if (action.action_id === "reject_task") {
@@ -507,10 +506,10 @@ app.post("/slack/actions", async (req, res) => {
 
 
 // Serve your JSON file to Power BI
-app.get("/data-export", (req, res) => {
-  const filePath = path.join(__dirname, "myDatabase.json");
-  res.sendFile(filePath);
-});
+// app.get("/data-export", (req, res) => {
+//   const filePath = path.join(__dirname, "myDatabase.json");
+//   res.sendFile(filePath);
+// });
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
