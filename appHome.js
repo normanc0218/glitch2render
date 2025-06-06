@@ -3,7 +3,8 @@ const qs = require("qs");
 const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const {
-  createInputBlock,
+  createButton,
+  createDivider,
   createInputBlock_select,
   createTextSection,
   createInputBlock_date,
@@ -15,64 +16,15 @@ const { maintenanceStaff, managerUsers } = require('./userConfig');
 
 //Update the view
 const updateView = async (user) => {
-  const blocks=[];
-  blocks.push({
-  type: "actions",
-  elements: [
-    {
-      type: "button",
-      text: {
-        type: "plain_text",
-        text: "📅 Daily Job",
-        emoji: true
-      },
-      action_id: "open_daily_job", // You'll handle this in your listener
-      value: "daily_job"
-    }
-  ]
-},{
-  type: "actions",
-  elements: [
-    {
-      type: "button",
-      text: {
-        type: "plain_text",
-        text: ` :dart:Projects:dart:`,
-        emoji: true
-      },
-      action_id: "long_project", // You'll handle this in your listener
-      value: "long_project"
-    }
-  ]
-});
+  const blocks=[createButton("📅 Daily Job", "daily_job", "open_daily_job"),
+                createButton(":dart:Projects:dart:", "long_project", "long_project")]
   if (managerUsers.includes(user)) {
-  blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people.",
-    },
-    accessory: {
-      type: "button",
-      action_id: "add_note",
-      text: {
-        type: "plain_text",
-        text: "Submit an order",
-        emoji: true,
-      },
-    },
-  });
-} else {
-  blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: `*Instruction:* Please find below the list of orders assigned to you by your supervisors. We kindly ask that you accept each task.\n If you have other engagements—just update your planned time and date as needed. Rejections should only be made under special or exceptional circumstances.`,
-    },
-  },{
-          type: "divider",
-        });
-}
+  blocks.push(createTextSection("This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people."),
+              createButton("Submit an order", "order", "add_note"))
+  } else {
+  blocks.push(createTextSection(`*Instruction:* Please find below the list of orders assigned to you by your supervisors. We kindly ask that you accept each task.\n If you have other engagements—just update your planned time and date as needed. Rejections should only be made under special or exceptional circumstances.`),
+              createDivider())
+  }
 
   let newData = [];
   try {
