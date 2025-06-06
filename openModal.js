@@ -1,5 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
+const { createTextSection, createInputBlock, createDivider } = require("./utils/blockBuilders");
+
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -26,6 +28,8 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   value: value
 }));
 const openModal = async(trigger_id) => {
+  const blocks=[]
+  blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,'reporter',`Name of the `))
   const modal = {
 	"type": "modal",
   "callback_id":"new_job_form",
