@@ -164,7 +164,13 @@ function createInputBlock_radio({ block_id, label, action_id, options=[]}) {
     element: {
       type: "radio_buttons",
       action_id,
-      options: options
+      options: options.map(([name, value]) => ({
+  text: {
+    type: "mrkdwn",
+    text: name
+  },
+  value: value
+      })),
     },
   };
 }

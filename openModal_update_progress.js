@@ -27,15 +27,6 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 
 // list of managerUser IDs
-const {Supervisors} = require('./userConfig');
-
-const superOptions = Object.entries(Supervisors).map(([name, value]) => ({
-  text: {
-    type: "mrkdwn",
-    text: name
-  },
-  value: value
-}));
 
 const openModal_update_progress = async (trigger_id, jobId) => {
   const blocks=[]
@@ -70,8 +61,12 @@ const openModal_update_progress = async (trigger_id, jobId) => {
     block_id: "supervisor_notify",
     label: "Notify the supervisor",
     action_id: "notify_supervisor",
-    options: superOptions
+    options: superOption
   }));
+  blocks.push(createInputBlock("supervisor_message", "Message to Supervisor", "notify_supervisor_message", "e.g. Please arrange for cleanup after repair"));
+  blocks.push(createInputBlock_date("date", "End date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_time("time", "End time", "timepickeraction", initialTime));
+
   blocks.push(createInputBlock_checkboxes({
     block_id: "other_status_block",
     label: "Other Job Status (if not completed)",
@@ -83,15 +78,8 @@ const openModal_update_progress = async (trigger_id, jobId) => {
       block_id: "follow_up_block",
       label: "Please make sure to follow up the job!",
       action_id: "followUp",
-      options:  [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Yes,I will follow up the job"
-						},
-						"value": "Completed"
-					}
-				]
+      options:  ["Complete the job and Fixed the issue":"Complete the job and Fixed the issue",
+                "Report other job status":"Reported other job status" ]
     })
   );
 
