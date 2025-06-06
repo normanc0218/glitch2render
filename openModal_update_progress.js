@@ -78,12 +78,23 @@ const openModal_update_progress = async (trigger_id, jobId) => {
     action_id: "otheroption",
     options: ["Waiting for parts","Temporarily fixed","Other"], // <-- make sure this is passed in like this
   }));
-  blocks.push(createInputBlock("specify", "If you select other, please specify", "specify_other"));
+  blocks.push(createInputBlock("specify", "If you select other, please specify*?", "specify_other", "Enter other reason", true));
   blocks.push(createInputBlock_radio({
-    block_id: "follow_up_block",
-    label: "Please make sure to follow up the job!",
-    action_id: "followUp",
-    options: [{ text: "Yes, I will follow up the job", value: "Completed" }]}));
+      block_id: "follow_up_block",
+      label: "Please make sure to follow up the job!",
+      action_id: "followUp",
+      options:  [
+					{
+						"text": {
+							"type": "mrkdwn",
+							"text": "Yes,I will follow up the job"
+						},
+						"value": "Completed"
+					}
+				]
+    })
+  );
+
   blocks.push(createInputBlock_pic("picture", "Picture of the Job (Max: 5 pics)", "finish_pic"));
 
   const modal ={

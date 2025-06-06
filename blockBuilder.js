@@ -8,7 +8,7 @@ function createTextSection(text) {
   };
 }
 
-function createInputBlock(block_id, label, action_id, placeholder = "") {
+function createInputBlock(block_id, label, action_id, placeholder = "",option=false) {
   return {
     type: "input",
     block_id,
@@ -23,7 +23,8 @@ function createInputBlock(block_id, label, action_id, placeholder = "") {
         type: "plain_text",
         text: placeholder
       }
-    }
+    },
+    "optional": option
   };
 }
 function createInputBlock_multistatic(block_id, label, action_id, placeholder = "",options) {
