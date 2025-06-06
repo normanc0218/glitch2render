@@ -80,10 +80,17 @@ async function openModal_daily_job(trigger_id, userId) {
       }
     }
     const allJobs = await db2.getData("/jobs").catch(() => ({}));
-
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/New_York"
+    });
     for (const jobId in allJobs) {
       const job = allJobs[jobId];
       const assignedSlackId = job.mStaff_id;
+      console.log(job.endDate)
+      console.log(today)
+      if (job.endDate && new Date(job.endDate) < new Date(today)) {
+        continue;
+}
 
       blocks.push(
         createTextSection(
