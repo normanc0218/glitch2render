@@ -39,7 +39,6 @@ const machineOptions = [
   "Office", "Boiler room", "Compressor", "Others"
 ];
 
-console.log(staffOptions)
 const openModal = async(trigger_id) => {
   const blocks=[]
   blocks.push(createInputBlock_select({

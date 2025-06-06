@@ -31,11 +31,24 @@ const openModal_reject = async (trigger_id, jobId) => {
     action_id: "whoreject",
     options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
   }));
-  blocks.push(createInputBlock("reason", "Specify Your Reason To Reject", "reason_input", "Enter your reason here"));
+  // blocks.push(createInputBlock("reason", "Specify Your Reason To Reject", "reason_input", "Enter your reason here"));
   blocks.push(createInputBlock("signature", "Reject the Job and Sign", "remarks_input", "Enter your signature here"));
-  blocks.push(createTextSection("Date"));
+  blocks.push(createTextSection("End Date"));
   blocks.push(createInputBlock_date("datepicker", "Select a Date", "reject_date", initialDate));
-  blocks.push(createTextSection("Time"));
+  blocks.push({
+    type: "input",
+    block_id: "reason",
+    label: { 
+      type: "plain_text", 
+      text: "Specify Your Reason To Reject" 
+    },
+    element: {
+      type: "plain_text_input",
+      action_id: "reason_input",
+      multiline: true  // This ensures multi-line input
+    }
+  });
+  blocks.push(createTextSection("End Time"));
   blocks.push(createInputBlock_time("timepicker", "Select a Time", "reject_time", initialTime));
   const modal = {
     type: "modal",
