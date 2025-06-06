@@ -65,7 +65,7 @@ function createInputBlock_pic(block_id, label, action_id) {
   };
 }
 
-function createInputBlock_date("date", label, action_id) {
+function createInputBlock_date(block_id, label, action_id,initial_date) {
   return {
 			type: "input",
       block_id,
@@ -73,18 +73,64 @@ function createInputBlock_date("date", label, action_id) {
 				type: "datepicker",
 				initial_date,
 				placeholder: {
-					"type": "plain_text",
-					"text": "Select a date",
-					"emoji": true
+					type: "plain_text",
+					text: "Select a date",
+					emoji: true
 				},
-				"action_id": "datepickeraction"
+				action_id,
 			},
-			"label": {
-				"type": "plain_text",
-				"text": "Start date",
-				"emoji": true
+			label: {
+				type: "plain_text",
+				text: label,
+				emoji: true
 			}
 		}
+}
+
+function createInputBlock_time(block_id, label, action_id,initial_time) {
+  return {
+			type: "input",
+      block_id,
+			element: {
+				type: "timepicker",
+				initial_time,
+				placeholder: {
+					type: "plain_text",
+					text: "Select a time",
+					emoji: true
+				},
+				action_id,
+			},
+			label: {
+				type: "plain_text",
+				text: label,
+				emoji: true
+			}
+		}
+}
+
+function createInputBlock_select({ block_id, label, action_id, options }) {
+  return {
+    type: "input",
+    block_id,
+    label: {
+      type: "plain_text",
+      text: label,
+    },
+    element: {
+      type: "static_select",
+      action_id,
+      placeholder: {
+        type: "plain_text",
+        text: "Select an option",
+        emoji: true,
+      },
+      options: options.map(opt => ({
+        text: { type: "plain_text", text: opt, emoji: true },
+        value: opt,
+      })),
+    },
+  };
 }
 
 function createDivider() {
@@ -96,5 +142,8 @@ module.exports = {
   createInputBlock,
   createInputBlock_multistatic,
   createInputBlock_pic,
+  createInputBlock_date,
+  createInputBlock_time,
+  createInputBlock_select,
   createDivider
 };

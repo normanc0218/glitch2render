@@ -1,9 +1,12 @@
 const axios = require('axios');
 const qs = require('qs');
 const {createTextSection, 
-       createInputBlock,               //block_id,label,action_id,placeholder
-       createInputBlock_multistatic,   //block_id,label,action_id,placeholder,options
-       createInputBlock_pic,           //block_id,label,action_id
+       createInputBlock,               //block_id, label, action_id, placeholder
+       createInputBlock_multistatic,   //block_id, label, action_id, placeholder, options
+       createInputBlock_pic,           //block_id, label, action_id
+       createInputBlock_date,          //block_id, label, action_id, initial_date
+       createInputBlock_time,          //block_id, label, action_id, initial_time
+       createInputBlock_select,
        createDivider } = require("./blockBuilder");
 
 const nyDate = new Intl.DateTimeFormat('en-US', {
@@ -31,12 +34,20 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
   },
   value: value
 }));
+const machineOptions = [
+  "#7 Machine", "#8 Machine", "#9 Machine", "#10 Machine", "#11 Machine",
+  "Packaging", "Warehouse", "Loading dock", "Washroom", "Die Washroom",
+  "Office", "Boiler room", "Compressor", "Others"
+];
 const openModal = async(trigger_id) => {
   const blocks=[]
   blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,`reporter`,`Name of the Finder`));
   blocks.push(createInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
   blocks.push(createInputBlock_multistatic(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`,staffOptions));
   blocks.push(createInputBlock_pic(`picture`,`Picture of the defect`,`file_input_action_id_1`));
+  blocks.push(createInputBlock_date(`date`,`Start Date`,`datepickeraction`,initialDate));  
+  blocks.push(createInputBlock_time(`time`,`Start Time`,`timepickeraction`,initialTime));
+
 
   const modal = {
 	"type": "modal",
