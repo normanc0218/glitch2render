@@ -5,12 +5,15 @@ const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
+//Daily modals
 const { openModal_daily_job } = require("./openModal_daily_job.js");
+const { openModal_daily_update} = require("./openMoal_daily_update.js");
+//Project + PM modals
 const { openModal_projects} = require("./openModal_projects.js");
 const { openModal_finish_project} = require("./openModal_finish_project.js");
+//general Approval
 const { openModal_general_approval} = require("./openModal_general_approval.js");
 
-const { open_general_update} = require("./open_general_update.js");
 
 const db2 = require("./db2")
 const db3 = require("./db3")
@@ -289,7 +292,7 @@ app.post("/slack/actions", async (req, res) => {
           await threadNotify(msg,job.messageTs);
         }         
         // Update progress for daily job
-        else if (view.callback_id === "open_general_update") {
+        else if (view.callback_id === "daily_update") {
           const jobId = view.private_metadata;  // Job ID passed from the modal
           const ts = new Date();
 
@@ -454,7 +457,7 @@ app.post("/slack/actions", async (req, res) => {
           //Open modal for update progress
             const jobId = action.value
             console.log(view)
-            await open_general_update(view.id,jobId)
+            await openModal_daily_update(view.id,jobId)
           }
           //
           // Project section

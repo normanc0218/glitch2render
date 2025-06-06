@@ -27,10 +27,10 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 const {Supervisors} = require('./userConfig');
 const superOption=Object.entries(Supervisors)
 
-const open_general_update = async (viewId, JobId) => {
+const openModal_daily_update = async (viewId, JobId) => {
   const modal = {
     type: "modal",
-    callback_id: "open_general_update",
+    callback_id: "daily_update",
     private_metadata: JobId, // Store the Job ID in private metadata
     title: {
       type: "plain_text",
@@ -81,4 +81,4 @@ const args = {
     console.error('Error during modal open request:', error.message);  // Handle network or other errors
   }
 };
-module.exports = { open_general_update};
+module.exports = { openModal_daily_update};
