@@ -1,5 +1,12 @@
 const axios = require('axios');
 const qs = require('qs');
+const { 
+  createInputBlock, 
+  createInputBlock_pic, 
+  createInputBlock_date, 
+  createInputBlock_time, 
+  createInputBlock_radio 
+} = require('./blockBuilder'); // Importing your block builders
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -16,15 +23,9 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 
-const { maintenanceStaff, Supervisors } = require('./userConfig');
-const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
-  text: {
-    type: "plain_text",
-    text: name,
-    emoji: true
-  },
-  value: value
-}));
+// list of managerUser IDs
+const {Supervisors} = require('./userConfig');
+const superOption=Object.entries(Supervisors)
 
 const open_general_update = async (viewId, JobId) => {
   const modal = {
@@ -47,33 +48,15 @@ const open_general_update = async (viewId, JobId) => {
       "emoji": true
     },
     "blocks": [
-      // File input block for picture upload
-      {
-        "type": "input",
-        "block_id": "picture",
-        "label": {
-          "type": "plain_text",
-          "text": "Picture of Your Job Update"
-        },
-        "element": {
-          "type": "file_input",
-          "action_id": "file_general_input",
-          "filetypes": [
-            "jpg",
-            "png"
-          ],
-          "max_files": 5
-        }
-      },{
-        type: "input",
-        block_id: "comments",
-        label: { type: "plain_text", text: "Comments. " },
-        element: {
-          type: "plain_text_input",
-          action_id: "remarks_input"
-        }
-      },
+      createInputBlock_pic("picture", "Picture of Your Job Update", "file_general_input"),
+      createInputBlock("comments", "Comments", "remarks_input"),
       // Supervisor Approval (static select dropdown)
+      createInputBlock_radio({
+        block_id: "supervisor_notify",
+        label: "Notify the supervisor",
+        action_id: "notify_supervisor",
+        options: superOption
+      }),
       {
         "type": "input",
         "block_id": "supervisor",
