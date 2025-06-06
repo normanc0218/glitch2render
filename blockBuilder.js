@@ -45,6 +45,48 @@ function createInputBlock_multistatic(block_id, label, action_id, placeholder = 
     }
   };
 }
+function createInputBlock_pic(block_id, label, action_id) {
+  return {
+    type: "input",
+    block_id,
+    label: {
+      type: "plain_text",
+      text: label
+    },
+    element: {
+      type: "file_input",
+      action_id,
+      "filetypes": [
+					"jpg",
+					"png"
+				],
+      max_files: 5
+     }
+  };
+}
+
+function createInputBlock_date("date", label, action_id) {
+  return {
+			type: "input",
+      block_id,
+			element: {
+				type: "datepicker",
+				initial_date,
+				placeholder: {
+					"type": "plain_text",
+					"text": "Select a date",
+					"emoji": true
+				},
+				"action_id": "datepickeraction"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Start date",
+				"emoji": true
+			}
+		}
+}
+
 function createDivider() {
   return { type: "divider" };
 }
@@ -52,5 +94,7 @@ function createDivider() {
 module.exports = {
   createTextSection,
   createInputBlock,
+  createInputBlock_multistatic,
+  createInputBlock_pic,
   createDivider
 };

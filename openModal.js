@@ -1,6 +1,10 @@
 const axios = require('axios');
 const qs = require('qs');
-const { createTextSection, createInputBlock, createDivider } = require("./utils/blockBuilders");
+const {createTextSection, 
+       createInputBlock,               //block_id,label,action_id,placeholder
+       createInputBlock_multistatic,   //block_id,label,action_id,placeholder,options
+       createInputBlock_pic,           //block_id,label,action_id
+       createDivider } = require("./blockBuilder");
 
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
@@ -29,10 +33,10 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
 }));
 const openModal = async(trigger_id) => {
   const blocks=[]
-  //block_id,label,action_id,placeholder
   blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,`reporter`,`Name of the Finder`));
   blocks.push(createInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
-  blocks.push(createInputBlock(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`));
+  blocks.push(createInputBlock_multistatic(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`,staffOptions));
+  blocks.push(createInputBlock_pic(`picture`,`Picture of the defect`,`file_input_action_id_1`));
 
   const modal = {
 	"type": "modal",
