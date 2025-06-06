@@ -7,7 +7,7 @@ const {
   createInputBlock_time,
   createInputBlock_checkboxes,
   createInputBlock_radio,
-  createInputBlock_file
+  createInputBlock_pic
 } = require('./blockBuilder');
 
 const nyDate = new Intl.DateTimeFormat('en-US', {
@@ -75,205 +75,35 @@ const openModal_update_progress = async (trigger_id, jobId) => {
   blocks.push(createInputBlock_checkboxes({
     block_id: "other_status_block",
     label: "Other Job Status (if not completed)",
-    action_id: "reason_defect",
+    action_id: "otheroption",
     options: ["Waiting for parts","Temporarily fixed","Other"], // <-- make sure this is passed in like this
   }));
-  const modal ={
-	"type": "modal",
-	"callback_id": "update_progress",
-	"private_metadata":jobId,
-	"title": {
-		"type": "plain_text",
-		"text": "Update progress"
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "Submit"
-	},
-	"close": {
-		"type": "plain_text",
-		"text": "Cancel"
-	},
-	"blocks": [
+  blocks.push(createInputBlock("specify", "If you select other, please specify", "specify_other"));
+  blocks.push(createInputBlock_radio({
+    block_id: "follow_up_block",
+    label: "Please make sure to follow up the job!",
+    action_id: "followUp",
+    options: [{ text: "Yes, I will follow up the job", value: "Completed" }]}));
+  blocks.push(createInputBlock_pic("picture", "Picture of the Job (Max: 5 pics)", "finish_pic"));
 
-		
-		{
-			"type": "input",
-			"block_id": "supervisor_message",
-			"element": {
-				"type": "plain_text_input",
-				"action_id": "notify_supervisor_message",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "e.g. Please arrange for cleanup after repair"
-				}
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Message to Supervisor",
-				"emoji": true
-			},
-			"optional": true
-		},
-		
-		{
-			"type": "input",
-			"block_id": "date",
-			"element": {
-				"type": "datepicker",
-				"initial_date": initialDate,
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select a date",
-					"emoji": true
-				},
-				"action_id": "datepickeraction"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "End date",
-				"emoji": true
-			}
-		},
-		{
-			"type": "input",
-			"block_id": "time",
-			"element": {
-				"type": "timepicker",
-				"initial_time": initialTime,
-				"placeholder": {
-					"type": "plain_text",
-					"text": "Select time",
-					"emoji": true
-				},
-				"action_id": "timepickeraction"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "End time",
-				"emoji": true
-			}
-		},
-		{
-			"type": "input",
-			"block_id": "complete_job_block",
-			"element": {
-				"type": "radio_buttons",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Complete the job and Fixed the issue"
-						},
-						"value": "Waiting for Supervisor Approval"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Report other job status (Please select from below)"
-						},
-						"value": "Reported other job status"
-					}
-				],
-				"action_id": "complete_job"
-			},			
-      "label": {
-				"type": "plain_text",
-				"text": "Status of Completed Job",
-				"emoji": true
-			}
-      		},
-		{
-			"type": "input",
-			"block_id": "other_status_block",
-			"element": {
-				"type": "checkboxes",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Waiting for parts"
-						},
-						"value": "Waiting for parts"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Temporarily fixed"
-						},
-						"value": "Temporarilyfixed"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Other"
-						},
-						"value": "other"
-					}
-				],
-				"action_id": "otheroption"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "Other Job Status (if not completed)",
-				"emoji": true
-			},
-			"optional": true
-		},{
-			"type": "input",
-      "block_id": "specify",
-			"element": {
-				"type": "plain_text_input",
-				"action_id": "specify_other"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "If you select other, please specify*",
-				"emoji": true
-			},
-			"optional": true
-		},
-		{
-			"type": "input",
-			"block_id": "follow_up_block",
-			"element": {
-				"type": "radio_buttons",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Yes,I will follow up the job"
-						},
-						"value": "Completed"
-					}
-				],
-				"action_id": "followUp"
-			},			
-      "label": {
-				"type": "plain_text",
-				"text": "Please make sure to follow up the job!",
-				"emoji": true
-			}
-      
-		}
-	,{
-			"type": "input",
-			"block_id": "picture",
-			"label": {
-				"type": "plain_text",
-				"text": "Picture of the Job (Max: 5 pics)"
-			},
-			"element": {
-				"type": "file_input",
-				"action_id": "finish_pic",
-				"filetypes": [
-					"jpg",
-					"png"
-				],
-				"max_files": 5
-			}
-		}]
-}
+  const modal ={
+    type: "modal",
+    callback_id: "update_progress",
+    private_metadata:jobId,
+    title: {
+      type: "plain_text",
+      text: "Update progress"
+    },
+    submit: {
+      type: "plain_text",
+      text: "Submit"
+    },
+    close: {
+      type: "plain_text",
+      text: "Cancel"
+    },
+    blocks
+  }
 ;
 
   try {

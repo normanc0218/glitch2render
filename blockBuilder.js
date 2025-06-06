@@ -167,6 +167,7 @@ function createInputBlock_radio({ block_id, label, action_id, options=[]}) {
     },
   };
 }
+
 function createDivider() {
   return { type: "divider" };
 }
