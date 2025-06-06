@@ -27,6 +27,8 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 
 // list of managerUser IDs
+const {Supervisors} = require('./userConfig');
+const superOption=Object.entries(Supervisors)
 
 const openModal_update_progress = async (trigger_id, jobId) => {
   const blocks=[]
@@ -66,23 +68,29 @@ const openModal_update_progress = async (trigger_id, jobId) => {
   blocks.push(createInputBlock("supervisor_message", "Message to Supervisor", "notify_supervisor_message", "e.g. Please arrange for cleanup after repair"));
   blocks.push(createInputBlock_date("date", "End date", "datepickeraction", initialDate));
   blocks.push(createInputBlock_time("time", "End time", "timepickeraction", initialTime));
-
+  blocks.push(createInputBlock_radio({
+      block_id: "complete_job_block",
+      label: "Status of Completed Job",
+      action_id: "complete_job",
+      options:  [["Complete the job and Fixed the issue","Complete the job and Fixed the issue"],
+                ["Report other job status", "Reported other job status"]]
+    })
+  );
   blocks.push(createInputBlock_checkboxes({
     block_id: "other_status_block",
     label: "Other Job Status (if not completed)",
     action_id: "otheroption",
     options: ["Waiting for parts","Temporarily fixed","Other"], // <-- make sure this is passed in like this
+    optional: true
   }));
   blocks.push(createInputBlock("specify", "If you select other, please specify*?", "specify_other", "Enter other reason", true));
   blocks.push(createInputBlock_radio({
       block_id: "follow_up_block",
       label: "Please make sure to follow up the job!",
       action_id: "followUp",
-      options:  ["Complete the job and Fixed the issue":"Complete the job and Fixed the issue",
-                "Report other job status":"Reported other job status" ]
+      options:  [["Yes,I will follow up the job","followup"]]
     })
   );
-
   blocks.push(createInputBlock_pic("picture", "Picture of the Job (Max: 5 pics)", "finish_pic"));
 
   const modal ={

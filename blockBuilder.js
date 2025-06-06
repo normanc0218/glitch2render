@@ -134,7 +134,7 @@ function createInputBlock_select({ block_id, label, action_id, options=[]}) {
   };
 }
 
-function createInputBlock_checkboxes({ block_id, label, action_id, options=[]}) {
+function createInputBlock_checkboxes({ block_id, label, action_id, options=[],optional=false}) {
   return {
     type: "input",
     block_id,
@@ -148,8 +148,8 @@ function createInputBlock_checkboxes({ block_id, label, action_id, options=[]}) 
       options: options.map(opt => ({
         text: { type: "mrkdwn", text: opt },
         value: opt,
-      })),
-    },
+      }))},    
+    optional:optional
   };
 }
 
