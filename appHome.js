@@ -1,7 +1,7 @@
 const axios = require("axios");
 const qs = require("qs");
 const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
-const LRU = require('lru-cache'); 
+const { LRUCache } = require('lru-cache'); 
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const {
   createButton,
@@ -11,7 +11,7 @@ const {
 const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
 // Slack supervisor user ID
 const { maintenanceStaff, managerUsers } = require("./userConfig");
-const lruCache = new LRU({
+const lruCache = new LRUCache({
   max: 50,  
   maxAge: 1000 * 60 * 5
 });
