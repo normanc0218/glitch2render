@@ -59,7 +59,7 @@ const openModal_daily_update = async (viewId, JobId) => {
       createInputBlock_date("sdate", "Actual Start Date", "datepickeraction", initialDate),
       createInputBlock_time("stime", "Actual Start Time", "timepickeraction", initialTime),
       createInputBlock_date("edate", "Actual End Date", "datepickeraction", initialDate),
-      createInputBlock_time("etime", "Actual End Time", "timepickeraction", initialTime),
+      createInputBlock_time("etime", "Actual End Time", "timepickeraction", initialTime)
     ]
   }
      

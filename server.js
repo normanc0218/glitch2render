@@ -321,8 +321,7 @@ app.post("/slack/actions", async (req, res) => {
               startTime: state.time?.timepickeraction?.selected_time || null,
               endDate: state.date?.datepickeraction?.selected_date || null,
               endTime: state.time?.timepickeraction?.selected_time || null,
-                            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)|| [],
-
+              finish_pic: state.picture.file_general_input.files.map(file => file.url_private)|| [],
               status: "Waiting for Supervisor approval"
             };
 
@@ -386,9 +385,12 @@ app.post("/slack/actions", async (req, res) => {
               ...job,
               timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
               remarks: state.comments?.remarks_input?.value || null,
-              supervisorUser: state.supervisor?.supervisor_select?.selected_option?.value || null,
+              supervisorUser: state.supervisor_notify?.notify_supervisor?.selected_option?.value || null,
+              startDate: state.date?.datepickeraction?.selected_date || null,
+              startTime: state.time?.timepickeraction?.selected_time || null,
               endDate: state.date?.datepickeraction?.selected_date || null,
               endTime: state.time?.timepickeraction?.selected_time || null,
+              finish_pic: state.picture.file_general_input.files.map(file => file.url_private)|| [],
               status: "Waiting for Supervisor approval"
             };
 

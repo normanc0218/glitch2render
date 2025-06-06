@@ -54,10 +54,12 @@ const openModal_project_update = async (viewId, JobId) => {
         block_id: "supervisor_notify",
         label: "Notify the supervisor",
         action_id: "notify_supervisor",
-        options: superOption.slice(1,5) //Skip Chris
+        options: superOption.slice(0,2) //Only Chris and Norman
       }),
-      createInputBlock_date("date", "End Date", "datepickeraction", initialDate),
-      createInputBlock_time("time", "End Time", "timepickeraction", initialTime),
+      createInputBlock_date("sdate", "Actual Start Date", "datepickeraction", initialDate),
+      createInputBlock_time("stime", "Actual Start Time", "timepickeraction", initialTime),
+      createInputBlock_date("edate", "Actual End Date", "datepickeraction", initialDate),
+      createInputBlock_time("etime", "Actual End Time", "timepickeraction", initialTime)
     ]
   }
      
