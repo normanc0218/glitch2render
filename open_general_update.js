@@ -29,106 +29,41 @@ const superOption=Object.entries(Supervisors)
 
 const open_general_update = async (viewId, JobId) => {
   const modal = {
-    "type": "modal",
-    "callback_id": "open_general_update",
-    "private_metadata": JobId, // Store the Job ID in private metadata
-    "title": {
-      "type": "plain_text",
-      "text": "Update Your Job",
-      "emoji": true
+    type: "modal",
+    callback_id: "open_general_update",
+    private_metadata: JobId, // Store the Job ID in private metadata
+    title: {
+      type: "plain_text",
+      text: "Update Your Job",
+      emoji: true
     },
-    "submit": {
-      "type": "plain_text",
-      "text": "Submit",
-      "emoji": true
+    submit: {
+      type: "plain_text",
+      text: "Submit",
+      emoji: true
     },
-    "close": {
-      "type": "plain_text",
-      "text": "Cancel",
-      "emoji": true
+    close: {
+      type: "plain_text",
+      text: "Cancel",
+      emoji: true
     },
-    "blocks": [
+    blocks: [
       createInputBlock_pic("picture", "Picture of Your Job Update", "file_general_input"),
       createInputBlock("comments", "Comments", "remarks_input"),
-      // Supervisor Approval (static select dropdown)
       createInputBlock_radio({
         block_id: "supervisor_notify",
         label: "Notify the supervisor",
         action_id: "notify_supervisor",
         options: superOption
       }),
-      {
-        "type": "input",
-        "block_id": "supervisor",
-        "label": {
-          "type": "plain_text",
-          "text": "Supervisor Approval",
-          "emoji": true
-        },
-        "element": {
-          "type": "static_select",
-          "placeholder": {
-            "type": "plain_text",
-            "text": "Select approving supervisor",
-            "emoji": true
-          },
-          "options": Object.entries(Supervisors).map(([name, userId]) => ({
-            text: {
-              type: "plain_text",
-              text: `Supervisor: ${name}`,
-              emoji: true
-            },
-            value: userId
-          }))
-          ,
-          "action_id": "supervisor_select"
-        }
-      },
-      // Date picker for start date
-      {
-        "type": "input",
-        "block_id": "date",
-        "element": {
-          "type": "datepicker",
-          "initial_date": initialDate,
-          "placeholder": {
-            "type": "plain_text",
-            "text": "Select a date",
-            "emoji": true
-          },
-          "action_id": "datepickeraction"
-        },
-        "label": {
-          "type": "plain_text",
-          "text": "End date",
-          "emoji": true
-        }
-      },
-      // Time picker for start time
-      {
-        "type": "input",
-        "block_id": "time",
-        "element": {
-          "type": "timepicker",
-          "initial_time": initialTime,
-          "placeholder": {
-            "type": "plain_text",
-            "text": "Select time",
-            "emoji": true
-          },
-          "action_id": "timepickeraction"
-        },
-        "label": {
-          "type": "plain_text",
-          "text": "End time",
-          "emoji": true
-        }
-      }
+      createInputBlock_date("date", "End Date", "datepickeraction", initialDate),
+      createInputBlock_time("time", "End Time", "timepickeraction", initialTime),
     ]
-  };
+  }
+     
 
   // API call to open the modal
-  const args = {
+const args = {
     token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
     view_id: viewId,  // The trigger ID that comes from the button press
     view: JSON.stringify(modal)  // Pass the modal structure as JSON
