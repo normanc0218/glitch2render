@@ -56,7 +56,7 @@ async function openModal_projects(trigger_id, userId) {
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+        const jobId = `JOB-${job.etag?.slice(-10, -1)}`;
         const existingJob = await db3
           .getData(`/jobs/${jobId}`)
           .catch(() => null);
