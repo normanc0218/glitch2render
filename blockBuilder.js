@@ -109,7 +109,7 @@ function createInputBlock_time(block_id, label, action_id,initial_time) {
 		}
 }
 
-function createInputBlock_select({ block_id, label, action_id, options }) {
+function createInputBlock_select({ block_id, label, action_id, options=[]}) {
   return {
     type: "input",
     block_id,

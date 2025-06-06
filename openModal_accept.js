@@ -16,6 +16,8 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 
 const openModal_accept = async (trigger_id, jobId) => {
+  blocks=[]
+  
   const modal = {
     type: "modal",
     callback_id: "accept_form",
@@ -32,68 +34,7 @@ const openModal_accept = async (trigger_id, jobId) => {
       type: "plain_text",
       text: "Cancel"
     },
-    blocks: [
-      {
-        type: "input",
-        block_id:"accept_block",
-        label: {
-            type: "plain_text",
-            text: "Your Name"
-          },
-        element: {
-          type: "static_select",
-          placeholder: { type: "plain_text", text: "name ", emoji: true },
-          options: [
-            { text: { type: "plain_text", text: "Fai", emoji: true }, value: "value-0" },
-            { text: { type: "plain_text", text: "Steven", emoji: true }, value: "value-1" },
-            { text: { type: "plain_text", text: "Sam", emoji: true }, value: "value-2" }
-          ],
-          action_id: "whoaccept"
-        }
-      },
-      {
-        type: "input",
-        block_id: "signature",
-        label: { type: "plain_text", text: "Specify the reason if you are currently occupied. " },
-        element: {
-          type: "plain_text_input",
-          action_id: "remarks_input"
-        }
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Plan to Start Date", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "datepicker",
-        elements: [
-          {
-            type: "datepicker",
-            initial_date: initialDate,
-            placeholder: { type: "plain_text", text: "Select a date", emoji: true },
-            action_id: "accept_date"
-          }
-        ]
-      },
-      {
-        type: "section",
-        text: { type: "plain_text", text: "Plan to Start Time", emoji: true }
-      },
-      {
-        type: "actions",
-        block_id: "timepicker",
-        elements: [
-          {
-            type: "timepicker",
-            initial_time: initialTime,
-            placeholder: { type: "plain_text", text: "Select time", emoji: true },
-            action_id: "accept_time"
-          }
-          
-        ]
-      }
-    ]
+    blocks
   };
 
   try {

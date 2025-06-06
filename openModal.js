@@ -42,7 +42,12 @@ const machineOptions = [
 console.log(staffOptions)
 const openModal = async(trigger_id) => {
   const blocks=[]
-  blocks.push(createInputBlock_select(`machineLocation`,`Machine and Location`,`machineLocation`,machineOptions));
+  blocks.push(createInputBlock_select({
+    block_id: "machineLocation",
+    label: "Machine and Location",
+    action_id: "machineLocation",
+    options: machineOptions, // <-- make sure this is passed in like this
+  }));
   blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,`reporter`,`Name of the Finder`));
   blocks.push(createInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
   blocks.push(createInputBlock_multistatic(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`,staffOptions));
