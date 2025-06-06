@@ -7,7 +7,7 @@ const { openModal_view_detail } = require("./openModal_view_detail.js");
 const { openModal_supervisor_approval } = require("./openModal_supervisor_approval.js");
 //Daily modals
 const { openModal_daily_job } = require("./openModal_daily_job.js");
-const { openModal_daily_update} = require("./openMoal_daily_update.js");
+const { openModal_daily_update} = require("./openModal_daily_update.js");
 //Project + PM modals
 const { openModal_projects} = require("./openModal_projects.js");
 const { openModal_finish_project} = require("./openModal_finish_project.js");
@@ -188,8 +188,8 @@ app.post("/slack/actions", async (req, res) => {
           const job = data.find(item => item.JobId === jobId);
           console.log(job.messageTs)
           const updatedData = {
-            acceptdate: view.state.values.datepicker.accept_date.selected_date,
-            accepttime: view.state.values.timepicker.accept_time.selected_time,
+            startDate: view.state.values.datepicker.accept_date.selected_date,
+            startTime: view.state.values.timepicker.accept_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
             status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
             JobId: jobId
@@ -316,9 +316,13 @@ app.post("/slack/actions", async (req, res) => {
               ...job,
               timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
               remarks: state.comments?.remarks_input?.value || null,
-              supervisorUser: state.supervisor?.supervisor_select?.selected_option?.value || null,
+              supervisorUser: state.supervisor_notify?.notify_supervisor?.selected_option?.value || null,
+              startDate: state.date?.datepickeraction?.selected_date || null,
+              startTime: state.time?.timepickeraction?.selected_time || null,
               endDate: state.date?.datepickeraction?.selected_date || null,
               endTime: state.time?.timepickeraction?.selected_time || null,
+                            finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)|| [],
+
               status: "Waiting for Supervisor approval"
             };
 
