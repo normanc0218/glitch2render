@@ -133,6 +133,24 @@ function createInputBlock_select({ block_id, label, action_id, options=[]}) {
   };
 }
 
+function createInputBlock_checkboxes({ block_id, label, action_id, options=[]}) {
+  return {
+    type: "input",
+    block_id,
+    label: {
+      type: "checkboxes",
+      text: label,
+    },
+    element: {
+      type: "static_select",
+      action_id,
+      options: options.map(opt => ({
+        text: { type: "mrkdwn", text: opt },
+        value: opt,
+      })),
+    },
+  };
+}
 function createDivider() {
   return { type: "divider" };
 }
@@ -145,5 +163,6 @@ module.exports = {
   createInputBlock_date,
   createInputBlock_time,
   createInputBlock_select,
+  createInputBlock_checkboxes,
   createDivider
 };

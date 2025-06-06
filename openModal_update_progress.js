@@ -1,4 +1,15 @@
 const axios = require('axios');
+const {
+  createInputBlock,
+  createInputBlock_select,
+  createTextSection,
+  createInputBlock_date,
+  createInputBlock_time,
+  createInputBlock_checkboxes,
+  createInputBlock_radio,
+  createInputBlock_file
+} = require('./blockBuilder');
+
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -27,6 +38,21 @@ const superOptions = Object.entries(Supervisors).map(([name, value]) => ({
 }));
 
 const openModal_update_progress = async (trigger_id, jobId) => {
+  const blocks=[]
+  blocks.push(createInputBlock_select({
+    block_id: "accept_block",
+    label: "Your Name",
+    action_id: "whoupdate",
+    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+  }));
+  blocks.push(createInputBlock_checkboxes({
+    block_id: "reason_defect_block",
+    label: "What is the cause of this issue?",
+    action_id: "reason_defect",
+    options: ["Wear or Tear","Operator error","No issue","Unknown issue","Other"], // <-- make sure this is passed in like this
+  }));
+  blocks.push(createInputBlock("other_reason_input", "*Specify the other reason if any?", "otherreason", "Enter other reason", true));
+
   const modal ={
 	"type": "modal",
 	"callback_id": "update_progress",
@@ -44,114 +70,9 @@ const openModal_update_progress = async (trigger_id, jobId) => {
 		"text": "Cancel"
 	},
 	"blocks": [
-		{
-			"type": "input",
-			"block_id": "accept_block",
-			"label": {
-				"type": "plain_text",
-				"text": "Your Name"
-			},
-			"element": {
-				"type": "static_select",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "name ",
-					"emoji": true
-				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Fai",
-							"emoji": true
-						},
-						"value": "Fai"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Steven",
-							"emoji": true
-						},
-						"value": "Steven"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "Sam",
-							"emoji": true
-						},
-						"value": "Sam"
-					}
-				],
-				"action_id": "whoupdate"
-			}
-		},
-		{
-			"type": "input",
-			"block_id": "reason_defect_block",
-			"element": {
-				"type": "checkboxes",
-				"options": [
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Wear or Tear"
-						},
-						"value": "wear_tear"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Operator error"
-						},
-						"value": "operator_error"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "No issue"
-						},
-						"value": "no_issue"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Unknown issue"
-						},
-						"value": "unknown_issue"
-					},
-					{
-						"text": {
-							"type": "mrkdwn",
-							"text": "Other"
-						},
-						"value": "other"
-					}
-				],
-				"action_id": "reason_defect"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "What is the cause of this issue?",
-				"emoji": true
-			}
-		},
-		{
-			"type": "input",
-			"block_id": "other_reason_input",
-			"element": {
-				"type": "plain_text_input",
-				"multiline": true,
-				"action_id": "otherreason"
-			},
-			"label": {
-				"type": "plain_text",
-				"text": "*Specify the other reason if any?",
-				"emoji": true
-			},
-			"optional": true
-		},
+		
+	
+		
 		{
 			"type": "rich_text",
 			"elements": [
