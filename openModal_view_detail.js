@@ -1,6 +1,13 @@
 const axios = require('axios');
 const qs = require('qs');
 const { db } = require("./appHome");
+
+const {
+  createTextSection,
+  createDivider,
+  createHeader,
+  createImage
+} = require('./blockBuilder');
 const nyDate = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/New_York',
   year: 'numeric',
@@ -17,6 +24,19 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id, jobId) => {
+    const blocks = [
+    createTextSection(`*Job ID:* ${job.JobId}`),
+    createTextSection(`*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`),
+    createTextSection(`*Description:* ${job.Description}`),
+    createTextSection(`*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`),
+    createDivider(),
+    ];
+    if (job.acceptdate || job.accepttime || job.remarks) {
+      blocks.push(
+        createTextSection(`*Accept Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`),
+        createDivider()
+      );
+    }
     const data = await db.getData("/data") || [];
     const job = data.find(item => item.JobId === jobId)
     const modal = {
@@ -33,36 +53,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
           emoji: true
         },
         blocks: [
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Job ID:* ${job.JobId}`
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Description:* ${job.Description}`
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`
-            }
-          },{
-          type: "divider",
-        },
+          
           ...(job.acceptdate || job.accepttime || job.remarks
         ? [{
             type: "section",

@@ -1,12 +1,4 @@
-function createTextSection(text) {
-  return {
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: text
-    }
-  };
-}
+
 
 function createInputBlock(block_id, label, action_id, placeholder = "",option=false) {
   return {
@@ -174,13 +166,39 @@ function createInputBlock_radio({ block_id, label, action_id, options=[]}) {
     },
   };
 }
-
+//
 function createDivider() {
   return { type: "divider" };
 }
+function createTextSection(text) {
+  return {
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: text
+    }
+  };
+}
+function createHeader(text) {
+  return {
+    type: "header",
+    text: {
+      type: "plain_text",
+      text: text,
+      emoji: true
+    }
+  };
+}
+function createImage( image_url, alt_text) {
+  return {
+    type: "image",
+    image_url: image_url,
+    alt_text: alt_text
+  };
+}
 
 module.exports = {
-  createTextSection,
+  
   createInputBlock,
   createInputBlock_multistatic,
   createInputBlock_pic,
@@ -189,5 +207,8 @@ module.exports = {
   createInputBlock_select,
   createInputBlock_checkboxes,
   createInputBlock_radio,
-  createDivider
+  createTextSection,
+  createDivider,
+  createHeader,
+  createImage
 };

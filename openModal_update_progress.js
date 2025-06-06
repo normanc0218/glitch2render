@@ -72,8 +72,8 @@ const openModal_update_progress = async (trigger_id, jobId) => {
       block_id: "complete_job_block",
       label: "Status of Completed Job",
       action_id: "complete_job",
-      options:  [["Complete the job and Fixed the issue","Complete the job and Fixed the issue"],
-                ["Report other job status", "Reported other job status"]]
+      options:  [["Complete the job and Fixed the issue","Waiting for Supervisor Approval"],
+                ["Report other job status (Please select from below)", "Reported other job status"]]
     })
   );
   blocks.push(createInputBlock_checkboxes({
