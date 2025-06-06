@@ -24,6 +24,8 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York"
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id, jobId) => {
+    const data = await db.getData("/data") || [];
+    const job = data.find(item => item.JobId === jobId)
     const blocks = [
     createTextSection(`*Job ID:* ${job.JobId}`),
     createTextSection(`*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`),
@@ -33,12 +35,33 @@ const openModal_view_detail = async(trigger_id, jobId) => {
     ];
     if (job.acceptdate || job.accepttime || job.remarks) {
       blocks.push(
-        createTextSection(`*Accept Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`),
+        createTextSection(`*Accept Date:* ${job.acceptdate || "N/A"}\n*Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`),
         createDivider()
       );
     }
-    const data = await db.getData("/data") || [];
-    const job = data.find(item => item.JobId === jobId)
+    if (job.rejectdate || job.rejecttime || job.rejectby) {
+    blocks.push(
+      createTextSection(`*Reject Date:* ${job.rejectdate || "N/A"}\n*Reject Time:* ${job.rejecttime || "N/A"}\n*Reject by:* ${job.rejectby || "None"}\n*Reject reason:* ${job.rejectreason}`),
+      createDivider()
+    );
+    }
+    if (job.endDate || job.endTime) {
+    blocks.push(
+      createTextSection(`*Done By:* ${job.updatedBy || "N/A"}\n*Cause of issue:* ${job.issueCauses || "N/A"}\n*Other reasons?:* ${job.otherreason || "N/A"}\n*Tools collected:* ${job.toolsCollected || "None"}\n*Lockout confirmed:* ${job.resetConfirmed}\n*Notify to Supervisor:* ${job.supervisorUser}\n*Message to Supervisor:* ${job.supervisorMessage || "None"}\n*Other Status:* ${job.otherStatuses || "None"}\n*Specify other Status:* ${job.otherSpecify || "None"}\n*End Date:* ${job.endDate || "None"}\n*End Time:* ${job.endTime || "None"}`),
+      createHeader("Picture for Finished Job")
+    );
+
+    if (Array.isArray(job.finish_pic)) {
+      blocks.push(...job.finish_pic.slice(0, 5).map((url, i) => createImage(url, `Job image ${i + 1}`)));
+    }
+
+    blocks.push(createDivider());
+    }
+    blocks.push(createHeader("Picture for Job Order"));
+    if (Array.isArray(job.picture)) {
+      blocks.push(...job.picture.slice(0, 5).map((url, i) => createImage(url, `Job image ${i + 1}`)));
+    }
+
     const modal = {
         type: "modal",
         callback_id: "view_detail_modal",
@@ -52,70 +75,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
           text: "Close",
           emoji: true
         },
-        blocks: [
-          
-          ...(job.acceptdate || job.accepttime || job.remarks
-        ? [{
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Accept Date:* ${job.acceptdate || "N/A"}\n *Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`
-            }
-          },{
-          type: "divider",
-        }]: []),
-          ...(job.rejectdate || job.rejecttime || job.rejectby
-        ? [{
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Reject Date:* ${job.rejectdate || "N/A"}\n *Reject Time:* ${job.rejecttime || "N/A"}\n*Reject by:* ${job.rejectby || "None"}\n*Reject reason:* ${job.rejectreason}`
-            }
-          },{
-          type: "divider",
-        }]: []),...(job.endDate || job.endTime 
-        ? [{
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Done By:* ${job.updatedBy || "N/A"}\n *Cause of issue:* ${job.issueCauses || "N/A"}\n *Other reasons?:* ${job.otherreason || "N/A"}\n*Tools collected:* ${job.toolsCollected || "None"}\n*Lockout confirmed:* ${job.resetConfirmed}
-              \n*Notify to Supervisor:* ${job.supervisorUser} \n*Message to Supervisor:* ${job.supervisorMessage|| "None"} \n*Other Status:* ${job.otherStatuses|| "None"} \n*Specify other Status:* ${job.otherSpecify|| "None"}
-              \n*End Date:* ${job.endDate|| "None"}\n*End Time:* ${job.endTime|| "None"}`
-            }
-          },{
-              "type": "header",
-              "text": {
-                "type": "plain_text",
-                "text": "Picture for Finished Job",
-                "emoji": true
-              }
-            },
-          ...(job.finish_pic?.length
-            ? job.finish_pic.slice(0, 5).map((url, index) => ({
-                type: "image",
-                image_url: url,
-                alt_text: `Job image ${index + 1}`
-              }))
-        : []),{
-          type: "divider",
-        }]: []),{
-              "type": "header",
-              "text": {
-                "type": "plain_text",
-                "text": "Picture for Job Order",
-                "emoji": true
-              }
-            },
-          ...(job.picture?.length
-            ? job.picture.slice(0, 5).map((url, index) => ({
-                type: "image",
-                image_url: url,
-                alt_text: `Job image ${index + 1}`
-              }))
-        : [])
-          
-         
-        ]
+        blocks
       };
     
   try {

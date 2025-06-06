@@ -1,6 +1,11 @@
 const axios = require("axios");
 const { fetchCalendar } = require("./fetchCalendar");
 const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig");
+const {
+  createTextSection,
+  createDivider,
+  createHeader
+} = require("./blockBuilder");
 const db2 = require(`./db2`);
 // Extracts time from ISO or returns "(All day)" for date-only entries
 function extractTime(eventTime) {
@@ -38,15 +43,8 @@ async function openModal_daily_job(trigger_id, userId) {
     const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
     let blocks = [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "🗓️ Daily Jobs from Multiple Calendars",
-          emoji: true,
-        },
-      },
-      { type: "divider" },
+      createHeader("🗓️ Daily Jobs from Multiple Calendars"),
+      createDivider(),
     ];
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
@@ -86,21 +84,11 @@ async function openModal_daily_job(trigger_id, userId) {
       const job = allJobs[jobId];
       const assignedSlackId = job.mStaff_id;
 
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*Job ID:* ${job.jobId}\n*Assigned To:* ${
-            job.assignedTo
-          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
-            job.summary || "(No summary)"
-          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
-            job.orderdate
-          } *Start Time:* ${job.ordertime}\n*End Date:* ${
-            job.endDate
-          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`,
-        },
-      });
+      blocks.push(
+        createTextSection(
+          `*Job ID:* ${job.jobId}\n*Assigned To:* ${job.assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${job.orderdate} *Start Time:* ${job.ordertime}\n*End Date:* ${job.endDate} *End Time:* ${job.endTime}\n*Status:* ${job.status}`
+        )
+      );
 
       if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
         blocks.push({
