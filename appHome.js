@@ -1,6 +1,7 @@
 const axios = require("axios");
 const qs = require("qs");
 const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
+const LRU = require('lru-cache'); 
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const {
   createButton,
@@ -10,7 +11,10 @@ const {
 const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
 // Slack supervisor user ID
 const { maintenanceStaff, managerUsers } = require("./userConfig");
-
+const lruCache = new LRU({
+  max: 50,  
+  maxAge: 1000 * 60 * 5
+});
 //Update the view
 const updateView = async (user) => {
   let blocks = [
@@ -35,8 +39,16 @@ const updateView = async (user) => {
 
   let newData = [];
   try {
-    const rawData = await db.getData(`/data/`);
-    newData = rawData.slice().reverse().slice(0, 50); // latest 50
+    newData = lruCache.get('/data');
+    if (!newData) {
+      console.log("Cache miss, fetching from DB...");
+      const rawData = await db.getData(`/data/`);
+      newData = rawData.slice().reverse().slice(0, 50); // 获取最新的 50 条数据
+      // 将数据存入缓存
+      lruCache.set('/data', newData);
+    } else {
+      console.log("Cache hit, using cached data.");
+    }
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -143,6 +155,7 @@ const displayHome = async (user, data) => {
     }
 
     await db.push(path, jobs, true);
+    lruCache.del('/data');
   }
   const userId = user.id || user;
   const args = {
