@@ -57,9 +57,9 @@ const openModal_project_update = async (viewId, JobId) => {
         options: superOption.slice(0,2) //Only Chris and Norman
       }),
       createInputBlock_date("sdate", "Actual Start Date", "datepickeraction", initialDate),
-      createInputBlock_time("stime", "Actual Start Time", "timepickeraction", initialTime),
+      createInputBlock_time("stime", "Actual Start Time", "timepickeraction"),
       createInputBlock_date("edate", "Actual End Date", "datepickeraction", initialDate),
-      createInputBlock_time("etime", "Actual End Time", "timepickeraction", initialTime)
+      createInputBlock_time("etime", "Actual End Time", "timepickeraction" )
     ]
   }
      
