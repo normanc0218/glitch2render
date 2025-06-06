@@ -4,7 +4,8 @@ const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig")
 const {
   createTextSection,
   createDivider,
-  createHeader
+  createHeader,
+  createButton
 } = require("./blockBuilder");
 const db2 = require(`./db2`);
 // Extracts time from ISO or returns "(All day)" for date-only entries
@@ -91,39 +92,13 @@ async function openModal_daily_job(trigger_id, userId) {
       );
 
       if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
-        blocks.push({
-          type: "actions",
-          elements: [
-            {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Approve the Job?",
-              },
-              value: job.jobId,
-              style: "primary",
-              action_id: "approve_general",
-            },
-          ],
-        });
-      }
+        blocks.push(createButton("Approve the Job?", job.jobId, "approve_general")
+                 )};               
+      // text, value, action_id
+
       if (assignedSlackId === userId && job.status ==="Pending") {
-        blocks.push({
-          type: "actions",
-          elements: [
-            {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Update Job",
-              },
-              value: job.jobId,
-              style: "primary",
-              action_id: "update_daily",
-            },
-          ],
-        });
-      }
+                blocks.push(createButton("Update Job", job.jobId, "update_daily")
+                           )};
       blocks.push({ type: "divider" });
     }
 
