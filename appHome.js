@@ -63,7 +63,7 @@ const updateView = async (user) => {
           },
           accessory: {
             type: "image",
-            image_url: o.picture[0],
+            image_url: (o.picture && o.picture[0]) || "https://via.placeholder.com/100",
             alt_text: "picture",
           },
         },
@@ -150,18 +150,13 @@ const displayHome = async (user, data) => {
     user_id: userId,
     view: await updateView(userId),
   };
-  const result = await axios.post(
-    `${apiUrl}/views.publish`,
-    qs.stringify(args)
-  );
-
   try {
+    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
     if (result.data.error) {
-      console.log(result.data.error);
+      console.error("Slack API error:", result.data.error);
     }
-  } catch (e) {
-    console.log(e);
-  }
-};
+  } catch (err) {
+    console.error("Failed to publish Slack view:", err.message);
+  }}
 
 module.exports = { db, displayHome };
