@@ -3,7 +3,7 @@ function createTextSection(text) {
     type: "section",
     text: {
       type: "mrkdwn",
-      text
+      text: text
     }
   };
 }
