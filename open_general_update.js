@@ -49,12 +49,12 @@ const open_general_update = async (viewId, JobId) => {
     },
     blocks: [
       createInputBlock_pic("picture", "Picture of Your Job Update", "file_general_input"),
-      createInputBlock("comments", "Comments", "remarks_input"),
+      createInputBlock("comments", "Comments", "remarks_input","comments"),
       createInputBlock_radio({
         block_id: "supervisor_notify",
         label: "Notify the supervisor",
         action_id: "notify_supervisor",
-        options: superOption
+        options: superOption.slice(1,5) //Skip Chris
       }),
       createInputBlock_date("date", "End Date", "datepickeraction", initialDate),
       createInputBlock_time("time", "End Time", "timepickeraction", initialTime),
