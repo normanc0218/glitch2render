@@ -66,9 +66,17 @@
             "description": null,
             "orderdate": "2025-06-06",
             "ordertime": "15:00",
-            "endDate": "2025-06-06",
-            "endTime": "17:00",
-            "status": "Pending"
+            "endDate": null,
+            "endTime": null,
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/6/2025, 3:26:03 PM",
+            "remarks": "ym",
+            "supervisorUser": "U06DSKC32E4",
+            "startDate": null,
+            "startTime": null,
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090EHE8DS8/img_3748.jpg"
+            ]
         },
         "JOB-20250606-137662": {
             "jobId": "JOB-20250606-137662",

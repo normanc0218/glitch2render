@@ -108,7 +108,7 @@ async function openModal_projects(trigger_id, userId) {
         job.status === "Waiting for Supervisor approval"
       ) {
         blocks.push(
-          createButton("Approve the Job?", job.jobId, "approve_general")
+          createButton("Approve the Job?", job.jobId, "approve_project")
         );
       }
 

@@ -99,7 +99,7 @@ async function openModal_daily_job(trigger_id, userId) {
       );
 
       if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
-        blocks.push(createButton("Approve the Job?", job.jobId, "approve_general")
+        blocks.push(createButton("Approve the Job?", job.jobId, "approve_daily")
                  )};               
       // text, value, action_id
 
