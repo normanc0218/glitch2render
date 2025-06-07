@@ -170,7 +170,7 @@ app.post("/slack/actions", async (req, res) => {
           } else {
             jobs.push(data);
           }
-          await db.push("/data/", jobs, true);
+          await pushAndInvalidate("regular", "/data/", jobs, true);
 
           // Now update user's home view (with full job info incl. messageTs)
           await displayHome(user, data);
@@ -179,9 +179,8 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/data") || [];
+          const data = await getCachedData("regular", "/data/") || [];
           const job = data.find(item => item.JobId === jobId);
-          console.log(job.messageTs)
           const updatedData = {
             startDate: view.state.values.datepicker.accept_date.selected_date,
             startTime: view.state.values.timepicker.accept_time.selected_time,
@@ -200,7 +199,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "reject_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/data") || [];
+          const data = await getCachedData("regular", "/data/") || [];
           const job = data.find(item => item.JobId === jobId);
           
           const updatedData = {
@@ -223,7 +222,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
                     //from previous payloads (or from database)
-          const data = await db.getData("/data") || [];
+          const data = await getCachedData("regular", "/data/") || [];
           const job = data.find(item => item.JobId === jobId);
           
           const updatedData = {
@@ -263,7 +262,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/data") || [];
+          const data = await getCachedData("regular", "/data/")|| [];
           const job = data.find(item => item.JobId === jobId);
           
           const updatedData = {
@@ -293,10 +292,9 @@ app.post("/slack/actions", async (req, res) => {
 
           // Construct the job path for db2, making sure to include the jobId
           const jobPath = `/jobs/${jobId}`;
-          console.log(view);
           try {
             // Try loading the existing job entry using the jobId
-            const job = await db2.getData(jobPath).catch(() => null);
+            const job = await getCachedData("daily", jobPath);
 
             if (!job) {
               console.error(`⚠️ Job ${jobId} not found in DB`);
@@ -362,10 +360,9 @@ app.post("/slack/actions", async (req, res) => {
 
           // Construct the job path for db3, making sure to include the jobId
           const jobPath = `/jobs/${jobId}`;
-          console.log(db3);
           try {
             // Try loading the existing job entry using the jobId
-            const job = await db3.getData(jobPath).catch(() => null);
+            const job = await getCachedData("project", jobPath).catch(() => null);
 
             if (!job) {
               console.error(`⚠️ Job ${jobId} not found in DB`);
@@ -390,7 +387,7 @@ app.post("/slack/actions", async (req, res) => {
             };
 
             // Save the updated job to the DB (merge instead of overwrite)
-            await db3.push(jobPath, updatedJob, false);  // false = merge
+            await pushAndInvalidate("project", jobPath, updatedJob, false)
             // Optional: Notify a Slack channel about the job completion
             try {
               const res = await axios.post(
