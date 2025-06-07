@@ -4,6 +4,10 @@ const qs = require("qs");
 // Fetch this from environment variables
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
 function signVerification(req, res, next) {
+  if (process.env.NODE_ENV === "development") {
+    console.log("⚠️ Slack signature check bypassed in development mode");
+    return next();
+  }
   const slackSignature = req.headers['x-slack-signature'];
   const timestamp = req.headers['x-slack-request-timestamp'];
 
