@@ -291,7 +291,7 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           // Construct the job path for db2, making sure to include the jobId
-          const jobPath = `/jobs/${jobId}`;
+          const jobPath = `/data`;
           try {
             // Try loading the existing job entry using the jobId
             const job = await getCachedData("daily", jobPath);
@@ -359,7 +359,7 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           // Construct the job path for db3, making sure to include the jobId
-          const jobPath = `/jobs/${jobId}`;
+          const jobPath = `/data`;
           try {
             // Try loading the existing job entry using the jobId
             const job = await getCachedData("project", jobPath).catch(() => null);

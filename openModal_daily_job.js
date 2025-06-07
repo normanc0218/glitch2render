@@ -9,7 +9,6 @@ const {
 } = require("./blockBuilder");
 
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-const { get: getDB, push: pushDB } = require("./db"); 
 
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
@@ -50,20 +49,29 @@ async function openModal_daily_job(trigger_id, userId) {
       createDivider(),
     ];
 
+    // 🚨 [CHANGED] Load existing jobs from /data instead of individual /jobs/jobId paths
+    const allJobs = await getCachedData("daily", "/data", () =>
+      Promise.resolve([]) // fallback default if no data
+    );
+
+    // 🚨 [CHANGED] Use mutable array to track updates
+    const updatedJobs = [...allJobs];
+
     // 🔁 Fetch and cache calendar events
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
-      const events = await getCachedData("calendar", cacheKey, () => fetchCalendar(calendarId));
+      const events = await getCachedData("calendar", cacheKey, () =>
+        fetchCalendar(calendarId)
+      );
+
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const jobPath = `/jobs/${jobId}`;
-        const existingJob = await getCachedData("daily", jobPath, () =>
-          getDB("daily", jobPath).catch(() => null)
-        );
 
-        if (!existingJob) {
+        const jobExists = updatedJobs.find(j => j.jobId === jobId); // 🚨 [CHANGED] Check from flat array
+
+        if (!jobExists) {
           const ordertime = extractTime(job.start);
           const endTime = extractTime(job.end);
           const orderdate = extractDate(job.start);
@@ -83,26 +91,22 @@ async function openModal_daily_job(trigger_id, userId) {
             status: "Pending",
           };
 
-          await pushDB("daily", jobPath, newJob, false);
-          await pushAndInvalidate("daily", jobPath);
+          updatedJobs.push(newJob); // 🚨 [CHANGED] Push to local array
         }
       }
     }
 
-    // ⏱️ Fetch all today's jobs from cache or DB
-    const allJobs = await getCachedData("daily", "/jobs", () =>
-      getDB("daily", "/jobs").catch(() => ({}))
-    );
+    // 🚨 [CHANGED] Save full array back to /data
+    await pushAndInvalidate("daily", "/data", updatedJobs, true);
 
     const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: "America/New_York"
+      timeZone: "America/New_York",
     });
 
-    for (const jobId in allJobs) {
-      const job = allJobs[jobId];
-      const assignedSlackId = job.mStaff_id;
-
+    for (const job of updatedJobs) {
       if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
+
+      const assignedSlackId = job.mStaff_id;
 
       blocks.push(
         createTextSection(

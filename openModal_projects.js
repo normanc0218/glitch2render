@@ -100,7 +100,6 @@ async function openModal_projects(trigger_id, userId) {
     for (const jobId in allJobs) {
       const job = allJobs[jobId];
       const assignedSlackId = job.mStaff_id;
-      console.log(job)
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n*Assigned To:* ${job.assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${job.orderdate} *Start Time:* ${job.ordertime}\n*End Date:* ${job.endDate} *End Time:* ${job.endTime}\n*Status:* ${job.status}`
