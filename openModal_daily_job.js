@@ -5,7 +5,7 @@ const {
   createTextSection,
   createDivider,
   createHeader,
-  createButton
+  createButton,
 } = require("./blockBuilder");
 
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
@@ -50,8 +50,10 @@ async function openModal_daily_job(trigger_id, userId) {
     ];
 
     // [CHANGED] Load existing jobs from /data instead of individual /jobs/jobId paths
-    const allJobs = await getCachedData("daily", "/data", () =>
-      Promise.resolve([]) // fallback default if no data
+    const allJobs = await getCachedData(
+      "daily",
+      "/data",
+      () => Promise.resolve([]) // fallback default if no data
     );
 
     // [CHANGED] Use mutable array to track updates
@@ -69,7 +71,7 @@ async function openModal_daily_job(trigger_id, userId) {
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
 
-        const jobExists = updatedJobs.find(j => j.jobId === jobId); // [CHANGED] Check from flat array
+        const jobExists = updatedJobs.find((j) => j.jobId === jobId); // [CHANGED] Check from flat array
 
         if (!jobExists) {
           const ordertime = extractTime(job.start);
@@ -92,11 +94,15 @@ async function openModal_daily_job(trigger_id, userId) {
           };
 
           updatedJobs.push(newJob); //[CHANGED] Push to local array
+        } else {
+          console.log(`🟡 Skipped existing job in DB: ${jobId}`);
         }
       }
     }
 
-    await pushAndInvalidate("daily", "/data", updatedJobs, true);
+    if (updatedJobs.length > allJobs.length) {
+      await pushAndInvalidate("daily", "/data", updatedJobs, true);
+    }
 
     const today = new Date().toLocaleDateString("en-CA", {
       timeZone: "America/New_York",
@@ -109,12 +115,25 @@ async function openModal_daily_job(trigger_id, userId) {
 
       blocks.push(
         createTextSection(
-          `*Job ID:* ${job.jobId}\n*Assigned To:* ${job.assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${job.orderdate} *Start Time:* ${job.ordertime}\n*End Date:* ${job.endDate} *End Time:* ${job.endTime}\n*Status:* ${job.status}`
+          `*Job ID:* ${job.jobId}\n*Assigned To:* ${
+            job.assignedTo
+          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
+            job.summary || "(No summary)"
+          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
+            job.orderdate
+          } *Start Time:* ${job.ordertime}\n*End Date:* ${
+            job.endDate
+          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`
         )
       );
 
-      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
-        blocks.push(createButton("Approve the Job?", job.jobId, "approve_daily"));
+      if (
+        managerUsers.includes(userId) &&
+        job.status === "Waiting for Supervisor approval"
+      ) {
+        blocks.push(
+          createButton("Approve the Job?", job.jobId, "approve_daily")
+        );
       }
 
       if (assignedSlackId === userId && job.status === "Pending") {
