@@ -191,9 +191,12 @@ app.post("/slack/actions", async (req, res) => {
           };
           const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.\n *Status update:* ${updatedData.status}`
 
-          await displayHome(user, updatedData);
-          //Notify the channel
-          await threadNotify(msg,job.messageTs)
+
+          await Promise.all([
+            displayHome(user, updatedData),
+            threadNotify(msg, job.messageTs)
+          ]);
+
         }      
           // Reject Modal Submission
         else if (view.callback_id === "reject_form") {
@@ -212,9 +215,11 @@ app.post("/slack/actions", async (req, res) => {
         };  
           const msg = `✅ Job *${jobId}* was *rejected* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.\n *Status update:* ${updatedData.status}`
 
-          await displayHome(user, updatedData);
-          //Notify the channel
-          await threadNotify(msg,job.messageTs);
+          await Promise.all([
+            displayHome(user, updatedData),
+            threadNotify(msg, job.messageTs)
+          ]);
+
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "update_progress") {
@@ -251,10 +256,11 @@ app.post("/slack/actions", async (req, res) => {
             finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)|| []
           };
           const msg = `✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}`
+          await Promise.all([
+            displayHome(user, updatedData),
+            threadNotify(msg, job.messageTs),
+          ]);
 
-          await displayHome(user, updatedData);
-          //Notify the channel
-          await threadNotify(msg,job.messageTs);
         }        
           // Update progress Modal Submission
         else if (view.callback_id === "review_progress") {
@@ -281,9 +287,11 @@ app.post("/slack/actions", async (req, res) => {
               };
           const msg = `✅ Job *${jobId}* was *approved and completed* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}`
 
-          await displayHome(user, updatedData);
-          //Notify the channel
-          await threadNotify(msg,job.messageTs);
+          await Promise.all([
+            displayHome(user, updatedData),
+            threadNotify(msg, job.messageTs)
+          ]);
+
         }         
         // Update progress for daily job
         else if (view.callback_id === "daily_update") {
