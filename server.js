@@ -46,7 +46,7 @@ async function generateUniqueJobId()  {
   while (exists) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-    jobId = JOB-${dateStr}-${randomStr};
+    jobId = `JOB-${dateStr}-${randomStr}`;
     exists = false;
     try {
       const allUsers = await getCachedData("regular", "/");
@@ -108,7 +108,7 @@ app.post("/slack/actions", async (req, res) => {
 
     if (command === "/newjob") {
       // You could open a modal here or respond with a message
-      await openModal(trigger_id); // You must have openModal defined for this
+      await openModal(trigger_id); // You must have `openModal` defined for this
 
       // Respond with 200 OK (Slack expects a response)
       return res.status(200).send(); // Optionally add a visible message
@@ -185,11 +185,11 @@ app.post("/slack/actions", async (req, res) => {
             startDate: view.state.values.datepicker.accept_date.selected_date,
             startTime: view.state.values.timepicker.accept_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
-            status: Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text},
+            status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
             JobId: jobId
             
           };
-          const msg = ✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.\n *Status update:* ${updatedData.status}
+          const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.\n *Status update:* ${updatedData.status}`
 
           await displayHome(user, updatedData);
           //Notify the channel
@@ -208,9 +208,9 @@ app.post("/slack/actions", async (req, res) => {
           rejecttime: view.state.values.timepicker.reject_time.selected_time,
           rejectreason:view.state.values.reason.reason_input.value,
           rejectby:view.state.values.reject_block.whoreject.selected_option.text.text,
-          status: Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}
+          status: `Rejected by ${view.state.values.reject_block.whoreject.selected_option.text.text}`
         };  
-          const msg = ✅ Job *${jobId}* was *rejected* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.\n *Status update:* ${updatedData.status}
+          const msg = `✅ Job *${jobId}* was *rejected* by <@${user.id}> on ${updatedData.rejectdate} at ${updatedData.rejecttime}.\n *Status update:* ${updatedData.status}`
 
           await displayHome(user, updatedData);
           //Notify the channel
@@ -250,7 +250,7 @@ app.post("/slack/actions", async (req, res) => {
             //Picture of finished job
             finish_pic:view.state.values.picture.finish_pic.files.map(file => file.url_private)|| []
           };
-          const msg = ✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}
+          const msg = `✅ Job *${jobId}* was *updated* by <@${user.id}> on ${updatedData.endDate} at ${updatedData.endTime}. Please <@${updatedData.supervisorUserId}> to check and approve the job!!\n *Status update:* ${updatedData.status}`
 
           await displayHome(user, updatedData);
           //Notify the channel
@@ -279,7 +279,7 @@ app.post("/slack/actions", async (req, res) => {
             checkDate:view.state.values.date?.datepickeraction?.selected_date || null,
             checkTime: view.state.values.time?.timepickeraction?.selected_time || null,
               };
-          const msg = ✅ Job *${jobId}* was *approved and completed* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}
+          const msg = `✅ Job *${jobId}* was *approved and completed* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}`
 
           await displayHome(user, updatedData);
           //Notify the channel
@@ -291,13 +291,13 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           // Construct the job path for db2, making sure to include the jobId
-          const jobPath = /data;
+          const jobPath = `/data`;
           try {
             // Try loading the existing job entry using the jobId
             const job = await getCachedData("daily", jobPath);
 
             if (!job) {
-              console.error(⚠️ Job ${jobId} not found in DB);
+              console.error(`⚠️ Job ${jobId} not found in DB`);
               return;  // If the job does not exist, exit the function
             }
 
@@ -326,12 +326,12 @@ app.post("/slack/actions", async (req, res) => {
                 "https://slack.com/api/chat.postMessage",
                 {
                   channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                  text: ✅ *Daily Job ${jobId}* was completed.,
+                  text: `✅ *Daily Job ${jobId}* was completed.`,
                 },
                  // <@${view.user.id}>
                 {
                   headers: {
-                    Authorization: Bearer ${process.env.SLACK_BOT_TOKEN},
+                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
                     "Content-Type": "application/json",
                   },
                 }
@@ -359,13 +359,13 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           // Construct the job path for db3, making sure to include the jobId
-          const jobPath = /data;
+          const jobPath = `/data`;
           try {
             // Try loading the existing job entry using the jobId
             const job = await getCachedData("project", jobPath).catch(() => null);
 
             if (!job) {
-              console.error(⚠️ Job ${jobId} not found in DB);
+              console.error(`⚠️ Job ${jobId} not found in DB`);
               return;  // If the job does not exist, exit the function
             }
 
@@ -394,12 +394,12 @@ app.post("/slack/actions", async (req, res) => {
                 "https://slack.com/api/chat.postMessage",
                 {
                   channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                  text: ✅ *Daily Job ${jobId}* was completed.,
+                  text: `✅ *Daily Job ${jobId}* was completed.`,
                 },
                  // <@${view.user.id}>
                 {
                   headers: {
-                    Authorization: Bearer ${process.env.SLACK_BOT_TOKEN},
+                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
                     "Content-Type": "application/json",
                   },
                 }
@@ -503,5 +503,5 @@ app.post("/slack/actions", async (req, res) => {
 //   res.sendFile(filePath);
 // });
 app.listen(port, () => {
-  console.log(🚀 Server running on port ${port});
-}); 
+  console.log(`🚀 Server running on port ${port}`);
+});
