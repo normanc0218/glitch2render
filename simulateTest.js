@@ -1,7 +1,7 @@
 const axios = require("axios");
 
-const BASE_URL = "http://localhost:12000/slack/events"; // 或你的线上地址
-const NUM_USERS = 20; // 模拟20个用户
+const BASE_URL = "https://ambiguous-ionized-traffic.glitch.me/slack/events"; // 🔒 HTTPS!
+const NUM_USERS = 20;
 const userIds = Array.from({ length: NUM_USERS }, (_, i) => `U${1000 + i}`);
 
 async function sendEvent(userId) {
@@ -14,7 +14,9 @@ async function sendEvent(userId) {
   };
 
   try {
-    await axios.post(BASE_URL, payload);
+    await axios.post(BASE_URL, payload, {
+      headers: { "Content-Type": "application/json" }
+    });
     console.log(`✅ Event sent for ${userId}`);
   } catch (err) {
     console.error(`❌ Failed for ${userId}`, err.message);
@@ -23,6 +25,6 @@ async function sendEvent(userId) {
 
 (async () => {
   console.time("⚡ Bulk Home Load");
-  await Promise.all(userIds.map(id => sendEvent(id)));
+  await Promise.all(userIds.map(sendEvent));
   console.timeEnd("⚡ Bulk Home Load");
 })();
