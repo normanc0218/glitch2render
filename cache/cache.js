@@ -1,6 +1,6 @@
-const LRU = require("lru-cache");
+const { LRUCache } = require('lru-cache')
 
-const cache = new LRU({
+const cache = new LRUCache({
   max: 100,
   ttl: 1000 * 60 * 3
 });

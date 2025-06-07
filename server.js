@@ -49,7 +49,7 @@ async function generateUniqueJobId()  {
     jobId = `JOB-${dateStr}-${randomStr}`;
     exists = false;
     try {
-      const allUsers = db.getData("/"); // root object: { user1: { data: [...] }, user2: { data: [...] }, ... }
+      const allUsers = await getCachedData("regular", "/");
 
       for (const user in allUsers) {
         const userJobs = allUsers[user]?.data || [];
@@ -319,7 +319,7 @@ app.post("/slack/actions", async (req, res) => {
             };
 
             // Save the updated job to the DB (merge instead of overwrite)
-            await getCachedData("regular", "/data/")
+            await pushAndInvalidate("daily", jobPath, updatedJob, false);
             // Optional: Notify a Slack channel about the job completion
             try {
               const res = await axios.post(
