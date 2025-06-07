@@ -7,19 +7,6 @@ function makeKey(type, path) {
   return `${type}:${path}`;
 }
 
-// Retrieve data from cache; fallback to DB if cache miss
-// async function getCachedData(type = "regular", path = "/data/") {
-//   const key = makeKey(type, path);
-
-//   if (cache.has(key)) {
-//     console.log("⚡ cache hit:", key);
-//     return cache.get(key);
-//   }
-
-//   const data = await db.get(type, path);
-//   cache.set(key, data);
-//   return data;
-// }
 async function getCachedData(type = "regular", path = "/data/", fallbackFn) {
   const key = makeKey(type, path);
 

@@ -378,10 +378,23 @@ app.post("/slack/actions", async (req, res) => {
                 ) || [],
               status: "Waiting for Supervisor approval",
             };
-            // Run DB update and Slack post in parallel
-            console.log(typeof updatedJob)
+
+            // Step 1: Get full job array from DB
+            const jobList = (await getCachedData("daily", jobPath)) || [];
+
+            // Step 2: Update the matching job
+            const index = jobList.findIndex((job) => job.JobId === jobId);
+
+            if (index !== -1) {
+              jobList[index] = { ...jobList[index], ...updatedJob };
+            } else {
+              jobList.push(updatedJob); // fallback if not found
+            }
+            console.log("printing")
+            console.log(jobList)
+
             const [_, res] = await Promise.all([
-              pushAndInvalidate("daily", jobPath, updatedJob, false),
+              pushAndInvalidate("daily", jobPath, jobList, true),
               axios.post(
                 "https://slack.com/api/chat.postMessage",
                 {
