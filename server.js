@@ -344,15 +344,16 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata; // Job ID passed from the modal
           const ts = new Date();
 
-          // Construct the job path for db2, making sure to include the jobId
           const jobPath = `/data`;
-          try {
-            // Try loading the existing job entry using the jobId
-            const job = await getCachedData("daily", jobPath);
+          const jobList = (await getCachedData("daily", jobPath)) || [];
 
-            if (!job) {
+          try {
+            // Step 2: Find the job to update
+            const index = jobList.findIndex((job) => job.JobId === jobId);
+
+            if (index === -1) {
               console.error(`⚠️ Job ${jobId} not found in DB`);
-              return; // If the job does not exist, exit the function
+              return;
             }
 
             // Extract state values from the modal submission
@@ -360,7 +361,7 @@ app.post("/slack/actions", async (req, res) => {
 
             // Construct the updated job object
             const updatedJob = {
-              ...job,
+              ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
                 timeZone: "America/New_York",
               }),
@@ -368,30 +369,21 @@ app.post("/slack/actions", async (req, res) => {
               supervisorUser:
                 state.supervisor_notify?.notify_supervisor?.selected_option
                   ?.value || null,
-              startDate: state.date?.datepickeraction?.selected_date || null,
-              startTime: state.time?.timepickeraction?.selected_time || null,
-              endDate: state.date?.datepickeraction?.selected_date || null,
-              endTime: state.time?.timepickeraction?.selected_time || null,
+              supervisorMessage: state.comments?.remarksinput?.value || null,
+              startDate: state.sdate?.datepickeraction?.selected_date || null,
+              startTime: state.stime?.timepickeraction?.selected_time || null,
+              endDate: state.edate?.datepickeraction?.selected_date || null,
+              endTime: state.etime?.timepickeraction?.selected_time || null,
               finish_pic:
-                state.picture.file_general_input.files.map(
+                state.picture?.file_general_input?.files?.map(
                   (file) => file.url_private
                 ) || [],
               status: "Waiting for Supervisor approval",
             };
+            jobList[index] = updatedJob;
 
-            // Step 1: Get full job array from DB
-            const jobList = (await getCachedData("daily", jobPath)) || [];
-
-            // Step 2: Update the matching job
-            const index = jobList.findIndex((job) => job.JobId === jobId);
-
-            if (index !== -1) {
-              jobList[index] = { ...jobList[index], ...updatedJob };
-            } else {
-              jobList.push(updatedJob); // fallback if not found
-            }
-            console.log("printing")
-            console.log(jobList)
+            console.log("printing");
+            console.log(jobList);
 
             const [_, res] = await Promise.all([
               pushAndInvalidate("daily", jobPath, jobList, true),
