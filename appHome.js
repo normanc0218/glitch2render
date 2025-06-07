@@ -54,7 +54,7 @@ let newData = [];
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*Job ID:* ${o.JobId}\n*Ordered by:* ${
+            text: `*Job ID:* ${o.jobId}\n*Ordered by:* ${
               o.Orderedby
             }\n*Description:* ${des}\n*Assign To:* ${
               o.maintenanceStaff || "N/A"
@@ -73,20 +73,20 @@ let newData = [];
       if (isAssignedToUser) {
         if (o.status === "Pending") {
           noteBlocks.push(
-            createButton("Accept", o.JobId, "accept_task"),
-            createButton("Reject", o.JobId, "reject_task", "danger")
+            createButton("Accept", o.jobId, "accept_task"),
+            createButton("Reject", o.jobId, "reject_task", "danger")
           );
         } else if (o.status.match("Accepted")) {
           noteBlocks.push(
-            createButton("Update Progress", o.JobId, "update_progress")
+            createButton("Update Progress", o.jobId, "update_progress")
           );
         }
       }
       // the work is done and ask Supervisor for approal
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
-        noteBlocks.push(createButton("Supervisor Approve?", o.JobId, "review_progress"))
+        noteBlocks.push(createButton("Supervisor Approve?", o.jobId, "review_progress"))
       }
-      noteBlocks.push(createD4Button("View Details", o.JobId, "view_detail"),
+      noteBlocks.push(createD4Button("View Details", o.jobId, "view_detail"),
         {
           type: "context",
           elements: [
@@ -133,13 +133,13 @@ const displayHome = async (user, data) => {
       jobs = [];
     }
 
-    const jobIndex = jobs.findIndex((job) => job.JobId === data.JobId);
+    const jobIndex = jobs.findIndex((job) => job.jobId === data.jobId);
 
     if (jobIndex > -1) {
-      console.log(`Updating JobId: ${data.JobId}`);
+      console.log(`Updating JobId: ${data.jobId}`);
       jobs[jobIndex] = { ...jobs[jobIndex], ...data };
     } else {
-      console.log(`Creating new job with JobId: ${data.JobId}`);
+      console.log(`Creating new job with JobId: ${data.jobId}`);
       jobs.push(data);
     }
 

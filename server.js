@@ -59,7 +59,7 @@ async function generateUniqueJobId() {
 
       for (const user in allUsers) {
         const userJobs = allUsers[user]?.data || [];
-        if (userJobs.some((job) => job.JobId === jobId)) {
+        if (userJobs.some((job) => job.jobId === jobId)) {
           exists = true;
           break;
         }
@@ -151,7 +151,7 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
           const jobId = await generateUniqueJobId();
           const data = {
-            JobId: jobId,
+            jobId: jobId,
             timestamp: ts.toLocaleString("en-US", {
               timeZone: "America/New_York",
             }),
@@ -185,7 +185,7 @@ app.post("/slack/actions", async (req, res) => {
           // Save job to DB (create or update)
           let jobs = await getCachedData("regular", "/data/"); // or "daily", "project"
 
-          const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
+          const jobIndex = jobs.findIndex((job) => job.jobId === jobId);
           if (jobIndex > -1) {
             jobs[jobIndex] = { ...jobs[jobIndex], ...data };
           } else {
@@ -201,13 +201,13 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
           const data = (await getCachedData("regular", "/data/")) || [];
-          const job = data.find((item) => item.JobId === jobId);
+          const job = data.find((item) => item.jobId === jobId);
           const updatedData = {
             startDate: view.state.values.datepicker.accept_date.selected_date,
             startTime: view.state.values.timepicker.accept_time.selected_time,
             remarks: view.state.values.signature.remarks_input.value,
             status: `Accepted by ${view.state.values.accept_block.whoaccept.selected_option.text.text}`,
-            JobId: jobId,
+            jobId: jobId,
           };
           const msg = `✅ Job *${jobId}* was *accepted* by <@${user.id}> on ${updatedData.acceptdate} at ${updatedData.accepttime}.\n *Status update:* ${updatedData.status}`;
 
@@ -221,10 +221,10 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
           const data = (await getCachedData("regular", "/data/")) || [];
-          const job = data.find((item) => item.JobId === jobId);
+          const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
-            JobId: jobId,
+            jobId: jobId,
             rejectdate: view.state.values.datepicker.reject_date.selected_date,
             rejecttime: view.state.values.timepicker.reject_time.selected_time,
             rejectreason: view.state.values.reason.reason_input.value,
@@ -247,10 +247,10 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
           const data = (await getCachedData("regular", "/data/")) || [];
-          const job = data.find((item) => item.JobId === jobId);
+          const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
-            JobId: jobId,
+            jobId: jobId,
             updatedBy:
               view.state.values.accept_block?.whoupdate?.selected_option
                 ?.value || null,
@@ -311,10 +311,10 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
           const data = (await getCachedData("regular", "/data/")) || [];
-          const job = data.find((item) => item.JobId === jobId);
+          const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
-            JobId: jobId,
+            jobId: jobId,
 
             toolsChecked:
               view.state.values.tool_id.Maitenance_tool.selected_option
@@ -345,11 +345,11 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           const jobPath = `/data`;
-          const jobList = (await getCachedData("daily", jobPath)) || [];
-
+          const jobList= (await getCachedData("daily", jobPath)) || {};
+          console.log(jobList)
           try {
             // Step 2: Find the job to update
-            const index = jobList.findIndex((job) => job.JobId === jobId);
+            const index = jobList.findIndex((job) => job.jobId === jobId);
 
             if (index === -1) {
               console.error(`⚠️ Job ${jobId} not found in DB`);
@@ -382,8 +382,7 @@ app.post("/slack/actions", async (req, res) => {
             };
             jobList[index] = updatedJob;
 
-            console.log("printing");
-            console.log(jobList);
+
 
             const [_, res] = await Promise.all([
               pushAndInvalidate("daily", jobPath, jobList, true),
@@ -525,7 +524,6 @@ app.post("/slack/actions", async (req, res) => {
         } else if (action.action_id === "update_finish_project") {
           //Open modal for update progress
           const jobId = action.value;
-          console.log(view);
           await openModal_project_update(view.id, jobId);
         }
 
@@ -533,14 +531,12 @@ app.post("/slack/actions", async (req, res) => {
         else if (action.action_id === "approve_daily") {
           //Open modal for update progress
           const jobId = action.value;
-          console.log(jobId);
           await openModal_general_approval(view.id, jobId, true);
         }
         //Project approval
         else if (action.action_id === "approve_project") {
           //Open modal for update progress
           const jobId = action.value;
-          console.log(jobId);
           await openModal_general_approval(view.id, jobId);
         } else if (action.action_id.match(/add_/)) {
           await openModal(trigger_id);
