@@ -49,12 +49,12 @@ async function openModal_daily_job(trigger_id, userId) {
       createDivider(),
     ];
 
-    // 🚨 [CHANGED] Load existing jobs from /data instead of individual /jobs/jobId paths
+    // [CHANGED] Load existing jobs from /data instead of individual /jobs/jobId paths
     const allJobs = await getCachedData("daily", "/data", () =>
       Promise.resolve([]) // fallback default if no data
     );
 
-    // 🚨 [CHANGED] Use mutable array to track updates
+    // [CHANGED] Use mutable array to track updates
     const updatedJobs = [...allJobs];
 
     // 🔁 Fetch and cache calendar events
@@ -69,7 +69,7 @@ async function openModal_daily_job(trigger_id, userId) {
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
 
-        const jobExists = updatedJobs.find(j => j.jobId === jobId); // 🚨 [CHANGED] Check from flat array
+        const jobExists = updatedJobs.find(j => j.jobId === jobId); // [CHANGED] Check from flat array
 
         if (!jobExists) {
           const ordertime = extractTime(job.start);
@@ -91,12 +91,11 @@ async function openModal_daily_job(trigger_id, userId) {
             status: "Pending",
           };
 
-          updatedJobs.push(newJob); // 🚨 [CHANGED] Push to local array
+          updatedJobs.push(newJob); //[CHANGED] Push to local array
         }
       }
     }
 
-    // 🚨 [CHANGED] Save full array back to /data
     await pushAndInvalidate("daily", "/data", updatedJobs, true);
 
     const today = new Date().toLocaleDateString("en-CA", {

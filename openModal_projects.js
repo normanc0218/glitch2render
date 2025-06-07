@@ -9,7 +9,6 @@ const { fetchCalendar } = require("./fetchCalendar");
 const { maintenanceStaff, managerUsers } = require("./userConfig");
 
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-const { get: getDB, push: pushDB } = require("./db");
 
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
@@ -49,25 +48,29 @@ async function openModal_projects(trigger_id, userId) {
     let blocks = [
       createHeader("Maintenance Projects"),
       createTextSection(
-        "This is the long term project list, you just need to click *Finish* button when finished the job and upload the picture of your job for Chris to approve."
+        "This is the long term project list. Just click *Finish* when done and upload a picture for supervisor approval."
       ),
       createDivider(),
     ];
 
+    // [CHANGED] Load existing jobs from unified /data
+    const allJobs = await getCachedData("project", "/data", () =>
+      Promise.resolve([])
+    );
+    const updatedJobs = [...allJobs]; // Make a mutable copy
+
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
-      const events = await getCachedData("calendar", cacheKey, () => fetchCalendar(calendarId));
+      const events = await getCachedData("calendar", cacheKey, () =>
+        fetchCalendar(calendarId)
+      );
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const jobPath = `/jobs/${jobId}`;
+        const jobExists = updatedJobs.find(j => j.jobId === jobId); // [CHANGED] Check in array
 
-        const existingJob = await getCachedData("project", jobPath, () =>
-          getDB("project", jobPath).catch(() => null)
-        );
-
-        if (!existingJob) {
+        if (!jobExists) {
           const ordertime = extractTime(job.start);
           const endTime = extractTime(job.end);
           const orderdate = extractDate(job.start);
@@ -87,19 +90,17 @@ async function openModal_projects(trigger_id, userId) {
             status: "Pending",
           };
 
-          await pushDB("project", jobPath, jobData, false);
-          await pushAndInvalidate("project", jobPath); // Invalidate cache
+          updatedJobs.push(jobData); // [CHANGED] Push to array instead of DB path
         }
       }
     }
 
-    const allJobs = await getCachedData("project", "/jobs", () =>
-      getDB("project", "/jobs").catch(() => ({}))
-    );
+    // [CHANGED] Save full updated array to /data
+    await pushAndInvalidate("project", "/data", updatedJobs, true);
 
-    for (const jobId in allJobs) {
-      const job = allJobs[jobId];
+    for (const job of updatedJobs) {
       const assignedSlackId = job.mStaff_id;
+
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n*Assigned To:* ${job.assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${job.orderdate} *Start Time:* ${job.ordertime}\n*End Date:* ${job.endDate} *End Time:* ${job.endTime}\n*Status:* ${job.status}`
@@ -111,7 +112,7 @@ async function openModal_projects(trigger_id, userId) {
       }
 
       if (assignedSlackId === userId && job.status === "Pending") {
-        blocks.push(createButton("Update Job", job.jobId, "update_finish_project"));
+        blocks.push(createButton("Finish", job.jobId, "update_finish_project"));
       }
 
       blocks.push(createDivider());
