@@ -14,9 +14,8 @@ const { openModal_project_update} = require("./openModal_project_update.js");
 //general Approval
 const { openModal_general_approval} = require("./openModal_general_approval.js");
 
+const { getCachedData, pushAndInvalidate } = require("./cache/utils");
 
-const db2 = require("./db2")
-const db3 = require("./db3")
 const {  threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -162,12 +161,8 @@ app.post("/slack/actions", async (req, res) => {
           data.messageTs = messageTs;
 
           // Save job to DB (create or update)
-          let jobs = [];
-          try {
-            jobs = await db.getData("/data/");
-          } catch {
-            jobs = [];
-          }
+          let jobs = await getCachedData("regular", "/data/"); // or "daily", "project"
+
 
           const jobIndex = jobs.findIndex((job) => job.JobId === jobId);
           if (jobIndex > -1) {
@@ -326,7 +321,7 @@ app.post("/slack/actions", async (req, res) => {
             };
 
             // Save the updated job to the DB (merge instead of overwrite)
-            await db2.push(jobPath, updatedJob, false);  // false = merge
+            await getCachedData("regular", "/data/")
             // Optional: Notify a Slack channel about the job completion
             try {
               const res = await axios.post(
