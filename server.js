@@ -322,7 +322,7 @@ app.post("/slack/actions", async (req, res) => {
             extrahelp: view.state.values.clean_input.name_clean.value || null,
 
             supervisorcomment:
-              view.state.values.other_reason_input.detailOfJob.value || null,
+              view.state.values.other_input.detailOfJob.value || null,
 
             // Completion status
             status: " 👍 *Approved and Completed*",
@@ -332,7 +332,7 @@ app.post("/slack/actions", async (req, res) => {
             checkTime:
               view.state.values.time?.timepickeraction?.selected_time || null,
           };
-          const msg = `✅ Job *${jobId}* was *approved and completed* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}`;
+          const msg = `✅ Job *${jobId}* was *approved* by <@${user.id}> on ${updatedData.checkDate} at ${updatedData.checkTime}.\n *Status update:* ${updatedData.status}`;
 
           await Promise.all([
             displayHome(user, updatedData),
@@ -379,6 +379,7 @@ app.post("/slack/actions", async (req, res) => {
               status: "Waiting for Supervisor approval",
             };
             // Run DB update and Slack post in parallel
+            console.log(typeof updatedJob)
             const [_, res] = await Promise.all([
               pushAndInvalidate("daily", jobPath, updatedJob, false),
               axios.post(
