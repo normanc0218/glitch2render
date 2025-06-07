@@ -384,7 +384,8 @@ app.post("/slack/actions", async (req, res) => {
             console.log("----")
             console.log(index)
 
-            await pushAndInvalidate("daily", jobPath, jobList, true)
+            const result = await pushAndInvalidate("daily", jobPath, jobList, true);
+            console.log("✅ DB push result:", result); // Should be `true` or defined
 
             const res = await axios.post(
                 "https://slack.com/api/chat.postMessage",

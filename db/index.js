@@ -1,19 +1,17 @@
 // db/index.js
 const { JsonDB, Config } = require("node-json-db");
 
-// Initialize separate JSON databases for different categories
-const JSONdb1 = new JsonDB(new Config("regularJobsDB", true, false, "/"));   // For regular maintenance jobs
-const JSONdb2 = new JsonDB(new Config("calendarJobsDB", true, true, "/"));   // For calendar/daily jobs
-const JSONdb3 = new JsonDB(new Config("ProjectJobsDB", true, true, "/"));    // For long-term project jobs
+// DB initializations
+const JSONdb1 = new JsonDB(new Config("regularJobsDB", true, false, "/"));
+const JSONdb2 = new JsonDB(new Config("calendarJobsDB", true, false, "/"));
+const JSONdb3 = new JsonDB(new Config("ProjectJobsDB", true, false, "/"));
 
-// Map each logical type to its corresponding DB instance
 const sourceMap = {
   regular: JSONdb1,
   daily: JSONdb2,
   project: JSONdb3,
 };
 
-// Retrieve the correct database based on type; fallback to 'regular' if unknown
 function getSource(type = "regular") {
   if (!sourceMap[type]) {
     console.warn(`⚠️ Unknown DB type "${type}", fallback to "regular"`);
@@ -21,27 +19,28 @@ function getSource(type = "regular") {
   return sourceMap[type] || sourceMap.regular;
 }
 
-// Export unified API for all DB operations
 module.exports = {
-  get: async (type, path) => {
+  get: (type, path) => {
     const db = getSource(type);
     console.log(`📥 DB GET [${type}] ${path}`);
     return db.getData(path);
   },
 
-  push: async (type, path, data, override = true) => {
+  push: (type, path, data, override = true) => {
     const db = getSource(type);
     console.log(`📤 DB PUSH [${type}] ${path}`);
-    return db.push(path, data, override);
+    db.push(path, data, override);
+    return true; // Indicate success explicitly
   },
 
-  delete: async (type, path) => {
+  delete: (type, path) => {
     const db = getSource(type);
     console.log(`🗑️ DB DELETE [${type}] ${path}`);
-    return db.delete(path);
+    db.delete(path);
+    return true;
   },
 
-  exists: async (type, path) => {
+  exists: (type, path) => {
     const db = getSource(type);
     console.log(`🔍 DB EXISTS? [${type}] ${path}`);
     return db.exists(path);

@@ -28,9 +28,11 @@ async function getCachedData(type = "regular", path = "/data/", fallbackFn) {
 
 // Push data to DB and invalidate the corresponding cache entry
 async function pushAndInvalidate(type, path, data, override = true) {
-  await db.push(type, path, data, override);
+  const result = db.push(type, path, data, override); // now sync
   cache.delete(makeKey(type, path));
+  return result; // if needed for confirmation
 }
+
 
 module.exports = {
   getCachedData,
