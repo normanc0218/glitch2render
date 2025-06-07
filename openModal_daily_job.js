@@ -1,14 +1,16 @@
 const axios = require("axios");
 const { fetchCalendar } = require("./fetchCalendar");
-const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig");
+const { maintenanceStaff, managerUsers } = require("./userConfig");
 const {
   createTextSection,
   createDivider,
   createHeader,
   createButton
 } = require("./blockBuilder");
-const db2 = require(`./db2`);
-// Extracts time from ISO or returns "(All day)" for date-only entries
+
+const { getCachedData, pushAndInvalidate } = require("./cache/utils");
+const { get: getDB, push: pushDB } = require("./db"); 
+
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
@@ -47,15 +49,19 @@ async function openModal_daily_job(trigger_id, userId) {
       createHeader("🗓️ Daily Jobs from Multiple Calendars"),
       createDivider(),
     ];
+
+    // 🔁 Fetch and cache calendar events
     for (const { calendarId, assignedTo } of calendarAssignments) {
-      const events = await fetchCalendar(calendarId);
+      const cacheKey = `calendar:${calendarId}`;
+      const events = await getCachedData("calendar", cacheKey, () => fetchCalendar(calendarId));
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const existingJob = await db2
-          .getData(`/jobs/${jobId}`)
-          .catch(() => null);
+        const jobPath = `/jobs/${jobId}`;
+        const existingJob = await getCachedData("daily", jobPath, () =>
+          getDB("daily", jobPath).catch(() => null)
+        );
 
         if (!existingJob) {
           const ordertime = extractTime(job.start);
@@ -63,7 +69,7 @@ async function openModal_daily_job(trigger_id, userId) {
           const orderdate = extractDate(job.start);
           const endDate = extractDate(job.end);
 
-          await db2.push(`/jobs/${jobId}`, {
+          const newJob = {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
@@ -75,22 +81,28 @@ async function openModal_daily_job(trigger_id, userId) {
             endDate: endDate,
             endTime: endTime,
             status: "Pending",
-          });
+          };
+
+          await pushDB("daily", jobPath, newJob, false);
+          await pushAndInvalidate("daily", jobPath);
         }
       }
     }
-    const allJobs = await db2.getData("/jobs").catch(() => ({}));
+
+    // ⏱️ Fetch all today's jobs from cache or DB
+    const allJobs = await getCachedData("daily", "/jobs", () =>
+      getDB("daily", "/jobs").catch(() => ({}))
+    );
+
     const today = new Date().toLocaleDateString("en-CA", {
       timeZone: "America/New_York"
     });
+
     for (const jobId in allJobs) {
       const job = allJobs[jobId];
       const assignedSlackId = job.mStaff_id;
-      console.log(job.endDate)
-      console.log(today)
-      if (job.endDate && new Date(job.endDate) < new Date(today)) {
-        continue;
-}
+
+      if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
 
       blocks.push(
         createTextSection(
@@ -98,14 +110,14 @@ async function openModal_daily_job(trigger_id, userId) {
         )
       );
 
-      if (managerUsers.includes(userId) && job.status ==="Waiting for Supervisor approval") {
-        blocks.push(createButton("Approve the Job?", job.jobId, "approve_daily")
-                 )};               
-      // text, value, action_id
+      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
+        blocks.push(createButton("Approve the Job?", job.jobId, "approve_daily"));
+      }
 
-      if (assignedSlackId === userId && job.status ==="Pending") {
-                blocks.push(createButton("Update Job", job.jobId, "update_daily")
-                           )};
+      if (assignedSlackId === userId && job.status === "Pending") {
+        blocks.push(createButton("Update Job", job.jobId, "update_daily"));
+      }
+
       blocks.push({ type: "divider" });
     }
 
