@@ -196,6 +196,7 @@ function createImage( image_url, alt_text) {
     alt_text: alt_text
   };
 }
+
 function createButton(text, value, action_id, style = "primary") {
   
   return {
@@ -214,6 +215,23 @@ function createButton(text, value, action_id, style = "primary") {
     ],
   };
 }
+function createD4Button(text, value, action_id) {
+  
+  return {
+    type: "actions",
+    elements: [
+      {
+        type: "button",
+        text: {
+          type: "plain_text",
+          text,
+        },
+        value,
+        action_id,
+      },
+    ],
+  };
+}
 module.exports = {
   createInputBlock,
   createInputBlock_multistatic,
@@ -227,5 +245,6 @@ module.exports = {
   createDivider,
   createHeader,
   createImage,
-  createButton
+  createButton,
+  createD4Button
 };

@@ -6,6 +6,7 @@ const {
   createButton,
   createDivider,
   createTextSection,
+  createD4Button
 } = require("./blockBuilder");
 const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
 // Slack supervisor user ID
@@ -21,7 +22,7 @@ const updateView = async (user) => {
       createTextSection(
         "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people."
       ),
-      createButton("Submit an order", "order", "add_note")
+      createD4Button("Submit an order", "order", "add_note")
     );
   } else {
     blocks.push(
@@ -85,7 +86,7 @@ let newData = [];
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
         noteBlocks.push(createButton("Supervisor Approve?", o.JobId, "review_progress"))
       }
-      noteBlocks.push(createButton("View Details", o.JobId, "view_detail"),
+      noteBlocks.push(createD4Button("View Details", o.JobId, "view_detail"),
         {
           type: "context",
           elements: [

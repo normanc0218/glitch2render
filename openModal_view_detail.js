@@ -35,7 +35,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
     ];
     if (job.acceptdate || job.accepttime || job.remarks) {
       blocks.push(
-        createTextSection(`*Accept Date:* ${job.acceptdate || "N/A"}\n*Accept Time:* ${job.accepttime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`),
+        createTextSection(`*Accept Date:* ${job.startDate || "N/A"}\n*Accept Time:* ${job.startTime || "N/A"}\n*Remarks:* ${job.remarks || "None"}`),
         createDivider()
       );
     }
