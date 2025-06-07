@@ -346,7 +346,6 @@ app.post("/slack/actions", async (req, res) => {
 
           const jobPath = `/data`;
           const jobList= (await getCachedData("daily", jobPath)) || {};
-          console.log(jobList)
           try {
             // Step 2: Find the job to update
             const index = jobList.findIndex((job) => job.jobId === jobId);
@@ -381,10 +380,12 @@ app.post("/slack/actions", async (req, res) => {
               status: "Waiting for Supervisor approval",
             };
             jobList[index] = updatedJob;
+            console.log(jobList)
+            console.log("----")
+            console.log(index)
 
 
-
-            const [_, res] = await Promise.all([
+            const [dbr, res] = await Promise.all([
               pushAndInvalidate("daily", jobPath, jobList, true),
               axios.post(
                 "https://slack.com/api/chat.postMessage",
@@ -400,6 +401,7 @@ app.post("/slack/actions", async (req, res) => {
                 }
               ),
             ]);
+            console.log("DB push result:", dbr);
 
             // Handle Slack response
             if (res.data.ok) {
