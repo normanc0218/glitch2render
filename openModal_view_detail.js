@@ -26,7 +26,7 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 const openModal_view_detail = async(trigger_id, jobId) => {
     const data = await db.getData("/data") || [];
     console.log(data)
-    const job = data.find(item => item.JobId === jobId)
+    const job = data.find(item => item.jobId === jobId)
     const blocks = [
     createTextSection(`*Job ID:* ${job.jobId}`),
     createTextSection(`*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`),

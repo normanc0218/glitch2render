@@ -7,7 +7,7 @@ function makeKey(type, path) {
   return `${type}:${path}`;
 }
 
-async function getCachedData(type = "regular", path = "/data/", fallbackFn) {
+async function getCachedData(type = "regular", path = "/data", fallbackFn) {
   const key = makeKey(type, path);
 
   if (cache.has(key)) {
