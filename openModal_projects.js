@@ -89,7 +89,7 @@ async function openModal_projects(trigger_id, userId) {
     const blocks = [createHeader("Maitenance Projects"), createDivider()];
 
     for (const job of mergedJobs) {
-      if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
+      if (job.status.match("Pending") && new Date(job.endDate) < new Date(today)) continue;
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +

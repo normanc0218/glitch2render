@@ -23,7 +23,15 @@ module.exports = {
   get: (type, path) => {
     const db = getSource(type);
     console.log(`📥 DB GET [${type}] ${path}`);
-    return db.getData(path);
+    try {
+      return db.getData(path);
+    } catch (e) {
+      // If path not found, return empty array (for lists)
+      if (e.message && e.message.includes("Can't find dataPath")) {
+        return [];
+      }
+      throw e;
+    }
   },
 
   push: (type, path, data, override = true) => {

@@ -97,7 +97,7 @@ async function openModal_daily_job(trigger_id, userId) {
       createDivider(),
     ];
     for (const job of mergedJobs) {
-      if (job.status.match("Waiting") && new Date(job.endDate) < new Date(today)) continue;
+      if (job.status.match("Pending") && new Date(job.endDate) < new Date(today)) continue;
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
