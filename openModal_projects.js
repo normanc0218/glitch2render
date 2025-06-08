@@ -23,8 +23,10 @@ function extractDate(eventTime) {
 
 async function openModal_projects(trigger_id, userId) {
   const now = new Date();
-
+  const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
   try {
+        const allJobs = await getCachedData("project", "/data");
+    const jobMap = new Map(allJobs.map(job => [job.jobId, job]));
     const calendarAssignments = [
       {
         calendarId:
@@ -43,90 +45,65 @@ async function openModal_projects(trigger_id, userId) {
       },
     ];
 
-    const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
-
-    let blocks = [
-      createHeader("Maintenance Projects"),
-      createTextSection(
-        "This is the long term project list. Just click *Finish* when done and upload a picture for supervisor approval."
-      ),
-      createDivider(),
-    ];
-
-    // Load existing jobs from unified /data, falling back to DB automatically
-    const allJobs = await getCachedData("project", "/data");
-
-    const updatedJobs = [...allJobs]; // Make a mutable copy
-
-    for (const { calendarId, assignedTo } of calendarAssignments) {
+     for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
       const events = await getCachedData("calendar", cacheKey, () =>
         fetchCalendar(calendarId)
       );
+
       if (!events || events.length === 0) continue;
 
-      for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const jobExists = updatedJobs.find((j) => j.jobId === jobId); // [CHANGED] Check in array
+      for (const ev of events) {
+        const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
 
-        if (!jobExists) {
-          const ordertime = extractTime(job.start);
-          const endTime = extractTime(job.end);
-          const orderdate = extractDate(job.start);
-          const endDate = extractDate(job.end);
-
-          const jobData = {
+        if (!jobMap.has(jobId)) {
+                   jobMap.set(jobId, {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
-            location: job.location || null,
-            summary: job.summary || null,
-            description: job.description || null,
-            orderdate,
-            ordertime,
-            endDate,
-            endTime,
+            location: ev.location || null,
+            summary: ev.summary || null,
+            description: ev.description || null,
+            orderdate: extractDate(ev.start),
+            ordertime: extractTime(ev.start),
+            endDate: extractDate(ev.end),
+            endTime: extractTime(ev.end),
             status: "Pending",
-          };
-
-          updatedJobs.push(jobData); // [CHANGED] Push to array instead of DB path
+          })
+          console.log(`🆕 Added new calendar job: ${jobId}`);
+        } else {
+          console.log(`🟡 Skip existing job: ${jobId}`);
         }
       }
     }
+    const mergedJobs = Array.from(jobMap.values());
+    if (mergedJobs.length > allJobs.length) {
+      await pushAndInvalidate("project", "/data", mergedJobs, true);
+      console.log(`✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`);
+    }
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    const blocks = [
+      createHeader("Maitenance Projects"),
+      createDivider(),
+    ];
 
-    // [CHANGED] Save full updated array to /data
-    await pushAndInvalidate("project", "/data", updatedJobs, true);
-
-    for (const job of updatedJobs) {
-      const assignedSlackId = job.mStaff_id;
-
-      blocks.push(
-        createTextSection(
-          `*Job ID:* ${job.jobId}\n*Assigned To:* ${
-            job.assignedTo
-          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
-            job.summary || "(No summary)"
-          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
-            job.orderdate
-          } *Start Time:* ${job.ordertime}\n*End Date:* ${
-            job.endDate
-          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`
-        )
-      );
-
-      if (
-        managerUsers.includes(userId) &&
-        job.status === "Waiting for Supervisor approval"
-      ) {
-        blocks.push(
-          createButton("Approve the Job?", job.jobId, "approve_project")
-        );
+    for (const job of mergedJobs) {
+      if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
+      blocks.push(createTextSection(
+        `*Job ID:* ${job.jobId}\n` +
+        `*Assigned To:* ${job.assignedTo}\n` +
+        `*Location:* ${job.location || "(N/A)"}\n` +
+        `*Summary:* ${job.summary || "(N/A)"}\n` +
+        `*Start:* ${job.orderdate} ${job.ordertime}\n` +
+        `*End:* ${job.endDate} ${job.endTime}\n` +
+        `*Status:* ${job.status}`
+      ));
+      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
+        blocks.push(createButton("Approve the Job?", job.jobId, "approve_project"));
       }
-
-      if (assignedSlackId === userId && job.status === "Pending") {
-        blocks.push(createButton("Finish", job.jobId, "update_finish_project"));
+      if (job.mStaff_id === userId && job.status === "Pending") {
+        blocks.push(createButton("Update Job", job.jobId, "update_project"));
       }
-
       blocks.push(createDivider());
     }
 
@@ -166,5 +143,6 @@ async function openModal_projects(trigger_id, userId) {
     );
   }
 }
+
 
 module.exports = { openModal_projects };

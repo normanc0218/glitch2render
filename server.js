@@ -345,7 +345,7 @@ app.post("/slack/actions", async (req, res) => {
           const ts = new Date();
 
           const jobPath = `/data`;
-          const jobList= (await getCachedData("daily", jobPath)) || [];
+          const jobList = (await getCachedData("daily", jobPath)) || [];
           try {
             // Step 2: Find the job to update
             const index = jobList.findIndex((job) => job.jobId === jobId);
@@ -380,26 +380,28 @@ app.post("/slack/actions", async (req, res) => {
               status: "Waiting for Supervisor approval",
             };
             jobList[index] = updatedJob;
-            console.log(jobList)
-            console.log("----")
-            console.log(index)
 
-            const result = await pushAndInvalidate("daily", jobPath, jobList, true);
+            const result = await pushAndInvalidate(
+              "daily",
+              jobPath,
+              jobList,
+              true
+            );
             console.log("✅ DB push result:", result); // Should be `true` or defined
 
             const res = await axios.post(
-                "https://slack.com/api/chat.postMessage",
-                {
-                  channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                  text: `✅ *Daily Job ${jobId}* was completed.`,
+              "https://slack.com/api/chat.postMessage",
+              {
+                channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+                text: `✅ *Daily Job ${jobId}* was completed.`,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                  "Content-Type": "application/json",
                 },
-                {
-                  headers: {
-                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              )
+              }
+            );
 
             // Handle Slack response
             if (res.data.ok) {
@@ -420,15 +422,15 @@ app.post("/slack/actions", async (req, res) => {
 
           // Construct the job path for db3, making sure to include the jobId
           const jobPath = `/data`;
+          const jobList = (await getCachedData("daily", jobPath)) || [];
+
           try {
             // Try loading the existing job entry using the jobId
-            const job = await getCachedData("project", jobPath).catch(
-              () => null
-            );
+            const index = jobList.findIndex((job) => job.jobId === jobId);
 
-            if (!job) {
+            if (index === -1) {
               console.error(`⚠️ Job ${jobId} not found in DB`);
-              return; // If the job does not exist, exit the function
+              return;
             }
 
             // Extract state values from the modal submission
@@ -436,7 +438,7 @@ app.post("/slack/actions", async (req, res) => {
 
             // Construct the updated job object
             const updatedJob = {
-              ...job,
+              ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
                 timeZone: "America/New_York",
               }),
@@ -455,23 +457,31 @@ app.post("/slack/actions", async (req, res) => {
               status: "Waiting for Supervisor approval",
             };
 
-            const [_, res] = await Promise.all([
-              pushAndInvalidate("project", jobPath, updatedJob, false),
-              axios.post(
-                "https://slack.com/api/chat.postMessage",
-                {
-                  channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                  text: `✅ *Project Job ${jobId}* was completed.`,
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              ),
-            ]);
+            jobList[index] = updatedJob;
 
+            const result = await pushAndInvalidate(
+              "project",
+              jobPath,
+              jobList,
+              true
+            );
+            console.log("✅ DB push result:", result); // Should be `true` or defined
+
+            const res = await axios.post(
+              "https://slack.com/api/chat.postMessage",
+              {
+                channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+                text: `✅ *Daily Job ${jobId}* was completed.`,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            // Handle Slack response
             if (res.data.ok) {
               return res.data.ts;
             } else {
@@ -479,7 +489,7 @@ app.post("/slack/actions", async (req, res) => {
               return null;
             }
           } catch (error) {
-            console.error("Error in project_update:", error.message || error);
+            console.error("Error in daily_update:", error.message || error);
             return null;
           }
         }
