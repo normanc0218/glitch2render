@@ -25,9 +25,10 @@ const initialTime =  new Intl.DateTimeFormat("en-US", {
 }).format(new Date()); // e.g. "14:37"
 const openModal_view_detail = async(trigger_id, jobId) => {
     const data = await db.getData("/data") || [];
+    console.log(data)
     const job = data.find(item => item.JobId === jobId)
     const blocks = [
-    createTextSection(`*Job ID:* ${job.JobId}`),
+    createTextSection(`*Job ID:* ${job.jobId}`),
     createTextSection(`*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`),
     createTextSection(`*Description:* ${job.Description}`),
     createTextSection(`*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`),
