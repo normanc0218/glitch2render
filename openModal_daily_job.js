@@ -63,81 +63,58 @@ async function openModal_daily_job(trigger_id, userId) {
 
       if (!events || events.length === 0) continue;
 
-      for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+      for (const ev of events) {
+        const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
 
         if (!jobMap.has(jobId)) {
-          const ordertime = extractTime(job.start);
-          const endTime = extractTime(job.end);
-          const orderdate = extractDate(job.start);
-          const endDate = extractDate(job.end);
-
-          const newJob = {
+                   jobMap.set(jobId, {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
-            location: job.location || null,
-            summary: job.summary || null,
-            description: job.description || null,
-            orderdate: orderdate,
-            ordertime: ordertime,
-            endDate: endDate,
-            endTime: endTime,
+            location: ev.location || null,
+            summary: ev.summary || null,
+            description: ev.description || null,
+            orderdate: extractDate(ev.start),
+            ordertime: extractTime(ev.start),
+            endDate: extractDate(ev.end),
+            endTime: extractTime(ev.end),
             status: "Pending",
-          };
-
-          updatedJobs.push(newJob); //[CHANGED] Push to local array
+          })
+          console.log(`🆕 Added new calendar job: ${jobId}`);
         } else {
-          console.log(`🟡 Skipped existing job in DB: ${jobId}`);
+          console.log(`🟡 Skip existing job: ${jobId}`);
         }
       }
     }
-
-    let blocks = [
+    const mergedJobs = Array.from(jobMap.values());
+    if (mergedJobs.length > allJobs.length) {
+      await pushAndInvalidate("daily", "/data", mergedJobs, true);
+      console.log(`✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`);
+    }
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+    const blocks = [
       createHeader("🗓️ Daily Jobs from Multiple Calendars"),
       createDivider(),
     ];
-    if (updatedJobs.length > allJobs.length) {
-      await pushAndInvalidate("daily", "/data", updatedJobs, true);
-    }
 
-    const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: "America/New_York",
-    });
-
-    for (const job of updatedJobs) {
+    for (const job of mergedJobs) {
       if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
-
-      const assignedSlackId = job.mStaff_id;
-
-      blocks.push(
-        createTextSection(
-          `*Job ID:* ${job.jobId}\n*Assigned To:* ${
-            job.assignedTo
-          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
-            job.summary || "(No summary)"
-          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
-            job.orderdate
-          } *Start Time:* ${job.ordertime}\n*End Date:* ${
-            job.endDate
-          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`
-        )
-      );
-
-      if (
-        managerUsers.includes(userId) &&
-        job.status === "Waiting for Supervisor approval"
-      ) {
-        blocks.push(
-          createButton("Approve the Job?", job.jobId, "approve_daily")
-        );
+      blocks.push(createTextSection(
+        `*Job ID:* ${job.jobId}\n` +
+        `*Assigned To:* ${job.assignedTo}\n` +
+        `*Location:* ${job.location || "(N/A)"}\n` +
+        `*Summary:* ${job.summary || "(N/A)"}\n` +
+        `*Start:* ${job.orderdate} ${job.ordertime}\n` +
+        `*End:* ${job.endDate} ${job.endTime}\n` +
+        `*Status:* ${job.status}`
+      ));
+      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
+        blocks.push(createButton("Approve the Job?", job.jobId, "approve_daily"));
       }
-
-      if (assignedSlackId === userId && job.status === "Pending") {
+      if (job.mStaff_id === userId && job.status === "Pending") {
         blocks.push(createButton("Update Job", job.jobId, "update_daily"));
       }
-
-      blocks.push({ type: "divider" });
+      blocks.push(createDivider());
     }
 
     const modal = {
