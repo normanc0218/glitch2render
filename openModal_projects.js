@@ -53,10 +53,9 @@ async function openModal_projects(trigger_id, userId) {
       createDivider(),
     ];
 
-    // [CHANGED] Load existing jobs from unified /data
-    const allJobs = await getCachedData("project", "/data", () =>
-      Promise.resolve([])
-    );
+    // Load existing jobs from unified /data, falling back to DB automatically
+    const allJobs = await getCachedData("project", "/data");
+
     const updatedJobs = [...allJobs]; // Make a mutable copy
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
@@ -68,7 +67,7 @@ async function openModal_projects(trigger_id, userId) {
 
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const jobExists = updatedJobs.find(j => j.jobId === jobId); // [CHANGED] Check in array
+        const jobExists = updatedJobs.find((j) => j.jobId === jobId); // [CHANGED] Check in array
 
         if (!jobExists) {
           const ordertime = extractTime(job.start);
@@ -103,12 +102,25 @@ async function openModal_projects(trigger_id, userId) {
 
       blocks.push(
         createTextSection(
-          `*Job ID:* ${job.jobId}\n*Assigned To:* ${job.assignedTo}\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${job.summary || "(No summary)"}\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${job.orderdate} *Start Time:* ${job.ordertime}\n*End Date:* ${job.endDate} *End Time:* ${job.endTime}\n*Status:* ${job.status}`
+          `*Job ID:* ${job.jobId}\n*Assigned To:* ${
+            job.assignedTo
+          }\n*Machine Location:* ${job.location || " "}\n*Job Summary:* ${
+            job.summary || "(No summary)"
+          }\n*Job Description:* ${job.description || "(N/A)"}\n*Start Date:* ${
+            job.orderdate
+          } *Start Time:* ${job.ordertime}\n*End Date:* ${
+            job.endDate
+          } *End Time:* ${job.endTime}\n*Status:* ${job.status}`
         )
       );
 
-      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
-        blocks.push(createButton("Approve the Job?", job.jobId, "approve_project"));
+      if (
+        managerUsers.includes(userId) &&
+        job.status === "Waiting for Supervisor approval"
+      ) {
+        blocks.push(
+          createButton("Approve the Job?", job.jobId, "approve_project")
+        );
       }
 
       if (assignedSlackId === userId && job.status === "Pending") {
@@ -148,7 +160,10 @@ async function openModal_projects(trigger_id, userId) {
       }
     );
   } catch (error) {
-    console.error("Error fetching calendars or opening modal:", error.response?.data || error.message);
+    console.error(
+      "Error fetching calendars or opening modal:",
+      error.response?.data || error.message
+    );
   }
 }
 

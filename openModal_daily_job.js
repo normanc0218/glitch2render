@@ -26,11 +26,7 @@ async function openModal_daily_job(trigger_id, userId) {
 
   try {
     
-    const allJobs = await getCachedData(
-      "daily",
-      "/data",
-      () => Promise.resolve([]) // fallback default if no data
-    );
+    const allJobs = await getCachedData("daily", "/data");
     const jobMap = new Map(allJobs.map(job => [job.jobId, job]));
     
     const calendarAssignments = [
