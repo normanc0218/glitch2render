@@ -25,8 +25,8 @@ async function openModal_projects(trigger_id, userId) {
   const now = new Date();
   const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
   try {
-        const allJobs = await getCachedData("project", "/data");
-    const jobMap = new Map(allJobs.map(job => [job.jobId, job]));
+    const allJobs = await getCachedData("project", "/data");
+    const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
     const calendarAssignments = [
       {
         calendarId:
@@ -45,7 +45,7 @@ async function openModal_projects(trigger_id, userId) {
       },
     ];
 
-     for (const { calendarId, assignedTo } of calendarAssignments) {
+    for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
       const events = await getCachedData("calendar", cacheKey, () =>
         fetchCalendar(calendarId)
@@ -54,10 +54,10 @@ async function openModal_projects(trigger_id, userId) {
       if (!events || events.length === 0) continue;
 
       for (const ev of events) {
-        const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
+        const jobId = `JOB-${ev.etag?.slice(-10, -1)}`;
 
         if (!jobMap.has(jobId)) {
-                   jobMap.set(jobId, {
+          jobMap.set(jobId, {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
@@ -69,7 +69,7 @@ async function openModal_projects(trigger_id, userId) {
             endDate: extractDate(ev.end),
             endTime: extractTime(ev.end),
             status: "Pending",
-          })
+          });
           console.log(`🆕 Added new calendar job: ${jobId}`);
         } else {
           console.log(`🟡 Skip existing job: ${jobId}`);
@@ -79,27 +79,35 @@ async function openModal_projects(trigger_id, userId) {
     const mergedJobs = Array.from(jobMap.values());
     if (mergedJobs.length > allJobs.length) {
       await pushAndInvalidate("project", "/data", mergedJobs, true);
-      console.log(`✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`);
+      console.log(
+        `✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`
+      );
     }
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-    const blocks = [
-      createHeader("Maitenance Projects"),
-      createDivider(),
-    ];
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/New_York",
+    });
+    const blocks = [createHeader("Maitenance Projects"), createDivider()];
 
     for (const job of mergedJobs) {
       if (job.endDate && new Date(job.endDate) < new Date(today)) continue;
-      blocks.push(createTextSection(
-        `*Job ID:* ${job.jobId}\n` +
-        `*Assigned To:* ${job.assignedTo}\n` +
-        `*Location:* ${job.location || "(N/A)"}\n` +
-        `*Summary:* ${job.summary || "(N/A)"}\n` +
-        `*Start:* ${job.orderdate} ${job.ordertime}\n` +
-        `*End:* ${job.endDate} ${job.endTime}\n` +
-        `*Status:* ${job.status}`
-      ));
-      if (managerUsers.includes(userId) && job.status === "Waiting for Supervisor approval") {
-        blocks.push(createButton("Approve the Job?", job.jobId, "approve_project"));
+      blocks.push(
+        createTextSection(
+          `*Job ID:* ${job.jobId}\n` +
+            `*Assigned To:* ${job.assignedTo}\n` +
+            `*Location:* ${job.location || "(N/A)"}\n` +
+            `*Summary:* ${job.summary || "(N/A)"}\n` +
+            `*Start:* ${job.orderdate} ${job.ordertime}\n` +
+            `*End:* ${job.endDate} ${job.endTime}\n` +
+            `*Status:* ${job.status}`
+        )
+      );
+      if (
+        managerUsers.includes(userId) &&
+        job.status === "Waiting for Supervisor approval"
+      ) {
+        blocks.push(
+          createButton("Approve the Job?", job.jobId, "approve_project")
+        );
       }
       if (job.mStaff_id === userId && job.status === "Pending") {
         blocks.push(createButton("Update Job", job.jobId, "update_project"));
@@ -143,6 +151,5 @@ async function openModal_projects(trigger_id, userId) {
     );
   }
 }
-
 
 module.exports = { openModal_projects };
