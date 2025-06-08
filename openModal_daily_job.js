@@ -22,8 +22,17 @@ function extractDate(eventTime) {
 
 async function openModal_daily_job(trigger_id, userId) {
   const now = new Date();
+  const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
   try {
+    
+    const allJobs = await getCachedData(
+      "daily",
+      "/data",
+      () => Promise.resolve([]) // fallback default if no data
+    );
+    const jobMap = new Map(allJobs.map(job => [job.jobId, job]));
+    
     const calendarAssignments = [
       {
         calendarId:
@@ -42,22 +51,8 @@ async function openModal_daily_job(trigger_id, userId) {
       },
     ];
 
-    const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
-
-    let blocks = [
-      createHeader("🗓️ Daily Jobs from Multiple Calendars"),
-      createDivider(),
-    ];
-
-    // [CHANGED] Load existing jobs from /data instead of individual /jobs/jobId paths
-    const allJobs = await getCachedData(
-      "daily",
-      "/data",
-      () => Promise.resolve([]) // fallback default if no data
-    );
-
     // [CHANGED] Use mutable array to track updates
-    const updatedJobs = [...allJobs];
+    // const updatedJobs = [...allJobs];
 
     // 🔁 Fetch and cache calendar events
     for (const { calendarId, assignedTo } of calendarAssignments) {
@@ -71,9 +66,7 @@ async function openModal_daily_job(trigger_id, userId) {
       for (const job of events) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
 
-        const jobExists = updatedJobs.find((j) => j.jobId === jobId); // [CHANGED] Check from flat array
-
-        if (!jobExists) {
+        if (!jobMap.has(jobId)) {
           const ordertime = extractTime(job.start);
           const endTime = extractTime(job.end);
           const orderdate = extractDate(job.start);
@@ -100,6 +93,10 @@ async function openModal_daily_job(trigger_id, userId) {
       }
     }
 
+    let blocks = [
+      createHeader("🗓️ Daily Jobs from Multiple Calendars"),
+      createDivider(),
+    ];
     if (updatedJobs.length > allJobs.length) {
       await pushAndInvalidate("daily", "/data", updatedJobs, true);
     }
