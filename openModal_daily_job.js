@@ -29,10 +29,10 @@ async function openModal_daily_job(trigger_id, userId) {
 
   try {
     // 1. Load all local daily jobs (from cache; falls back to DB on cache miss)
-    const allJobs = await getCachedData("daily", "/data", fallbackFn);
+    const allJobs = await getCachedData("daily", "/data");
 
     const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
-
+    console.log(allJobs)
     // 2. Define all Google Calendar sources to check for new jobs
     const calendarAssignments = [
       {
@@ -62,7 +62,7 @@ async function openModal_daily_job(trigger_id, userId) {
       if (!freshEvents || freshEvents.length === 0) continue;
 
       // Get cached version of events
-      const cachedEvents = await getCachedData("calendar", cacheKey, () => []);
+      const cachedEvents = await getCachedData("daily", cacheKey, () => []);
 
       // Create a Map of cached jobIds to quickly check existing cache state
       const cachedJobMap = new Map(
@@ -72,62 +72,60 @@ async function openModal_daily_job(trigger_id, userId) {
         ])
       );
 
-      let updatedEventsForCache = [...cachedEvents]; // Will update if any changes
+//       let updatedEventsForCache = [...cachedEvents]; // Will update if any changes
 
-      for (const ev of freshEvents) {
-        const etagSuffix = ev.etag?.slice(-7, -1);
-        const jobId = `JOB-${jobDate}-${etagSuffix}`;
+//       for (const ev of freshEvents) {
+//         const etagSuffix = ev.etag?.slice(-10, -1);
+//         const jobId = `JOB-${jobDate}-${etagSuffix}`;
 
-        // Check if job exists in jobMap and cache with the same etag
-        const alreadyInDB = jobMap.has(jobId);
-        const sameInCache = cachedJobMap.get(jobId) === ev.etag;
+//         // Check if job exists in jobMap and cache with the same etag
+//         const alreadyInDB = jobMap.has(jobId);
+//         const sameInCache = cachedJobMap.get(jobId) === ev.etag;
 
-        if (alreadyInDB && sameInCache) {
-          console.log(`⏭️ Skipping unchanged job: ${jobId}`);
-          continue;
-        }
+//         if (alreadyInDB && sameInCache) {
+//           console.log(`⏭️ Skipping unchanged job: ${jobId}`);
+//           continue;
+//         }
 
-        const job = {
-          jobId,
-          assignedTo,
-          mStaff_id: maintenanceStaff[assignedTo],
-          location: ev.location || null,
-          summary: ev.summary || null,
-          description: ev.description || null,
-          orderdate: extractDate(ev.start),
-          ordertime: extractTime(ev.start),
-          endDate: extractDate(ev.end),
-          endTime: extractTime(ev.end),
-          status: "Pending",
-        };
+//         const job = {
+//           jobId,
+//           assignedTo,
+//           mStaff_id: maintenanceStaff[assignedTo],
+//           location: ev.location || null,
+//           summary: ev.summary || null,
+//           description: ev.description || null,
+//           orderdate: extractDate(ev.start),
+//           ordertime: extractTime(ev.start),
+//           endDate: extractDate(ev.end),
+//           endTime: extractTime(ev.end),
+//           status: "Pending",
+//         };
 
-        if (!alreadyInDB) {
-          console.log(`🆕 Adding job to jobMap: ${jobId}`);
-          jobMap.set(jobId, job);
-        }
+//         if (!alreadyInDB) {
+//           console.log(`🆕 Adding job to jobMap: ${jobId}`);
+//           jobMap.set(jobId, job);
+//         }
 
-        if (!sameInCache) {
-          console.log(`🔄 Updating cached event: ${jobId}`);
-          // Replace or add to cached events
-          updatedEventsForCache = updatedEventsForCache.filter(
-            (e) => `JOB-${jobDate}-${e.etag?.slice(-7, -1)}` !== jobId
-          );
-          updatedEventsForCache.push(ev);
-        }
-      }
+//         if (!sameInCache) {
+//           console.log(`🔄 Updating cached event: ${jobId}`);
+//           // Replace or add to cached events
+//           updatedEventsForCache = updatedEventsForCache.filter(
+//             (e) => `JOB-${jobDate}-${e.etag?.slice(-10, -1)}` !== jobId
+//           );
+//           updatedEventsForCache.push(ev);
+//         }
+//       }
 
-      // Update the cache if it changed
-      await pushAndInvalidate(
-        "calendar",
-        cacheKey,
-        updatedEventsForCache,
-        true
-      );
+//       // Update the cache if it changed
+//       await pushAndInvalidate(
+//         "daily",
+//         cacheKey,
+//         updatedEventsForCache,
+//         true
+//       );
+    }      
+    const mergedJobs = Array.from(jobMap.values());
 
-      console.log(
-        `✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`
-      );
-    }
     const today = new Date().toLocaleDateString("en-CA", {
       timeZone: "America/New_York",
     });
