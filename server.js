@@ -4,6 +4,7 @@ const { openModal_accept } = require("./openModal_accept.js");
 const { openModal_reject } = require("./openModal_reject.js");
 const { openModal_update_progress } = require("./openModal_update_progress.js");
 const { openModal_view_detail } = require("./openModal_view_detail.js");
+const { fetchCalendar } = require("./fetchCalendar.js");
 const {
   openModal_supervisor_approval,
 } = require("./openModal_supervisor_approval.js");
@@ -518,6 +519,43 @@ app.post("/slack/actions", async (req, res) => {
         //
         else if (action.action_id === "open_daily_job") {
           //Open home modal for Daily job
+          const jobDate = new Date()
+            .toISOString()
+            .split("T")[0]
+            .replace(/-/g, "");
+
+          const calendarAssignments = [
+            {
+              calendarId:
+                "3c900c9ad4cfa608582d351a1cffae1c54c08ad48cab7be68eb3921305a88352@group.calendar.google.com",
+              assignedTo: "Fai",
+            },
+            {
+              calendarId:
+                "8f1e07292ce07989c47cbacd57096717820a1eeeeb2426be8b58232fd7d01bc8@group.calendar.google.com",
+              assignedTo: "Sam",
+            },
+            {
+              calendarId:
+                "0d9e2d5f6cd5d2523b7df5b9f147d8738681fb7d7c3a7832747c41682bc24c20@group.calendar.google.com",
+              assignedTo: "Steven",
+            },
+          ];
+
+          for (const { calendarId, assignedTo } of calendarAssignments) {
+            const cacheKey = `calendar:${calendarId}`;
+            const freshEvents = await fetchCalendar(calendarId);
+            if (!freshEvents || freshEvents.length === 0) continue;
+            const cachedEvents = await getCachedData("calendar", cacheKey, () =>
+              fetchCalendar(calendarId)
+            );
+            const cachedJobMap = new Map(
+              cachedEvents.map((ev) => [
+                `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`,
+                ev.etag,
+              ])
+            );
+          }
           await openModal_daily_job(trigger_id, user.id);
         } else if (action.action_id === "update_daily") {
           //Open modal for update progress
