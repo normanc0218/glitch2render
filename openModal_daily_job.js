@@ -52,58 +52,78 @@ async function openModal_daily_job(trigger_id, userId) {
       },
     ];
 
-    // 3. Fetch and cache Google Calendar events for each staff member
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
-      // NOTE: type="calendar" here is only for API cache, NOT a real local DB type!
       const jobPrefix = `JOB-${jobDate}-`;
-      console.log(job)
-      // Check if any jobs for today from this calendar already exist
-      const hasTodayJobsFromCalendar = Array.from(jobMap.values()).some(
-        (job) =>
-          job.jobId.startsWith(jobPrefix) && job.assignedTo === assignedTo
+
+      // Always fetch fresh data from Google Calendar
+      const freshEvents = await fetchCalendar(calendarId);
+
+      if (!freshEvents || freshEvents.length === 0) continue;
+
+      // Get cached version of events
+      const cachedEvents = await getCachedData("calendar", cacheKey, () => []);
+
+      // Create a Map of cached jobIds to quickly check existing cache state
+      const cachedJobMap = new Map(
+        cachedEvents.map((ev) => [
+          `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`,
+          ev.etag,
+        ])
       );
 
-      if (hasTodayJobsFromCalendar) {
-        console.log(
-          `⏭️ Skipping ${assignedTo}'s calendar fetch — already in cache`
-        );
-        continue;
-      }
+      let updatedEventsForCache = [...cachedEvents]; // Will update if any changes
 
-      // Not found in cache, fetch from Google Calendar
-      const events = await getCachedData("calendar", cacheKey, () =>
-        fetchCalendar(calendarId)
-      );
+      for (const ev of freshEvents) {
+        const etagSuffix = ev.etag?.slice(-7, -1);
+        const jobId = `JOB-${jobDate}-${etagSuffix}`;
 
-      if (!events || events.length === 0) continue;
+        // Check if job exists in jobMap and cache with the same etag
+        const alreadyInDB = jobMap.has(jobId);
+        const sameInCache = cachedJobMap.get(jobId) === ev.etag;
 
-      for (const ev of events) {
-        const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
-        if (!jobMap.has(jobId)) {
-          jobMap.set(jobId, {
-            jobId,
-            assignedTo,
-            mStaff_id: maintenanceStaff[assignedTo],
-            location: ev.location || null,
-            summary: ev.summary || null,
-            description: ev.description || null,
-            orderdate: extractDate(ev.start),
-            ordertime: extractTime(ev.start),
-            endDate: extractDate(ev.end),
-            endTime: extractTime(ev.end),
-            status: "Pending",
-          });
-          console.log(`🆕 Added new calendar job: ${jobId}`);
-        } else {
-          console.log(`🟡 Skip existing job: ${jobId}`);
+        if (alreadyInDB && sameInCache) {
+          console.log(`⏭️ Skipping unchanged job: ${jobId}`);
+          continue;
+        }
+
+        const job = {
+          jobId,
+          assignedTo,
+          mStaff_id: maintenanceStaff[assignedTo],
+          location: ev.location || null,
+          summary: ev.summary || null,
+          description: ev.description || null,
+          orderdate: extractDate(ev.start),
+          ordertime: extractTime(ev.start),
+          endDate: extractDate(ev.end),
+          endTime: extractTime(ev.end),
+          status: "Pending",
+        };
+
+        if (!alreadyInDB) {
+          console.log(`🆕 Adding job to jobMap: ${jobId}`);
+          jobMap.set(jobId, job);
+        }
+
+        if (!sameInCache) {
+          console.log(`🔄 Updating cached event: ${jobId}`);
+          // Replace or add to cached events
+          updatedEventsForCache = updatedEventsForCache.filter(
+            (e) => `JOB-${jobDate}-${e.etag?.slice(-7, -1)}` !== jobId
+          );
+          updatedEventsForCache.push(ev);
         }
       }
-    }
 
-    const mergedJobs = Array.from(jobMap.values());
-    if (mergedJobs.length > allJobs.length) {
-      await pushAndInvalidate("daily", "/data", mergedJobs, true);
+      // Update the cache if it changed
+      await pushAndInvalidate(
+        "calendar",
+        cacheKey,
+        updatedEventsForCache,
+        true
+      );
+
       console.log(
         `✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`
       );
