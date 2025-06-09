@@ -28,11 +28,9 @@ async function openModal_daily_job(trigger_id, userId) {
   const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
   try {
-    // Step 1: Try loading all daily jobs from the cache first
-    let allJobs = await getCachedData("daily", "/data", async () => {
-      console.log("Cache miss: Fetching data from DB...");
-      return await fetchJobsFromDB();  // Placeholder for your DB fetch function
-    });
+    // 1. Load all local daily jobs (from cache; falls back to DB on cache miss)
+    const allJobs = await getCachedData("daily", "/data", fallbackFn);
+
     const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
     // 2. Define all Google Calendar sources to check for new jobs
     const calendarAssignments = [
