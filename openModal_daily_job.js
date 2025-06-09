@@ -9,7 +9,9 @@ const {
 } = require("./blockBuilder");
 
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-const fallbackFn = async () => {return []};
+const fallbackFn = async () => {
+  return [];
+};
 
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
@@ -27,10 +29,8 @@ async function openModal_daily_job(trigger_id, userId) {
 
   try {
     // 1. Load all local daily jobs (from cache; falls back to DB on cache miss)
-    console.log("1")
     const allJobs = await getCachedData("daily", "/data", fallbackFn);
-    console.log( allJobs)
-    
+
     const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
 
     // 2. Define all Google Calendar sources to check for new jobs
@@ -56,14 +56,29 @@ async function openModal_daily_job(trigger_id, userId) {
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const cacheKey = `calendar:${calendarId}`;
       // NOTE: type="calendar" here is only for API cache, NOT a real local DB type!
+      const jobPrefix = `JOB-${jobDate}-`;
+      console.log(job)
+      // Check if any jobs for today from this calendar already exist
+      const hasTodayJobsFromCalendar = Array.from(jobMap.values()).some(
+        (job) =>
+          job.jobId.startsWith(jobPrefix) && job.assignedTo === assignedTo
+      );
+
+      if (hasTodayJobsFromCalendar) {
+        console.log(
+          `⏭️ Skipping ${assignedTo}'s calendar fetch — already in cache`
+        );
+        continue;
+      }
+
+      // Not found in cache, fetch from Google Calendar
       const events = await getCachedData("calendar", cacheKey, () =>
         fetchCalendar(calendarId)
       );
 
       if (!events || events.length === 0) continue;
-      // 4. Only add jobs not already existing in the local jobMap
+
       for (const ev of events) {
-        // Generate jobId from date and event etag
         const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
         if (!jobMap.has(jobId)) {
           jobMap.set(jobId, {
@@ -101,7 +116,11 @@ async function openModal_daily_job(trigger_id, userId) {
       createDivider(),
     ];
     for (const job of mergedJobs) {
-      if (job.status.match("Pending") && new Date(job.endDate) < new Date(today)) continue;
+      if (
+        job.status.match("Pending") &&
+        new Date(job.endDate) < new Date(today)
+      )
+        continue;
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
