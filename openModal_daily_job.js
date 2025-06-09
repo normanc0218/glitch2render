@@ -9,13 +9,8 @@ const {
 } = require("./blockBuilder");
 
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-const fallbackEmpty = async () => {
-  // Optional: initialize empty entry in your DB
-  await db.set("myType", "/myPath", {}); // or [] depending on expected structure
+const fallbackFn = async () => {return []};
 
-  // Return empty object as fallback value
-  return {};
-};
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
@@ -33,9 +28,9 @@ async function openModal_daily_job(trigger_id, userId) {
   try {
     // 1. Load all local daily jobs (from cache; falls back to DB on cache miss)
     console.log("1")
-    const allJobs = await getCachedData("daily", "/data");
-    console.log("2")
-
+    const allJobs = await getCachedData("daily", "/data", fallbackFn);
+    console.log( allJobs)
+    
     const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
 
     // 2. Define all Google Calendar sources to check for new jobs
