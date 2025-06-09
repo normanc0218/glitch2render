@@ -1,30 +1,30 @@
 const { google } = require('googleapis');
+const { DateTime } = require('luxon');
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: './google_calendar_key.json', // Use your actual JSON key path
+  keyFile: './google_calendar_key.json',
   scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
 });
 
-const calendar = google.calendar({ version: 'v3', auth });
+const TIME_ZONE = 'America/New_York'; // GMT-4 during DST
 
 async function fetchCalendar(cId) {
-  const now = new Date();
+  const authClient = await auth.getClient();
+  const calendar = google.calendar({ version: 'v3', auth: authClient });
 
-  // Beginning of today (00:00:00)
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const now = DateTime.now().setZone(TIME_ZONE);
 
-  // End of today (23:59:59.999)
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  const startOfDay = now.startOf('day').toISO(); // e.g., 2025-06-09T00:00:00.000-04:00
+  const endOfDay = now.endOf('day').toISO();     // e.g., 2025-06-09T23:59:59.999-04:00
 
   const res = await calendar.events.list({
     calendarId: cId,
-    timeMin: startOfDay.toISOString(),
-    timeMax: endOfDay.toISOString(),
+    timeMin: startOfDay,
+    timeMax: endOfDay,
     singleEvents: true,
     orderBy: 'startTime',
-    timeZone: 'America/New_York' // Optional but recommended
+    timeZone: TIME_ZONE,
   });
-
 
   return res.data.items;
 }

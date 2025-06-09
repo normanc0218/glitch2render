@@ -23,7 +23,8 @@
     "google-auth-library": "^9.15.1",
     "open": "^10.1.2",
     "googleapis": "^149.0.0",
-    "lru-cache": "^11.1.0"
+    "lru-cache": "^11.1.0",
+    "luxon": "^3.6.1"
   },
   "engines": {
     "node": "14.x"
