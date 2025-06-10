@@ -71,6 +71,8 @@ app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
   const { type, challenge, event } = req.body;
+  console.log("Received request body:", req.body); // 🔍 Check incoming data
+
   if (event.type === "app_home_opened") {
     console.log("App home opened by user:", event.user);
     await displayHome(event.user); // Ensure this passes correct user ID
