@@ -9,9 +9,24 @@
             "description": "Daily Check",
             "orderdate": "2025-06-09",
             "ordertime": "09:00",
-            "endDate": "2025-06-09",
-            "endTime": "09:30",
-            "status": "Pending"
+            "endDate": "2025-06-10",
+            "endTime": "00:27",
+            "status": " 👍 Approved and Completed",
+            "timestamp": "6/10/2025, 12:30:34 AM",
+            "remarks": "l",
+            "supervisorUser": "U06DSKC32E4",
+            "supervisorMessage": null,
+            "startDate": "2025-06-10",
+            "startTime": "00:27",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F091E74BDQQ/img_3479.jpg"
+            ],
+            "checkDate": "2025-06-10",
+            "checkTime": "00:30",
+            "toolsChecked": "Yes",
+            "extrahelp": null,
+            "supervisorcomment": null,
+            "cleaningNeed": "Yes"
         },
         {
             "jobId": "JOB-20250610-692414-D",
@@ -65,15 +80,18 @@
             "ordertime": "09:45",
             "endDate": null,
             "endTime": null,
-            "status": "Waiting for Supervisor approval",
-            "timestamp": "6/9/2025, 11:58:58 PM",
-            "remarks": "s",
+            "status": " 👍 Approved and Completed",
+            "timestamp": "6/10/2025, 12:31:04 AM",
+            "remarks": "o",
             "supervisorUser": "U06DSKC32E4",
             "startDate": null,
             "startTime": null,
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090HGERRA7/img_3748.jpg"
-            ]
+                "https://files.slack.com/files-pri/TH1AQELNT-F090RKZGB26/img_3479.jpg"
+            ],
+            "checkDate": "2025-06-10",
+            "checkTime": "00:30",
+            "toolsChecked": "Yes"
         },
         {
             "jobId": "JOB-073950-P",
@@ -87,6 +105,33 @@
             "endDate": "2025-06-30",
             "endTime": "18:00",
             "status": "Pending"
+        }
+    ],
+    "regular": [
+        {
+            "jobId": "JOB-20250610-EKNG",
+            "timestamp": "6/10/2025, 12:34:39 AM",
+            "Orderedby": "norman",
+            "machineLocation": "#7 Machine",
+            "finder": "s",
+            "Description": "s",
+            "maintenanceStaff": [
+                "Fai"
+            ],
+            "mStaff_id": [
+                "U08V4M4RT8R"
+            ],
+            "picture": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F09134JA96D/img_3479.jpg"
+            ],
+            "orderdate": "2025-06-10",
+            "ordertime": "00:34",
+            "status": "Rejected by Fai",
+            "messageTs": "1749530079.114709",
+            "rejectdate": "2025-06-10",
+            "rejecttime": "00:36",
+            "rejectreason": "z",
+            "rejectby": "Fai"
         }
     ]
 }

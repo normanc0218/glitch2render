@@ -16,12 +16,14 @@ const nyDate = new Intl.DateTimeFormat('en-US', {
 const [month, day, year] = nyDate.split('/');
 const initialDate = `${year}-${month}-${day}`;
 
-const initialTime =  new Intl.DateTimeFormat("en-US", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "America/New_York"
-}).format(new Date()); // e.g. "14:37"
+function getNYTimeString() {
+  const d = new Date();
+  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const hh = ny.getHours().toString().padStart(2, '0');
+  const mm = ny.getMinutes().toString().padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+const initialTime = getNYTimeString();
 
 // list of managerUser IDs
 const {Supervisors} = require('./userConfig');

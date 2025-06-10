@@ -19,12 +19,14 @@ const nyDate = new Intl.DateTimeFormat("en-US", {
 const [month, day, year] = nyDate.split("/");
 const initialDate = `${year}-${month}-${day}`;
 
-const initialTime = new Intl.DateTimeFormat("en-US", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "America/New_York",
-}).format(new Date()); // e.g. "14:37"
+function getNYTimeString() {
+  const d = new Date();
+  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const hh = ny.getHours().toString().padStart(2, '0');
+  const mm = ny.getMinutes().toString().padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+const initialTime = getNYTimeString();
 
 const openModal_general_approval = async (
   viewId,
@@ -107,25 +109,29 @@ const openModal_general_approval = async (
   };
 
   // API call to open the modal
-  const args = {
-    token: process.env.SLACK_BOT_TOKEN, // Ensure correct bot token
-    view_id: viewId, // The trigger ID that comes from the button press
-    view: JSON.stringify(modal), // Pass the modal structure as JSON
-  };
-
-  try {
+ try {
     const result = await axios.post(
       "https://slack.com/api/views.update",
-      qs.stringify(args)
+      {
+        token: process.env.SLACK_BOT_TOKEN,
+        view_id: viewId,
+        view: modal   
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        },
+      }
     );
 
     if (result.data.ok) {
       console.log("Modal opened successfully!");
     } else {
-      console.error("Error opening modal:", result.data.error); // Log any error response
+      console.error("Error opening modal:", result.data.error, result.data);
     }
   } catch (error) {
-    console.error("Error during modal open request:", error.message); // Handle network or other errors
+    console.error("Error during modal open request:", error.message);
   }
 };
 
