@@ -98,7 +98,8 @@ async function openModal_daily_job(trigger_id, userId) {
             (job.startDate?`*Actual Start:* ${job.startDate} ${job.startTime}\n`:"") +
             (job.endDate?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
             (job.checkDate?`*Actual Start:* ${job.checkDate} ${job.checkTime}\n`:"") +
-            (job.remarks?`*Remarks:* ${job.remarks}\n`:"")+
+            (job.remarks?`*Remarks from Maintenance:* ${job.remarks}\n`:"")+
+            (job.supervisorUser?`*Supervisor in charge:* ${job.supervisorUser}\n`:"")+
             (job.supervisorMessage?`*Message to supervisor:* ${job.supervisorMessage}\n`:"")+
             (job.supervisorcomment?`*Supervisor Comments:* ${job.supervisorcomment}\n`:"")+
             (job.toolsChecked?`*Tools check?:* ${job.toolsChecked}\n`:"") +
@@ -108,7 +109,7 @@ async function openModal_daily_job(trigger_id, userId) {
       );
 
       if (
-        jon.superVisruserId) &&
+        job.supervisorUserID === userId &&
         job.status === "Waiting for Supervisor approval"
       ) {
         blocks.push(

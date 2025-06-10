@@ -12,19 +12,20 @@
             "orderEndDate": "2025-06-10",
             "OrderEndTime": "09:30",
             "status": " 👍 Approved and Completed",
-            "timestamp": "6/10/2025, 9:16:40 AM",
+            "timestamp": "6/10/2025, 9:56:48 AM",
             "remarks": "S",
-            "supervisorUser": "U06DSKC32E4",
+            "supervisorUserID": "U06DSKC32E4",
+            "supervisorUser": "Norman",
             "supervisorMessage": null,
             "startDate": "2025-06-10",
-            "startTime": "09:15",
+            "startTime": "09:55",
             "endDate": "2025-06-10",
-            "endTime": "09:13",
+            "endTime": "09:55",
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F091GCA77TJ/img_7499.jpg"
+                "https://files.slack.com/files-pri/TH1AQELNT-F091GK7DT32/img_7499.jpg"
             ],
             "checkDate": "2025-06-10",
-            "checkTime": "09:13",
+            "checkTime": "09:55",
             "toolsChecked": "Yes",
             "extrahelp": null,
             "supervisorcomment": null,
@@ -70,55 +71,6 @@
             "status": "Pending"
         }
     ],
-    "regular": [
-        {
-            "jobId": "JOB-20250610-3I8R",
-            "timestamp": "6/10/2025, 9:15:54 AM",
-            "Orderedby": "norman",
-            "machineLocation": "#7 Machine",
-            "finder": "D",
-            "Description": "D",
-            "assignedTo": [
-                "Fai"
-            ],
-            "mStaff_id": [
-                "U08V4M4RT8R"
-            ],
-            "picture": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090QUWEPJR/img_7499.jpg"
-            ],
-            "orderdate": "2025-06-10",
-            "ordertime": "09:13",
-            "status": " 👍 *Approved and Completed*",
-            "messageTs": "1749561354.269079",
-            "startDate": "2025-06-10",
-            "startTime": "09:12",
-            "remarks": "h",
-            "updatedBy": "Fai",
-            "issueCauses": [
-                "Wear or Tear",
-                "Operator error"
-            ],
-            "otherreason": null,
-            "toolsCollected": "Yes",
-            "resetConfirmed": null,
-            "supervisorUser": "Norman",
-            "supervisorUserId": "U06DSKC32E4",
-            "supervisorMessage": "b",
-            "otherStatuses": [],
-            "otherSpecify": "h",
-            "endDate": "2025-06-10",
-            "endTime": "09:12",
-            "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090R03982Z/img_3748.jpg"
-            ],
-            "toolsChecked": "Yes",
-            "extrahelp": null,
-            "supervisorcomment": null,
-            "checkDate": "2025-06-10",
-            "checkTime": "09:13"
-        }
-    ],
     "project": [
         {
             "jobId": "JOB-259294-P",
@@ -129,19 +81,22 @@
             "description": "easy job",
             "orderdate": "2025-06-05",
             "ordertime": "09:45",
-            "endDate": "2025-06-10",
-            "endTime": "09:13",
+            "orderEndDate": "2025-06-30",
+            "orderEndTime": "12:00",
             "status": " 👍 Approved and Completed",
-            "timestamp": "6/10/2025, 9:18:43 AM",
-            "remarks": "D",
-            "supervisorUser": "U06DSKC32E4",
+            "timestamp": "6/10/2025, 9:58:32 AM",
+            "remarks": "S",
+            "supervisorUserID": "U06DSKC32E4",
+            "supervisorUser": "Norman",
             "startDate": "2025-06-10",
-            "startTime": "09:17",
+            "startTime": "09:55",
+            "endDate": "2025-06-10",
+            "endTime": "09:55",
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090QVDJVKP/img_7499.jpg"
+                "https://files.slack.com/files-pri/TH1AQELNT-F090R79JUN9/img_7499.jpg"
             ],
             "checkDate": "2025-06-10",
-            "checkTime": "09:13",
+            "checkTime": "09:58",
             "toolsChecked": "Yes"
         },
         {
@@ -153,9 +108,35 @@
             "description": "Need to install the wire and electrical connection to the PLC",
             "orderdate": "2025-06-05",
             "ordertime": "09:00",
-            "endDate": "2025-06-30",
-            "endTime": "18:00",
+            "orderEndDate": "2025-06-30",
+            "orderEndTime": "18:00",
             "status": "Pending"
+        }
+    ],
+    "regular": [
+        {
+            "jobId": "JOB-20250610-2CEX",
+            "timestamp": "6/10/2025, 10:00:42 AM",
+            "Orderedby": "norman",
+            "machineLocation": "#7 Machine",
+            "finder": "G",
+            "Description": "H",
+            "assignedTo": [
+                "Fai"
+            ],
+            "mStaff_id": [
+                "U08V4M4RT8R"
+            ],
+            "picture": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F091GL372KA/img_7499.jpg"
+            ],
+            "orderdate": "2025-06-10",
+            "ordertime": "09:58",
+            "status": "Accepted by Fai",
+            "messageTs": "1749564043.000849",
+            "startDate": "2025-06-10",
+            "startTime": "09:58",
+            "remarks": "g"
         }
     ]
 }
