@@ -34,9 +34,11 @@ const updateView = async (user) => {
 
   let newData = [];
   try {
-    const rawData = await db.getData(`/regular`).catch(() => []);
-    newData = rawData.slice().reverse().slice(0, 50); // latest 50
+    newData = await db.getData(`/regular`).catch(() => []);
+    if (!Array.isArray(newData)) newData = [];
+    newData = newData.slice().reverse().slice(0, 50); // latest 50
   } catch (error) {
+    newData = [];
     console.error("Error fetching data:", error);
   }
 
@@ -62,8 +64,7 @@ const updateView = async (user) => {
           },
           accessory: {
             type: "image",
-            image_url:
-              (o.picture && o.picture[0]) || "https://via.placeholder.com/100",
+            image_url: (o.picture && o.picture[0]) || "https://via.placeholder.com/100",
             alt_text: "picture",
           },
         },
@@ -75,20 +76,17 @@ const updateView = async (user) => {
             createButton("Accept", o.jobId, "accept_task"),
             createButton("Reject", o.jobId, "reject_task", "danger")
           );
-        } else if (o.status.match("Accepted")) {
+        } else if (o.status && o.status.match("Accepted")) {
           noteBlocks.push(
             createButton("Update Progress", o.jobId, "update_progress")
           );
         }
       }
-      // the work is done and ask Supervisor for approal
+      // the work is done and ask Supervisor for approval
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
-        noteBlocks.push(
-          createButton("Supervisor Approve?", o.jobId, "review_progress")
-        );
+        noteBlocks.push(createButton("Supervisor Approve?", o.jobId, "review_progress"))
       }
-      noteBlocks.push(
-        createD4Button("View Details", o.jobId, "view_detail"),
+      noteBlocks.push(createD4Button("View Details", o.jobId, "view_detail"),
         {
           type: "context",
           elements: [
@@ -116,24 +114,21 @@ const updateView = async (user) => {
 
   return JSON.stringify(view);
 };
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection:", reason);
-});
+
 /* Display App Home */
 const displayHome = async (user, data) => {
-  console.log(`Displaying app home...`);
+  const userId = user.id || user;
+  const path = `/regular`;
+
+  let jobs = [];
+  try {
+    jobs = await db.getData(path);
+    if (!Array.isArray(jobs)) jobs = [];
+  } catch (err) {
+    jobs = [];
+  }
+
   if (data) {
-    const userId = user.id || user; // handle if user is string
-    const path = `/regular`;
-
-    let jobs = [];
-    try {
-      jobs = await db.getData(path);
-      if (!Array.isArray(jobs)) jobs = [];
-    } catch (err) {
-      jobs = [];
-    }
-
     const jobIndex = jobs.findIndex((job) => job.jobId === data.jobId);
 
     if (jobIndex > -1) {
@@ -146,17 +141,14 @@ const displayHome = async (user, data) => {
 
     await db.push(path, jobs, true);
   }
-  const userId = user.id || user;
+
   const args = {
     token: process.env.SLACK_BOT_TOKEN,
     user_id: userId,
     view: await updateView(userId),
   };
   try {
-    const result = await axios.post(
-      `${apiUrl}/views.publish`,
-      qs.stringify(args)
-    );
+    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
     if (result.data.error) {
       console.error("Slack API error:", result.data.error);
     }
@@ -165,4 +157,4 @@ const displayHome = async (user, data) => {
   }
 };
 
-module.exports = { db, displayHome };
+module.exports = { displayHome };

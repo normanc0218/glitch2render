@@ -19,8 +19,6 @@ const {
   openModal_general_approval,
 } = require("./openModal_general_approval.js");
 
-const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-
 const { threadNotify, notifyNewOrder } = require("./notifyChannel");
 const path = require("path");
 
@@ -28,7 +26,8 @@ const axios = require("axios");
 
 const crypto = require("crypto");
 const bodyParser = require("body-parser"); // Needed to get raw body
-const { db, displayHome } = require("./appHome");
+const { displayHome } = require("./appHome");
+const db = require("./db");
 const { openModal } = require("./openModal"); // Make sure this file and function exist
 const qs = require("qs");
 const signVerification = require("./signVerification");
@@ -56,7 +55,7 @@ async function generateUniqueJobId() {
     jobId = `JOB-${dateStr}-${randomStr}`;
     exists = false;
     try {
-      const allUsers = await getCachedData("regular", "/");
+      const allUsers = await db.getData("regular");
 
       for (const user in allUsers) {
         const userJobs = allUsers[user]?.data || [];
@@ -184,7 +183,7 @@ app.post("/slack/actions", async (req, res) => {
           data.messageTs = messageTs;
 
           // Save job to DB (create or update)
-          let jobs = await getCachedData("regular", "/data/"); // or "daily", "project"
+          let jobs = await db.getData("/regular"); // or "daily", "project"
 
           const jobIndex = jobs.findIndex((job) => job.jobId === jobId);
           if (jobIndex > -1) {
@@ -192,7 +191,7 @@ app.post("/slack/actions", async (req, res) => {
           } else {
             jobs.push(data);
           }
-          await pushAndInvalidate("regular", "/data/", jobs, true);
+          await db.push("/regular", data, true);
 
           // Now update user's home view (with full job info incl. messageTs)
           await displayHome(user, data);
@@ -201,7 +200,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = (await getCachedData("regular", "/data/")) || [];
+          const data = await db.get("/regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
           const updatedData = {
             startDate: view.state.values.datepicker.accept_date.selected_date,
@@ -221,7 +220,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "reject_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = (await getCachedData("regular", "/data/")) || [];
+          const data = await db.getData("regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
@@ -247,7 +246,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = (await getCachedData("regular", "/data/")) || [];
+          const data = await db.getData("regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
@@ -311,7 +310,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = (await getCachedData("regular", "/data/")) || [];
+          const data = await db.getData("regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
