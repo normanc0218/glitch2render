@@ -10,8 +10,17 @@
             "orderdate": "2025-06-09",
             "ordertime": "09:00",
             "endDate": "2025-06-09",
-            "endTime": "09:30",
-            "status": "Pending"
+            "endTime": "23:17",
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/9/2025, 11:18:17 PM",
+            "remarks": "g",
+            "supervisorUser": "U06DSKC32E4",
+            "supervisorMessage": null,
+            "startDate": "2025-06-09",
+            "startTime": "23:18",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090RE7FBLJ/img_3748.jpg"
+            ]
         },
         {
             "jobId": "JOB-20250610-692414",

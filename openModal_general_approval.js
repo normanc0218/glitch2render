@@ -89,7 +89,7 @@ const openModal_general_approval = async (
   );
   const modal = {
     type: "modal",
-    callback_id: "review_progress",
+    callback_id: "general_approval",
     private_metadata: jobId,
     title: {
       type: "plain_text",

@@ -400,7 +400,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "project_update") {
           const jobId = view.private_metadata;
           const ts = new Date();
-          const jobPath = `/project`; // <--- Make sure this matches你的 db 结构！
+          const jobPath = `/project`; 
           const jobList = await db.getData(jobPath).catch(() => []);
           try {
             const index = jobList.findIndex((job) => job.jobId === jobId);
@@ -451,6 +451,10 @@ app.post("/slack/actions", async (req, res) => {
             console.error("Error in project_update:", error.message || error);
             return null;
           }
+        }
+        //General Approval
+        else if (view.callback_id === "general_approval"){
+          
         }
       } else if (actions) {
         const action = actions[0];
