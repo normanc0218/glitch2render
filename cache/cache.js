@@ -1,8 +1,8 @@
-const { LRUCache } = require('lru-cache')
+// const { LRUCache } = require('lru-cache')
 
-const cache = new LRUCache({
-  max: 100,
-  ttl: 1000 * 60 * 3
-});
+// const cache = new LRUCache({
+//   max: 100,
+//   ttl: 1000 * 60 * 3
+// });
 
-module.exports = cache;
+// module.exports = cache;

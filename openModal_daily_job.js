@@ -1,14 +1,13 @@
 const axios = require("axios");
 const { fetchCalendar } = require("./fetchCalendar");
-const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig");
-const db2 = require(`./db2`);
-const { getCachedData, pushAndInvalidate } = require("./cache/utils");
+const { maintenanceStaff, managerUsers } = require("./userConfig");
+const db = require(`./db`);
 const {
   createTextSection,
   createDivider,
   createButton,
 } = require("./blockBuilder");
-// Extracts time from ISO or returns "(All day)" for date-only entries
+
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
@@ -43,6 +42,38 @@ async function openModal_daily_job(trigger_id, userId) {
 
     const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
+    // Read all jobs as an array (if none, default to empty)
+    let allJobs = await db.getData("/daily").catch(() => []);
+
+    // For each calendar assignment, add new jobs (if not already in the array)
+    for (const { calendarId, assignedTo } of calendarAssignments) {
+      const events = await fetchCalendar(calendarId);
+      if (!events || events.length === 0) continue;
+
+      for (const job of events) {
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+        const exists = allJobs.some(j => j.jobId === jobId);
+        if (!exists) {
+          allJobs.push({
+            jobId,
+            assignedTo,
+            mStaff_id: maintenanceStaff[assignedTo],
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate: extractDate(job.start),
+            ordertime: extractTime(job.start),
+            endDate: extractDate(job.end),
+            endTime: extractTime(job.end),
+            status: "Pending",
+          });
+        }
+      }
+    }
+
+    // Write back the merged array (overwrites old /daily)
+    await db.push("/daily", allJobs, true);
+
     let blocks = [
       {
         type: "header",
@@ -54,45 +85,8 @@ async function openModal_daily_job(trigger_id, userId) {
       },
       { type: "divider" },
     ];
-    for (const { calendarId, assignedTo } of calendarAssignments) {
-      const events = await fetchCalendar(calendarId);
-      if (!events || events.length === 0) continue;
 
-      for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
-        const existingJob = await db2
-          .getData(`/jobs/${jobId}`)
-          .catch(() => null);
-
-        if (!existingJob) {
-          const ordertime = extractTime(job.start);
-          const endTime = extractTime(job.end);
-          const orderdate = extractDate(job.start);
-          const endDate = extractDate(job.end);
-
-          await db2.push(`/jobs/${jobId}`, {
-            jobId,
-            assignedTo,
-            mStaff_id: maintenanceStaff[assignedTo],
-            location: job.location || null,
-            summary: job.summary || null,
-            description: job.description || null,
-            orderdate: orderdate,
-            ordertime: ordertime,
-            endDate: endDate,
-            endTime: endTime,
-            status: "Pending",
-          });
-        }
-      }
-    }
-    const allJobs = await db2.getData("/jobs").catch(() => ({}));
-
-    for (const jobId in allJobs) {
-      const job = allJobs[jobId];
-      const assignedSlackId = job.mStaff_id;
-
-            // Add job details to modal blocks
+    for (const job of allJobs) {
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
@@ -105,8 +99,6 @@ async function openModal_daily_job(trigger_id, userId) {
         )
       );
 
- 
-      // Conditional buttons for managers and staff
       if (
         managerUsers.includes(userId) &&
         job.status === "Waiting for Supervisor approval"
@@ -122,7 +114,6 @@ async function openModal_daily_job(trigger_id, userId) {
 
       blocks.push(createDivider());
     }
-
 
     const modal = {
       type: "modal",
