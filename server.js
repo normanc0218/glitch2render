@@ -55,23 +55,17 @@ async function generateUniqueJobId() {
     jobId = `JOB-${dateStr}-${randomStr}`;
     exists = false;
     try {
-      const allUsers = await db.getData("regular");
-
-      for (const user in allUsers) {
-        const userJobs = allUsers[user]?.data || [];
-        if (userJobs.some((job) => job.jobId === jobId)) {
-          exists = true;
-          break;
-        }
+      const allJobs = await db.getData("/regular").catch(() => []);
+      if (allJobs.some((job) => job.jobId === jobId)) {
+        exists = true;
       }
     } catch (error) {
-      // If /jobs doesn't exist yet, that's fine — it means no data yet
       exists = false;
     }
   }
-
   return jobId;
 }
+
 
 //events
 app.post("/slack/events", signVerification, async (req, res) => {
@@ -183,7 +177,7 @@ app.post("/slack/actions", async (req, res) => {
           data.messageTs = messageTs;
 
           // Save job to DB (create or update)
-          let jobs = await db.getData("/regular"); // or "daily", "project"
+          let jobs = await db.getData("/regular").catch(() => []); // or "daily", "project"
 
           const jobIndex = jobs.findIndex((job) => job.jobId === jobId);
           if (jobIndex > -1) {
@@ -193,14 +187,13 @@ app.post("/slack/actions", async (req, res) => {
           }
           await db.push("/regular", data, true);
 
-          // Now update user's home view (with full job info incl. messageTs)
           await displayHome(user, data);
         }
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.get("/regular").catch(() => []);
+          const data = await db.getData("/regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
           const updatedData = {
             startDate: view.state.values.datepicker.accept_date.selected_date,
@@ -220,7 +213,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "reject_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("regular").catch(() => []);
+          const data = await db.getData("/regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
@@ -246,7 +239,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("regular").catch(() => []);
+          const data = await db.getData("/regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {
@@ -310,7 +303,7 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("regular").catch(() => []);
+          const data = await db.getData("/regular").catch(() => []);
           const job = data.find((item) => item.jobId === jobId);
 
           const updatedData = {

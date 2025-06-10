@@ -52,5 +52,55 @@
             "endTime": "21:30",
             "status": "Pending"
         }
+    ],
+    "regular": [
+        {
+            "jobId": "JOB-20250610-DE3A",
+            "timestamp": "6/9/2025, 11:15:21 PM",
+            "Orderedby": "norman",
+            "machineLocation": "#7 Machine",
+            "finder": "q",
+            "Description": "1",
+            "maintenanceStaff": [
+                "Fai"
+            ],
+            "mStaff_id": [
+                "U08V4M4RT8R"
+            ],
+            "picture": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F091E1KP9L0/img_3479.jpg"
+            ],
+            "orderdate": "2025-06-09",
+            "ordertime": "23:13",
+            "status": " 👍 *Approved and Completed*",
+            "messageTs": "1749525322.062179",
+            "startDate": "2025-06-09",
+            "startTime": "23:13",
+            "remarks": "s",
+            "updatedBy": "Fai",
+            "issueCauses": [
+                "Wear or Tear"
+            ],
+            "otherreason": null,
+            "toolsCollected": "Yes",
+            "resetConfirmed": null,
+            "supervisorUser": "Norman",
+            "supervisorUserId": "U06DSKC32E4",
+            "supervisorMessage": "s",
+            "otherStatuses": [
+                "Waiting for parts"
+            ],
+            "otherSpecify": null,
+            "endDate": "2025-06-09",
+            "endTime": "23:13",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090RE2DJD8/img_3748.jpg"
+            ],
+            "toolsChecked": "Yes",
+            "extrahelp": null,
+            "supervisorcomment": null,
+            "checkDate": "2025-06-09",
+            "checkTime": "23:13"
+        }
     ]
 }
