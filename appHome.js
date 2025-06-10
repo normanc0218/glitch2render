@@ -15,6 +15,22 @@ const updateView = async (user) => {
   let blocks = [
     createButton("📅 Daily Job", "daily_job", "open_daily_job"),
     createButton(":dart:Projects:dart:", "long_project", "long_project"),
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "View Google Sheet"
+          },
+          "url": "https://docs.google.com/spreadsheets/d/1RNT-dSBH2nC1C369jUwyajtLaNSdHHeMEhL7OK_Yrdg/edit?usp=sharing",
+        }
+      ]
+    }
+  ]
+}
+
   ];
   if (managerUsers.includes(user)) {
     blocks.push(
