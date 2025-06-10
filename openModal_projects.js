@@ -7,13 +7,13 @@ const {
 } = require("./blockBuilder");
 const { fetchCalendar } = require("./fetchCalendar");
 const { maintenanceStaff, managerUsers } = require("./userConfig");
-const db = require("./project")
+const db = require("./db");
+
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
   return "N/A";
 }
-
 function extractDate(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[0];
@@ -21,10 +21,14 @@ function extractDate(eventTime) {
 
 async function openModal_projects(trigger_id, userId) {
   const now = new Date();
-  const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
+  const today = now.toISOString().split("T")[0];
+  const jobDate = today.replace(/-/g, "");
+
   try {
-    const allJobs = await db.getData("project").catch([]);
-    const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
+    // 1. 先加载 DB 所有 project 任务
+    let allJobs = await db.getData("/project").catch(() => []);
+
+    // 2. 补充 Google Calendar 新任务
     const calendarAssignments = [
       {
         calendarId:
@@ -44,50 +48,41 @@ async function openModal_projects(trigger_id, userId) {
     ];
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
-      const cacheKey = `calendar:${calendarId}`;
-      const events = await getCachedData("calendar", cacheKey, () =>
-        fetchCalendar(calendarId)
-      );
-
+      const events = await fetchCalendar(calendarId);
       if (!events || events.length === 0) continue;
 
-      for (const ev of events) {
-        const jobId = `JOB-${ev.etag?.slice(-10, -1)}`;
-
-        if (!jobMap.has(jobId)) {
-          jobMap.set(jobId, {
+      for (const job of events) {
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}-P`;
+        const exists = allJobs.some(j => j.jobId === jobId);
+        if (!exists) {
+          allJobs.push({
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
-            location: ev.location || null,
-            summary: ev.summary || null,
-            description: ev.description || null,
-            orderdate: extractDate(ev.start),
-            ordertime: extractTime(ev.start),
-            endDate: extractDate(ev.end),
-            endTime: extractTime(ev.end),
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate: extractDate(job.start),
+            ordertime: extractTime(job.start),
+            endDate: extractDate(job.end),
+            endTime: extractTime(job.end),
             status: "Pending",
           });
-          console.log(`🆕 Added new calendar job: ${jobId}`);
-        } else {
-          console.log(`🟡 Skip existing job: ${jobId}`);
         }
       }
     }
-    const mergedJobs = Array.from(jobMap.values());
-    if (mergedJobs.length > allJobs.length) {
-      await pushAndInvalidate("project", "/data", mergedJobs, true);
-      console.log(
-        `✅ DB updated with ${mergedJobs.length - allJobs.length} new job(s)`
-      );
-    }
-    const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: "America/New_York",
-    });
-    const blocks = [createHeader("Maitenance Projects"), createDivider()];
 
-    for (const job of mergedJobs) {
-      if (job.status.match("Pending") && new Date(job.endDate) < new Date(today)) continue;
+    // 3. 渲染 Blocks
+    const blocks = [createHeader("Maintenance Projects"), createDivider()];
+
+    for (const job of allJobs) {
+      // 只显示未过期或已处理的
+      if (
+        job.status === "Pending" &&
+        job.endDate &&
+        new Date(job.endDate) < new Date(today)
+      )
+        continue;
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
@@ -113,6 +108,7 @@ async function openModal_projects(trigger_id, userId) {
       blocks.push(createDivider());
     }
 
+    // 4. 打开 Modal
     const modal = {
       type: "modal",
       callback_id: "job_modal",

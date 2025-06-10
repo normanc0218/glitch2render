@@ -396,7 +396,7 @@ app.post("/slack/actions", async (req, res) => {
         }
 
         // PROJECT JOB UPDATE
-        else if (view.callback_id === "project_update") {
+        else if (view.callback_id === "update_project") {
           const jobId = view.private_metadata;
           const ts = new Date();
           const jobPath = `/project`;
@@ -456,7 +456,7 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           const ts = new Date();
 
-          // 判断类型
+          // -P for project -D for Daily
           let jobPath = "/project";
           let jobType = "Project";
           if (jobId.endsWith("-D")) {
@@ -563,7 +563,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (action.action_id === "long_project") {
           //Open home modal for update progress
           await openModal_projects(trigger_id, user.id);
-        } else if (action.action_id === "update_finish_project") {
+        } else if (action.action_id === "update_project") {
           //Open modal for update progress
           const jobId = action.value;
           await openModal_project_update(view.id, jobId);

@@ -30,7 +30,7 @@ const superOption=Object.entries(Supervisors)
 const openModal_project_update = async (viewId, JobId) => {
   const modal = {
     type: "modal",
-    callback_id: "project_update",
+    callback_id: "update_project",
     private_metadata: JobId, // Store the Job ID in private metadata
     title: {
       type: "plain_text",
