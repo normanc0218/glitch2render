@@ -42,10 +42,10 @@ async function openModal_daily_job(trigger_id, userId) {
 
     const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
-    // Read all jobs as an array (if none, default to empty)
-    let allJobs = await db.getData("/daily").catch(() => []);
+    const ref = db.ref("jobs/daily");
+    const snapshot = await ref.once("value");
+    let allJobs = snapshot.val() ? Object.values(snapshot.val()) : [];
 
-    // For each calendar assignment, add new jobs (if not already in the array)
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
       if (!events || events.length === 0) continue;
@@ -54,7 +54,7 @@ async function openModal_daily_job(trigger_id, userId) {
         const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}-D`;
         const exists = allJobs.some(j => j.jobId === jobId);
         if (!exists) {
-          allJobs.push({
+          const newJob = {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
@@ -66,14 +66,11 @@ async function openModal_daily_job(trigger_id, userId) {
             orderEndDate: extractDate(job.end),
             OrderEndTime: extractTime(job.end),
             status: "Pending",
-          });
+          };
+          await ref.push(newJob); // ✅ push individually
+          allJobs.push(newJob);   // ✅ keep local list updated for display
         }
       }
-    }
-
-    // Write back the merged array (overwrites old /daily)
-    await db.push("/daily", allJobs, true);
-
     let blocks = [
       {
         type: "header",
@@ -153,7 +150,7 @@ async function openModal_daily_job(trigger_id, userId) {
         },
       }
     );
-  } catch (error) {
+  }} catch (error) {
     console.error(
       "Error fetching calendars or opening modal:",
       error.response?.data || error.message
