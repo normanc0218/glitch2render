@@ -419,10 +419,10 @@ app.post("/slack/actions", async (req, res) => {
               supervisorUser:
                 state.supervisor_notify?.notify_supervisor?.selected_option
                   ?.value || null,
-              startDate: state.date?.datepickeraction?.selected_date || null,
-              startTime: state.time?.timepickeraction?.selected_time || null,
-              endDate: state.date?.datepickeraction?.selected_date || null,
-              endTime: state.time?.timepickeraction?.selected_time || null,
+              startDate: state.sdate?.datepickeraction?.selected_date || null,
+              startTime: state.stime?.timepickeraction?.selected_time || null,
+              endDate: state.edate?.datepickeraction?.selected_date || null,
+              endTime: state.etime?.timepickeraction?.selected_time || null,
               finish_pic:
                 state.picture?.file_general_input?.files?.map(
                   (file) => file.url_private

@@ -10,23 +10,8 @@
             "orderdate": "2025-06-09",
             "ordertime": "09:00",
             "endDate": "2025-06-09",
-            "endTime": "23:34",
-            "status": " 👍 Approved and Completed",
-            "timestamp": "6/9/2025, 11:36:31 PM",
-            "remarks": "l",
-            "supervisorUser": "U06DSKC32E4",
-            "supervisorMessage": null,
-            "startDate": "2025-06-09",
-            "startTime": "23:35",
-            "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090RGPT0DS/img_3479.jpg"
-            ],
-            "checkDate": "2025-06-09",
-            "checkTime": "23:34",
-            "toolsChecked": "Yes",
-            "extrahelp": null,
-            "supervisorcomment": null,
-            "cleaningNeed": "Yes"
+            "endTime": "09:30",
+            "status": "Pending"
         },
         {
             "jobId": "JOB-20250610-692414-D",
@@ -68,54 +53,40 @@
             "status": "Pending"
         }
     ],
-    "regular": [
+    "project": [
         {
-            "jobId": "JOB-20250610-DE3A",
-            "timestamp": "6/9/2025, 11:15:21 PM",
-            "Orderedby": "norman",
-            "machineLocation": "#7 Machine",
-            "finder": "q",
-            "Description": "1",
-            "maintenanceStaff": [
-                "Fai"
-            ],
-            "mStaff_id": [
-                "U08V4M4RT8R"
-            ],
-            "picture": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F091E1KP9L0/img_3479.jpg"
-            ],
-            "orderdate": "2025-06-09",
-            "ordertime": "23:13",
-            "status": " 👍 *Approved and Completed*",
-            "messageTs": "1749525322.062179",
-            "startDate": "2025-06-09",
-            "startTime": "23:13",
+            "jobId": "JOB-259294-P",
+            "assignedTo": "Fai",
+            "mStaff_id": "U08V4M4RT8R",
+            "location": "boiler",
+            "summary": "new project",
+            "description": "easy job",
+            "orderdate": "2025-06-05",
+            "ordertime": "09:45",
+            "endDate": null,
+            "endTime": null,
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/9/2025, 11:58:58 PM",
             "remarks": "s",
-            "updatedBy": "Fai",
-            "issueCauses": [
-                "Wear or Tear"
-            ],
-            "otherreason": null,
-            "toolsCollected": "Yes",
-            "resetConfirmed": null,
-            "supervisorUser": "Norman",
-            "supervisorUserId": "U06DSKC32E4",
-            "supervisorMessage": "s",
-            "otherStatuses": [
-                "Waiting for parts"
-            ],
-            "otherSpecify": null,
-            "endDate": "2025-06-09",
-            "endTime": "23:13",
+            "supervisorUser": "U06DSKC32E4",
+            "startDate": null,
+            "startTime": null,
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090RE2DJD8/img_3748.jpg"
-            ],
-            "toolsChecked": "Yes",
-            "extrahelp": null,
-            "supervisorcomment": null,
-            "checkDate": "2025-06-09",
-            "checkTime": "23:13"
+                "https://files.slack.com/files-pri/TH1AQELNT-F090HGERRA7/img_3748.jpg"
+            ]
+        },
+        {
+            "jobId": "JOB-073950-P",
+            "assignedTo": "Steven",
+            "mStaff_id": "value-1",
+            "location": "#11 Machine",
+            "summary": "#11 Electrical Cabinet Installation",
+            "description": "Need to install the wire and electrical connection to the PLC",
+            "orderdate": "2025-06-05",
+            "ordertime": "09:00",
+            "endDate": "2025-06-30",
+            "endTime": "18:00",
+            "status": "Pending"
         }
     ]
 }

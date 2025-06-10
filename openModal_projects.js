@@ -25,10 +25,7 @@ async function openModal_projects(trigger_id, userId) {
   const jobDate = today.replace(/-/g, "");
 
   try {
-    // 1. 先加载 DB 所有 project 任务
     let allJobs = await db.getData("/project").catch(() => []);
-
-    // 2. 补充 Google Calendar 新任务
     const calendarAssignments = [
       {
         calendarId:
@@ -50,9 +47,8 @@ async function openModal_projects(trigger_id, userId) {
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
       if (!events || events.length === 0) continue;
-
       for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}-P`;
+        const jobId = `JOB-${job.etag?.slice(-7, -1)}-P`;
         const exists = allJobs.some(j => j.jobId === jobId);
         if (!exists) {
           allJobs.push({
@@ -71,12 +67,12 @@ async function openModal_projects(trigger_id, userId) {
         }
       }
     }
+    await db.push("/project", allJobs, true);
 
     // 3. 渲染 Blocks
     const blocks = [createHeader("Maintenance Projects"), createDivider()];
 
     for (const job of allJobs) {
-      // 只显示未过期或已处理的
       if (
         job.status === "Pending" &&
         job.endDate &&
