@@ -341,14 +341,15 @@ app.post("/slack/actions", async (req, res) => {
           ]);
         }
         // Update progress for daily job
+        // DAILY JOB UPDATE
         else if (view.callback_id === "daily_update") {
-          const jobId = view.private_metadata; // Job ID passed from the modal
+          const jobId = view.private_metadata; // Job ID from the modal
           const ts = new Date();
-
-          const jobPath = `/data`;
-          const jobList = (await getCachedData("daily", jobPath)) || [];
+          const jobPath = `/daily`;
+          // 1. Read all jobs (array), fallback to []
+          const jobList = await db.getData(jobPath).catch(() => []);
           try {
-            // Step 2: Find the job to update
+            // 2. Find the job by jobId
             const index = jobList.findIndex((job) => job.jobId === jobId);
 
             if (index === -1) {
@@ -356,10 +357,8 @@ app.post("/slack/actions", async (req, res) => {
               return;
             }
 
-            // Extract state values from the modal submission
+            // 3. Build updated job object
             const state = view.state.values;
-
-            // Construct the updated job object
             const updatedJob = {
               ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
@@ -382,19 +381,15 @@ app.post("/slack/actions", async (req, res) => {
             };
             jobList[index] = updatedJob;
 
-            const result = await pushAndInvalidate(
-              "daily",
-              jobPath,
-              jobList,
-              true
-            );
-            console.log("✅ DB push result:", result); // Should be `true` or defined
+            // 4. Save the whole array back
+            await db.push(jobPath, jobList, true);
 
-            const res = await axios.post(
+            // 5. (Optional) Notify Slack channel
+            await axios.post(
               "https://slack.com/api/chat.postMessage",
               {
                 channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                text: `✅ *Daily Job ${jobId}* was completed.`,
+                text: `✅ *Daily Job ${jobId}* was updated.`,
               },
               {
                 headers: {
@@ -403,30 +398,19 @@ app.post("/slack/actions", async (req, res) => {
                 },
               }
             );
-
-            // Handle Slack response
-            if (res.data.ok) {
-              return res.data.ts;
-            } else {
-              console.error("Slack API error:", res.data.error);
-              return null;
-            }
           } catch (error) {
             console.error("Error in daily_update:", error.message || error);
             return null;
           }
         }
-        // Update progress for Project
+
+        // PROJECT JOB UPDATE
         else if (view.callback_id === "project_update") {
-          const jobId = view.private_metadata; // Job ID passed from the modal
+          const jobId = view.private_metadata;
           const ts = new Date();
-
-          // Construct the job path for db3, making sure to include the jobId
-          const jobPath = `/data`;
-          const jobList = (await getCachedData("daily", jobPath)) || [];
-
+          const jobPath = `/project`; // <--- Make sure this matches你的 db 结构！
+          const jobList = await db.getData(jobPath).catch(() => []);
           try {
-            // Try loading the existing job entry using the jobId
             const index = jobList.findIndex((job) => job.jobId === jobId);
 
             if (index === -1) {
@@ -434,10 +418,7 @@ app.post("/slack/actions", async (req, res) => {
               return;
             }
 
-            // Extract state values from the modal submission
             const state = view.state.values;
-
-            // Construct the updated job object
             const updatedJob = {
               ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
@@ -452,27 +433,20 @@ app.post("/slack/actions", async (req, res) => {
               endDate: state.date?.datepickeraction?.selected_date || null,
               endTime: state.time?.timepickeraction?.selected_time || null,
               finish_pic:
-                state.picture.file_general_input.files.map(
+                state.picture?.file_general_input?.files?.map(
                   (file) => file.url_private
                 ) || [],
               status: "Waiting for Supervisor approval",
             };
 
             jobList[index] = updatedJob;
+            await db.push(jobPath, jobList, true);
 
-            const result = await pushAndInvalidate(
-              "project",
-              jobPath,
-              jobList,
-              true
-            );
-            console.log("✅ DB push result:", result); // Should be `true` or defined
-
-            const res = await axios.post(
+            await axios.post(
               "https://slack.com/api/chat.postMessage",
               {
                 channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                text: `✅ *Daily Job ${jobId}* was completed.`,
+                text: `✅ *Project Job ${jobId}* was updated.`,
               },
               {
                 headers: {
@@ -481,16 +455,8 @@ app.post("/slack/actions", async (req, res) => {
                 },
               }
             );
-
-            // Handle Slack response
-            if (res.data.ok) {
-              return res.data.ts;
-            } else {
-              console.error("Slack API error:", res.data.error);
-              return null;
-            }
           } catch (error) {
-            console.error("Error in daily_update:", error.message || error);
+            console.error("Error in project_update:", error.message || error);
             return null;
           }
         }
@@ -519,43 +485,6 @@ app.post("/slack/actions", async (req, res) => {
         //
         else if (action.action_id === "open_daily_job") {
           //Open home modal for Daily job
-          const jobDate = new Date()
-            .toISOString()
-            .split("T")[0]
-            .replace(/-/g, "");
-
-          const calendarAssignments = [
-            {
-              calendarId:
-                "3c900c9ad4cfa608582d351a1cffae1c54c08ad48cab7be68eb3921305a88352@group.calendar.google.com",
-              assignedTo: "Fai",
-            },
-            {
-              calendarId:
-                "8f1e07292ce07989c47cbacd57096717820a1eeeeb2426be8b58232fd7d01bc8@group.calendar.google.com",
-              assignedTo: "Sam",
-            },
-            {
-              calendarId:
-                "0d9e2d5f6cd5d2523b7df5b9f147d8738681fb7d7c3a7832747c41682bc24c20@group.calendar.google.com",
-              assignedTo: "Steven",
-            },
-          ];
-
-          for (const { calendarId, assignedTo } of calendarAssignments) {
-            const cacheKey = `calendar:${calendarId}`;
-            const freshEvents = await fetchCalendar(calendarId);
-            if (!freshEvents || freshEvents.length === 0) continue;
-            const cachedEvents = await getCachedData("calendar", cacheKey, () =>
-              fetchCalendar(calendarId)
-            );
-            const cachedJobMap = new Map(
-              cachedEvents.map((ev) => [
-                `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`,
-                ev.etag,
-              ])
-            );
-          }
           await openModal_daily_job(trigger_id, user.id);
         } else if (action.action_id === "update_daily") {
           //Open modal for update progress

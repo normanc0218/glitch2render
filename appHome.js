@@ -1,14 +1,13 @@
 const axios = require("axios");
 const qs = require("qs");
-const { JsonDB, Config } = require("node-json-db"); // Ensure this is your database module
+const db = require("./db");
 const apiUrl = "https://slack.com/api"; // Define Slack API URL
 const {
   createButton,
   createDivider,
   createTextSection,
-  createD4Button
+  createD4Button,
 } = require("./blockBuilder");
-const db = new JsonDB(new Config("regularJobsDB", true, false, "/")); // Adjust name and config as needed
 // Slack supervisor user ID
 const { maintenanceStaff, managerUsers } = require("./userConfig");
 //Update the view
@@ -33,20 +32,19 @@ const updateView = async (user) => {
     );
   }
 
-let newData = [];
+  let newData = [];
   try {
-    const rawData = await db.getData(`/data/`);
+    const rawData = await db.getData(`/regular`).catch(() => []);
     newData = rawData.slice().reverse().slice(0, 50); // latest 50
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 
-
   if (newData.length > 0) {
     for (const o of newData) {
       let des = o.Description || "(No description provided)";
       if (des.length > 3000) des = des.substr(0, 2980) + "... _(truncated)_";
-      const isAssignedToUser = o.mStaff_id.includes(user);
+      const isAssignedToUser = o.mStaff_id && o.mStaff_id.includes(user);
 
       const noteBlocks = [
         createTextSection(`*Machine Location:* ${o.machineLocation || "N/A"}`),
@@ -64,7 +62,8 @@ let newData = [];
           },
           accessory: {
             type: "image",
-            image_url: (o.picture && o.picture[0]) || "https://via.placeholder.com/100",
+            image_url:
+              (o.picture && o.picture[0]) || "https://via.placeholder.com/100",
             alt_text: "picture",
           },
         },
@@ -84,9 +83,12 @@ let newData = [];
       }
       // the work is done and ask Supervisor for approal
       if (!o.checkTime && user.includes(o.supervisorUserId) && o.endTime) {
-        noteBlocks.push(createButton("Supervisor Approve?", o.jobId, "review_progress"))
+        noteBlocks.push(
+          createButton("Supervisor Approve?", o.jobId, "review_progress")
+        );
       }
-      noteBlocks.push(createD4Button("View Details", o.jobId, "view_detail"),
+      noteBlocks.push(
+        createD4Button("View Details", o.jobId, "view_detail"),
         {
           type: "context",
           elements: [
@@ -122,14 +124,13 @@ const displayHome = async (user, data) => {
   console.log(`Displaying app home...`);
   if (data) {
     const userId = user.id || user; // handle if user is string
-    const path = `/data`;
+    const path = `/regular`;
 
     let jobs = [];
-
     try {
       jobs = await db.getData(path);
+      if (!Array.isArray(jobs)) jobs = [];
     } catch (err) {
-      // No existing data
       jobs = [];
     }
 
@@ -152,12 +153,16 @@ const displayHome = async (user, data) => {
     view: await updateView(userId),
   };
   try {
-    const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
+    const result = await axios.post(
+      `${apiUrl}/views.publish`,
+      qs.stringify(args)
+    );
     if (result.data.error) {
       console.error("Slack API error:", result.data.error);
     }
   } catch (err) {
     console.error("Failed to publish Slack view:", err.message);
-  }}
+  }
+};
 
 module.exports = { db, displayHome };
