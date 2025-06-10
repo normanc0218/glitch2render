@@ -25,7 +25,9 @@ async function openModal_projects(trigger_id, userId) {
   const jobDate = today.replace(/-/g, "");
 
   try {
-    let allJobs = await db.getData("/project").catch(() => []);
+    const ref = db.ref("jobs/project");
+    const snapshot = await ref.once("value");
+    let allJobs = snapshot.val() ? Object.values(snapshot.val()) : [];
     const calendarAssignments = [
       {
         calendarId:
@@ -49,9 +51,9 @@ async function openModal_projects(trigger_id, userId) {
       if (!events || events.length === 0) continue;
       for (const job of events) {
         const jobId = `JOB-${job.etag?.slice(-7, -1)}-P`;
-        const exists = allJobs.some(j => j.jobId === jobId);
+        const exists = allJobs.some((j) => j.jobId === jobId);
         if (!exists) {
-          allJobs.push({
+          const newJob = {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
@@ -63,20 +65,20 @@ async function openModal_projects(trigger_id, userId) {
             orderEndDate: extractDate(job.end),
             orderEndTime: extractTime(job.end),
             status: "Pending",
-          });
+          };
+          await ref.push(newJob); // ✅ push each new job as it's created
+          allJobs.push(newJob); // ✅ update local array
         }
       }
     }
-    await db.push("/project", allJobs, true);
-
     // 3. 渲染 Blocks
     const blocks = [createHeader("Maintenance Projects"), createDivider()];
 
     for (const job of allJobs) {
       if (
         job.status === "Pending" &&
-        job.endDate &&
-        new Date(job.endDate) < new Date(today)
+        job.orderEndDate &&
+        new Date(job.orderEndDate) < new Date(today)
       )
         continue;
       blocks.push(
@@ -86,16 +88,30 @@ async function openModal_projects(trigger_id, userId) {
             `*Location:* ${job.machineLocation || "(N/A)"}\n` +
             `*Summary:* ${job.summary || "(N/A)"}\n` +
             `*Order Start:* ${job.orderdate} ${job.ordertime}\n` +
-            `*Order End:* ${job.orderEndDate} ${job.orderEndTime}\n` +            
-            (job.startDate?`*Actual Start:* ${job.startDate} ${job.startTime}\n`:"") +
-            (job.endDate?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
-            (job.checkDate?`*Actual Start:* ${job.checkDate} ${job.checkTime}\n`:"") +
-            (job.remarks?`*Remarks from Maintenance:* ${job.remarks}\n`:"")+
-            (job.supervisorUser?`*Supervisor in charge:* ${job.supervisorUser}\n`:"")+
-            (job.supervisorMessage?`*Message to supervisor:* ${job.supervisorMessage}\n`:"")+
-            (job.supervisorcomment?`*Supervisor Comments:* ${job.supervisorcomment}\n`:"")+
-            (job.toolsChecked?`*Tools check?:* ${job.toolsChecked}\n`:"") +
-            (job.extrahelp?`*Cleaning help:* ${job.extrahelp}\n`:"") +
+            `*Order End:* ${job.orderEndDate} ${job.orderEndTime}\n` +
+            (job.startDate
+              ? `*Actual Start:* ${job.startDate} ${job.startTime}\n`
+              : "") +
+            (job.endDate
+              ? `*Actual End:* ${job.endDate} ${job.endTime}\n`
+              : "") +
+            (job.checkDate
+              ? `*Actual Start:* ${job.checkDate} ${job.checkTime}\n`
+              : "") +
+            (job.remarks
+              ? `*Remarks from Maintenance:* ${job.remarks}\n`
+              : "") +
+            (job.supervisorUser
+              ? `*Supervisor in charge:* ${job.supervisorUser}\n`
+              : "") +
+            (job.supervisorMessage
+              ? `*Message to supervisor:* ${job.supervisorMessage}\n`
+              : "") +
+            (job.supervisorcomment
+              ? `*Supervisor Comments:* ${job.supervisorcomment}\n`
+              : "") +
+            (job.toolsChecked ? `*Tools check?:* ${job.toolsChecked}\n` : "") +
+            (job.extrahelp ? `*Cleaning help:* ${job.extrahelp}\n` : "") +
             `*Status:* ${job.status}`
         )
       );
