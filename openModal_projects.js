@@ -7,9 +7,7 @@ const {
 } = require("./blockBuilder");
 const { fetchCalendar } = require("./fetchCalendar");
 const { maintenanceStaff, managerUsers } = require("./userConfig");
-
-const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-
+const db = require("./project")
 function extractTime(eventTime) {
   if (!eventTime) return "N/A";
   if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
@@ -25,7 +23,7 @@ async function openModal_projects(trigger_id, userId) {
   const now = new Date();
   const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
   try {
-    const allJobs = await getCachedData("project", "/data");
+    const allJobs = await db.getData("project").catch([]);
     const jobMap = new Map(allJobs.map((job) => [job.jobId, job]));
     const calendarAssignments = [
       {

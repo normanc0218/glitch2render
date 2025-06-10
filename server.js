@@ -66,7 +66,6 @@ async function generateUniqueJobId() {
   return jobId;
 }
 
-
 //events
 app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
@@ -400,7 +399,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "project_update") {
           const jobId = view.private_metadata;
           const ts = new Date();
-          const jobPath = `/project`; 
+          const jobPath = `/project`;
           const jobList = await db.getData(jobPath).catch(() => []);
           try {
             const index = jobList.findIndex((job) => job.jobId === jobId);
@@ -453,8 +452,78 @@ app.post("/slack/actions", async (req, res) => {
           }
         }
         //General Approval
-        else if (view.callback_id === "general_approval"){
-          
+        else if (view.callback_id === "general_approval") {
+          const jobId = view.private_metadata;
+          const ts = new Date();
+
+          // 判断类型
+          let jobPath = "/project";
+          let jobType = "Project";
+          if (jobId.endsWith("-D")) {
+            jobPath = "/daily";
+            jobType = "Daily";
+          } else if (jobId.endsWith("-P")) {
+            jobPath = "/project";
+            jobType = "Project";
+          }
+
+          let jobList = await db.getData(jobPath).catch(() => []);
+          const index = jobList.findIndex(
+            (job) => job.jobId === jobId
+          );
+
+          if (index === -1) {
+            console.error(`⚠️ Job ${jobId} not found in ${jobPath}`);
+            return;
+          }
+
+          const state = view.state.values;
+          const updatedJob = {
+            ...jobList[index],
+            timestamp: ts.toLocaleString("en-US", {
+              timeZone: "America/New_York",
+            }),
+            remarks: state.comments?.remarks_input?.value || null,
+            checkDate: state.date?.datepickeraction?.selected_date || null,
+            checkTime: state.time?.timepickeraction?.selected_time || null,
+            finish_pic:
+              state.picture?.file_general_app?.files?.map(
+                (file) => file.url_private
+              ) || [],
+            status: " 👍 Approved and Completed",
+          };
+
+          if (jobType === "Daily") {
+            updatedJob.toolsChecked =
+              state.tool_id?.Maitenance_tool?.selected_option?.value || null;
+            updatedJob.extrahelp = state.clean_input?.name_clean?.value || null;
+            updatedJob.supervisorcomment =
+              state.other_input?.detailOfJob?.value || null;
+            updatedJob.cleaningNeed =
+              state.clean_id?.working_area?.selected_option?.value || null;
+          } else {
+            // Project 可单独加专属字段
+            updatedJob.toolsChecked =
+              state.tool_id?.Maitenance_tool?.selected_option?.value || null;
+          }
+
+          jobList[index] = updatedJob;
+          await db.push(jobPath, jobList, true);
+
+          // Slack 通知
+          await axios.post(
+            "https://slack.com/api/chat.postMessage",
+            {
+              channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
+              text: `✅ *${jobType} Job ${jobId}* was approved and completed.`,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
         }
       } else if (actions) {
         const action = actions[0];

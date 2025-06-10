@@ -51,7 +51,7 @@ async function openModal_daily_job(trigger_id, userId) {
       if (!events || events.length === 0) continue;
 
       for (const job of events) {
-        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}-D`;
         const exists = allJobs.some(j => j.jobId === jobId);
         if (!exists) {
           allJobs.push({
