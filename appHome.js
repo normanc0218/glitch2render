@@ -22,15 +22,12 @@ const updateView = async (user) => {
           "type": "button",
           "text": {
             "type": "plain_text",
-            "text": "View Google Sheet"
+            "text": "View History"
           },
           "url": "https://docs.google.com/spreadsheets/d/1RNT-dSBH2nC1C369jUwyajtLaNSdHHeMEhL7OK_Yrdg/edit?usp=sharing",
         }
       ]
     }
-  ]
-}
-
   ];
   if (managerUsers.includes(user)) {
     blocks.push(
