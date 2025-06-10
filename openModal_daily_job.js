@@ -63,8 +63,8 @@ async function openModal_daily_job(trigger_id, userId) {
             description: job.description || null,
             orderdate: extractDate(job.start),
             ordertime: extractTime(job.start),
-            endDate: extractDate(job.end),
-            endTime: extractTime(job.end),
+            orderEndDate: extractDate(job.end),
+            OrderEndTime: extractTime(job.end),
             status: "Pending",
           });
         }
@@ -94,7 +94,7 @@ async function openModal_daily_job(trigger_id, userId) {
             `*Location:* ${job.location || "(N/A)"}\n` +
             `*Summary:* ${job.summary || "(N/A)"}\n` +
             `*Start:* ${job.orderdate} ${job.ordertime}\n` +
-            `*End:* ${job.endDate} ${job.endTime}\n` +
+            `*End:* ${job.orderEndDate} ${job.OrderEndTime}\n` +
             `*Status:* ${job.status}`
         )
       );

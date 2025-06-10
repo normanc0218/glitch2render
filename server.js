@@ -154,7 +154,7 @@ app.post("/slack/actions", async (req, res) => {
                 .value,
             finder: view.state.values.reporter_block.reporter.value,
             Description: view.state.values.Description.issue.value,
-            maintenanceStaff:
+            assignedTo:
               view.state.values.maintenanceStaff.pickedGuy.selected_options.map(
                 (opt) => opt.text.text
               ),

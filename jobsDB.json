@@ -37,9 +37,18 @@
             "description": "Daily check",
             "orderdate": "2025-06-09",
             "ordertime": "14:00",
-            "endDate": "2025-06-09",
-            "endTime": "14:30",
-            "status": "Pending"
+            "endDate": "2025-06-10",
+            "endTime": "09:02",
+            "status": "Waiting for Supervisor approval",
+            "timestamp": "6/10/2025, 9:04:08 AM",
+            "remarks": "v",
+            "supervisorUser": "U06DSKC32E4",
+            "supervisorMessage": null,
+            "startDate": "2025-06-10",
+            "startTime": "09:03",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090BEFM2AK/img_3748.jpg"
+            ]
         },
         {
             "jobId": "JOB-20250610-700574-D",

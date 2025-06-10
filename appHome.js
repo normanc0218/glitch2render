@@ -57,7 +57,7 @@ const updateView = async (user) => {
             text: `*Job ID:* ${o.jobId}\n*Ordered by:* ${
               o.Orderedby
             }\n*Description:* ${des}\n*Assign To:* ${
-              o.maintenanceStaff || "N/A"
+              o.assignedTo || "N/A"
             }\n*Order date:* ${o.orderdate}\n*Order time:* ${
               o.ordertime
             }\n*Status:* ${o.status}`,
