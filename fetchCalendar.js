@@ -2,7 +2,7 @@ const { google } = require('googleapis');
 const { DateTime } = require('luxon');
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: './google_calendar_key.json',
+  keyFile: '/etc/secrets/google_calendar_key.json',
   scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
 });
 
