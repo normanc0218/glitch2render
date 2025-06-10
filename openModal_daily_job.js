@@ -1,22 +1,28 @@
 const axios = require("axios");
+const { fetchCalendar } = require("./fetchCalendar");
+const { maintenanceStaff, managerUsers, Supervisors  } = require("./userConfig");
+const db2 = require(`./db2`);
 const { getCachedData, pushAndInvalidate } = require("./cache/utils");
-const { managerUsers } = require("./userConfig");
 const {
   createTextSection,
   createDivider,
   createButton,
 } = require("./blockBuilder");
-const { fetchCalendar } = require("./fetchCalendar");
-const { maintenanceStaff } = require("./userConfig");
+// Extracts time from ISO or returns "(All day)" for date-only entries
+function extractTime(eventTime) {
+  if (!eventTime) return "N/A";
+  if (eventTime.dateTime) return eventTime.dateTime.split("T")[1].slice(0, 5);
+  return "N/A";
+}
+function extractDate(eventTime) {
+  if (!eventTime) return "N/A";
+  if (eventTime.dateTime) return eventTime.dateTime.split("T")[0];
+}
 
 async function openModal_daily_job(trigger_id, userId) {
   const now = new Date();
-  const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
 
   try {
-    // 1. Read job list from cache or DB
-    let jobList = await getCachedData("daily", "/data");
-    const jobMap = new Map(jobList.map((job) => [job.jobId, job]));
     const calendarAssignments = [
       {
         calendarId:
@@ -34,66 +40,59 @@ async function openModal_daily_job(trigger_id, userId) {
         assignedTo: "Steven",
       },
     ];
-    let newJobAdded = false;
 
+    const jobDate = now.toISOString().split("T")[0].replace(/-/g, "");
+
+    let blocks = [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "🗓️ Daily Jobs from Multiple Calendars",
+          emoji: true,
+        },
+      },
+      { type: "divider" },
+    ];
     for (const { calendarId, assignedTo } of calendarAssignments) {
-      const cacheKey = `calendar:${calendarId}`;
-      // Fetch from cache, or if cache miss, from Google Calendar API
-      const events = await getCachedData("calendar", cacheKey, () =>
-        fetchCalendar(calendarId)
-      );
+      const events = await fetchCalendar(calendarId);
       if (!events || events.length === 0) continue;
 
-      for (const ev of events) {
-        const jobId = `JOB-${jobDate}-${ev.etag?.slice(-7, -1)}`;
-        if (!jobMap.has(jobId)) {
-          // New job found, add to map
-          const newJob = {
+      for (const job of events) {
+        const jobId = `JOB-${jobDate}-${job.etag?.slice(-7, -1)}`;
+        const existingJob = await db2
+          .getData(`/jobs/${jobId}`)
+          .catch(() => null);
+
+        if (!existingJob) {
+          const ordertime = extractTime(job.start);
+          const endTime = extractTime(job.end);
+          const orderdate = extractDate(job.start);
+          const endDate = extractDate(job.end);
+
+          await db2.push(`/jobs/${jobId}`, {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
-            location: ev.location || null,
-            summary: ev.summary || null,
-            description: ev.description || null,
-            orderdate: ev.start?.dateTime?.split("T")[0],
-            ordertime: ev.start?.dateTime?.split("T")[1]?.slice(0, 5),
-            endDate: ev.end?.dateTime?.split("T")[0],
-            endTime: ev.end?.dateTime?.split("T")[1]?.slice(0, 5),
+            location: job.location || null,
+            summary: job.summary || null,
+            description: job.description || null,
+            orderdate: orderdate,
+            ordertime: ordertime,
+            endDate: endDate,
+            endTime: endTime,
             status: "Pending",
-          };
-          jobMap.set(jobId, newJob);
-          newJobAdded = true;
+          });
         }
       }
     }
+    const allJobs = await db2.getData("/jobs").catch(() => ({}));
 
-    // 3. Only update DB/cache if there's a new job added
-    if (newJobAdded) {
-      const mergedJobs = Array.from(jobMap.values());
-      await pushAndInvalidate("daily", "/data", mergedJobs, true);
-    }
-    
-    const blocks = [
-      {
-        type: "section",
-        block_id: "header",
-        text: {
-          type: "mrkdwn",
-          text: "*🗓️ Daily Jobs from Multiple Calendars*",
-        },
-      },
-      {
-        type: "divider",
-      },
-    ];
+    for (const jobId in allJobs) {
+      const job = allJobs[jobId];
+      const assignedSlackId = job.mStaff_id;
 
-    mergedJobs.forEach((job) => {
-      // Skip jobs with end date in the past
-      if (new Date(job.endDate) < new Date(today)) {
-        return;
-      }
-
-      // Add job details to modal blocks
+            // Add job details to modal blocks
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
@@ -106,6 +105,7 @@ async function openModal_daily_job(trigger_id, userId) {
         )
       );
 
+ 
       // Conditional buttons for managers and staff
       if (
         managerUsers.includes(userId) &&
@@ -121,9 +121,9 @@ async function openModal_daily_job(trigger_id, userId) {
       }
 
       blocks.push(createDivider());
-    });
+    }
 
-    // Prepare the modal for Slack API
+
     const modal = {
       type: "modal",
       callback_id: "daily_job_modal",
@@ -140,8 +140,7 @@ async function openModal_daily_job(trigger_id, userId) {
       blocks,
     };
 
-    // Open the modal via Slack API
-    const result = await axios.post(
+    await axios.post(
       "https://slack.com/api/views.open",
       {
         trigger_id,
@@ -154,14 +153,11 @@ async function openModal_daily_job(trigger_id, userId) {
         },
       }
     );
-
-    if (result.data.ok) {
-      console.log("Modal opened successfully!");
-    } else {
-      console.error("Error opening modal:", result.data.error);
-    }
   } catch (error) {
-    console.error("Error fetching jobs or opening modal:", error.message);
+    console.error(
+      "Error fetching calendars or opening modal:",
+      error.response?.data || error.message
+    );
   }
 }
 
