@@ -47,13 +47,18 @@ const updateView = async (user) => {
 
   let newData = [];
   try {
-    newData = await db.getData(`/regular`).catch(() => []);
-    if (!Array.isArray(newData)) newData = [];
-    newData = newData.slice().reverse().slice(0, 50); // latest 50
+    const snapshot = await db.ref("/jobs/regular").once("value");
+    const jobsObj = snapshot.val() || {};
+
+    // Convert object to array, sort by timestamp descending if available
+    newData = Object.values(jobsObj)
+      .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+      .slice(0, 50);
   } catch (error) {
     newData = [];
     console.error("Error fetching data:", error);
   }
+
 
   if (newData.length > 0) {
     for (const o of newData) {
@@ -131,28 +136,30 @@ const updateView = async (user) => {
 /* Display App Home */
 const displayHome = async (user, data) => {
   const userId = user.id || user;
-  const path = `/regular`;
+  const path = `jobs/regular`;
 
-  let jobs = [];
-  try {
-    jobs = await db.getData(path);
-    if (!Array.isArray(jobs)) jobs = [];
-  } catch (err) {
-    jobs = [];
-  }
+  const ref = db.ref(path);
 
   if (data) {
-    const jobIndex = jobs.findIndex((job) => job.jobId === data.jobId);
+    const snapshot = await ref.once('value');
+    const jobs = snapshot.val() || {};
 
-    if (jobIndex > -1) {
-      console.log(`Updating JobId: ${data.jobId}`);
-      jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-    } else {
-      console.log(`Creating new job with JobId: ${data.jobId}`);
-      jobs.push(data);
+    let existingKey = null;
+
+    for (const [key, job] of Object.entries(jobs)) {
+      if (job.jobId === data.jobId) {
+        existingKey = key;
+        break;
+      }
     }
 
-    await db.push(path, jobs, true);
+    if (existingKey) {
+      console.log(`Updating JobId: ${data.jobId}`);
+      await ref.child(existingKey).update(data);
+    } else {
+      console.log(`Creating new job with JobId: ${data.jobId}`);
+      await ref.push(data);
+    }
   }
 
   const args = {
@@ -160,6 +167,7 @@ const displayHome = async (user, data) => {
     user_id: userId,
     view: await updateView(userId),
   };
+
   try {
     const result = await axios.post(`${apiUrl}/views.publish`, qs.stringify(args));
     if (result.data.error) {
@@ -169,5 +177,6 @@ const displayHome = async (user, data) => {
     console.error("Failed to publish Slack view:", err.message);
   }
 };
+
 
 module.exports = { displayHome };
