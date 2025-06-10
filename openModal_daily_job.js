@@ -58,7 +58,7 @@ async function openModal_daily_job(trigger_id, userId) {
             jobId,
             assignedTo,
             mStaff_id: maintenanceStaff[assignedTo],
-            location: job.location || null,
+            machineLocation: job.location || null,
             summary: job.summary || null,
             description: job.description || null,
             orderdate: extractDate(job.start),
@@ -91,7 +91,7 @@ async function openModal_daily_job(trigger_id, userId) {
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
             `*Assigned To:* ${job.assignedTo}\n` +
-            `*Location:* ${job.location || "(N/A)"}\n` +
+            `*Location:* ${job.machineLocation || "(N/A)"}\n` +
             `*Summary:* ${job.summary || "(N/A)"}\n` +
             `*Order Start:* ${job.orderdate} ${job.ordertime}\n` +
             `*Order End:* ${job.orderEndDate} ${job.OrderEndTime}\n` +            
