@@ -24,6 +24,12 @@
 // })();
 const express = require("express");
 const app =express()
-app.get('/data', (req, res) => {
+const PORT = 4000;
+
+app.get('/', (req, res) => {
+  
   res.json({ message: 'Hello from /data!' });
+});
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
