@@ -356,9 +356,12 @@ app.post("/slack/actions", async (req, res) => {
                 timeZone: "America/New_York",
               }),
               remarks: state.comments?.remarks_input?.value || null,
-              supervisorUser:
+              supervisorUserID:
                 state.supervisor_notify?.notify_supervisor?.selected_option
                   ?.value || null,
+              supervisorUser:
+                state.supervisor_notify?.notify_supervisor?.selected_option
+                  ?.text.text || null,
               supervisorMessage: state.comments?.remarksinput?.value || null,
               startDate: state.sdate?.datepickeraction?.selected_date || null,
               startTime: state.stime?.timepickeraction?.selected_time || null,
@@ -416,9 +419,12 @@ app.post("/slack/actions", async (req, res) => {
                 timeZone: "America/New_York",
               }),
               remarks: state.comments?.remarks_input?.value || null,
-              supervisorUser:
+              supervisorUserID:
                 state.supervisor_notify?.notify_supervisor?.selected_option
                   ?.value || null,
+              supervisorUser:
+                state.supervisor_notify?.notify_supervisor?.selected_option
+                  ?.text.text || null,
               startDate: state.sdate?.datepickeraction?.selected_date || null,
               startTime: state.stime?.timepickeraction?.selected_time || null,
               endDate: state.edate?.datepickeraction?.selected_date || null,
@@ -502,7 +508,7 @@ app.post("/slack/actions", async (req, res) => {
             updatedJob.cleaningNeed =
               state.clean_id?.working_area?.selected_option?.value || null;
           } else {
-            // Project 可单独加专属字段
+            // Project 
             updatedJob.toolsChecked =
               state.tool_id?.Maitenance_tool?.selected_option?.value || null;
           }

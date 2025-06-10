@@ -96,16 +96,19 @@ async function openModal_daily_job(trigger_id, userId) {
             `*Order Start:* ${job.orderdate} ${job.ordertime}\n` +
             `*Order End:* ${job.orderEndDate} ${job.OrderEndTime}\n` +            
             (job.startDate?`*Actual Start:* ${job.startDate} ${job.startTime}\n`:"") +
-            (job.startTime?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
+            (job.endDate?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
+            (job.checkDate?`*Actual Start:* ${job.checkDate} ${job.checkTime}\n`:"") +
             (job.remarks?`*Remarks:* ${job.remarks}\n`:"")+
-            (job.supervisorMessage?`*Message to supervisor:* ${job.supervisorMessage}`:"")+
-
+            (job.supervisorMessage?`*Message to supervisor:* ${job.supervisorMessage}\n`:"")+
+            (job.supervisorcomment?`*Supervisor Comments:* ${job.supervisorcomment}\n`:"")+
+            (job.toolsChecked?`*Tools check?:* ${job.toolsChecked}\n`:"") +
+            (job.extrahelp?`*Cleaning help:* ${job.extrahelp}\n`:"") +
             `*Status:* ${job.status}`
         )
       );
 
       if (
-        managerUsers.includes(userId) &&
+        jon.superVisruserId) &&
         job.status === "Waiting for Supervisor approval"
       ) {
         blocks.push(
