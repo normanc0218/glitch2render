@@ -71,7 +71,6 @@ app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
   const { type, challenge, event } = req.body;
-  console.log("Received request body:", req.body);
 
   switch (type) {
     case "url_verification":
