@@ -1,3 +1,13 @@
-const { JsonDB, Config } = require("node-json-db");
-const db = new JsonDB(new Config("jobsDB", true, true, "/"));
+const admin = require('firebase-admin');
+const fs = require('fs');
+
+// Load Firebase credentials
+const serviceAccount = require('./firebase_service.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://maintenance-form-602d9-default-rtdb.firebaseio.com"
+});
+
+const db = admin.database();
 module.exports = db;
