@@ -16,7 +16,7 @@ const openModal_view_detail = async(trigger_id, jobId) => {
     createTextSection(`*Job ID:* ${job.jobId}`),
     createTextSection(`*Ordered By:* ${job.Orderedby || "N/A"}\n*Machine Location:* ${job.machineLocation}\n*Finder:* ${job.finder || "N/A"}`),
     createTextSection(`*Description:* ${job.Description}`),
-    createTextSection(`*Assigned Staff:* ${Array.isArray(job.maintenanceStaff) ? job.maintenanceStaff.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`),
+    createTextSection(`*Assigned Staff:* ${Array.isArray(job.assignedTo) ? job.assignedTo.join(", ") : "N/A"}\n*Order Date:* ${job.orderdate}\n*Order Time:* ${job.ordertime}\n*Status:* ${job.status}`),
     createDivider(),
     ];
     if (job.acceptdate || job.accepttime || job.remarks) {

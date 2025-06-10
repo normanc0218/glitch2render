@@ -7,22 +7,24 @@
             "location": "Boiler room #1 #2 Boiler and #1 #2 Superheat",
             "summary": "Boiler room blow down",
             "description": "Daily Check",
-            "orderdate": "2025-06-09",
+            "orderdate": "2025-06-10",
             "ordertime": "09:00",
-            "endDate": "2025-06-10",
-            "endTime": "00:27",
+            "orderEndDate": "2025-06-10",
+            "OrderEndTime": "09:30",
             "status": " 👍 Approved and Completed",
-            "timestamp": "6/10/2025, 12:30:34 AM",
-            "remarks": "l",
+            "timestamp": "6/10/2025, 9:16:40 AM",
+            "remarks": "S",
             "supervisorUser": "U06DSKC32E4",
             "supervisorMessage": null,
             "startDate": "2025-06-10",
-            "startTime": "00:27",
+            "startTime": "09:15",
+            "endDate": "2025-06-10",
+            "endTime": "09:13",
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F091E74BDQQ/img_3479.jpg"
+                "https://files.slack.com/files-pri/TH1AQELNT-F091GCA77TJ/img_7499.jpg"
             ],
             "checkDate": "2025-06-10",
-            "checkTime": "00:30",
+            "checkTime": "09:13",
             "toolsChecked": "Yes",
             "extrahelp": null,
             "supervisorcomment": null,
@@ -35,20 +37,11 @@
             "location": "Boiler room #1 #2 Boiler and #1 #2 Superheat",
             "summary": "Boiler room blow down",
             "description": "Daily check",
-            "orderdate": "2025-06-09",
+            "orderdate": "2025-06-10",
             "ordertime": "14:00",
-            "endDate": "2025-06-10",
-            "endTime": "09:02",
-            "status": "Waiting for Supervisor approval",
-            "timestamp": "6/10/2025, 9:04:08 AM",
-            "remarks": "v",
-            "supervisorUser": "U06DSKC32E4",
-            "supervisorMessage": null,
-            "startDate": "2025-06-10",
-            "startTime": "09:03",
-            "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090BEFM2AK/img_3748.jpg"
-            ]
+            "orderEndDate": "2025-06-10",
+            "OrderEndTime": "14:30",
+            "status": "Pending"
         },
         {
             "jobId": "JOB-20250610-700574-D",
@@ -57,10 +50,10 @@
             "location": "#2,#4,#5,#6 Compressor",
             "summary": "Check compressor temperature and pressure",
             "description": "Check temperature and the pressure",
-            "orderdate": "2025-06-09",
+            "orderdate": "2025-06-10",
             "ordertime": "14:00",
-            "endDate": "2025-06-09",
-            "endTime": "18:00",
+            "orderEndDate": "2025-06-10",
+            "OrderEndTime": "18:00",
             "status": "Pending"
         },
         {
@@ -70,11 +63,60 @@
             "location": "#8 Miller",
             "summary": "Check mill temperature and current",
             "description": "Check the temperature and the current",
-            "orderdate": "2025-06-09",
+            "orderdate": "2025-06-10",
             "ordertime": "21:00",
-            "endDate": "2025-06-09",
-            "endTime": "21:30",
+            "orderEndDate": "2025-06-10",
+            "OrderEndTime": "21:30",
             "status": "Pending"
+        }
+    ],
+    "regular": [
+        {
+            "jobId": "JOB-20250610-3I8R",
+            "timestamp": "6/10/2025, 9:15:54 AM",
+            "Orderedby": "norman",
+            "machineLocation": "#7 Machine",
+            "finder": "D",
+            "Description": "D",
+            "assignedTo": [
+                "Fai"
+            ],
+            "mStaff_id": [
+                "U08V4M4RT8R"
+            ],
+            "picture": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090QUWEPJR/img_7499.jpg"
+            ],
+            "orderdate": "2025-06-10",
+            "ordertime": "09:13",
+            "status": " 👍 *Approved and Completed*",
+            "messageTs": "1749561354.269079",
+            "startDate": "2025-06-10",
+            "startTime": "09:12",
+            "remarks": "h",
+            "updatedBy": "Fai",
+            "issueCauses": [
+                "Wear or Tear",
+                "Operator error"
+            ],
+            "otherreason": null,
+            "toolsCollected": "Yes",
+            "resetConfirmed": null,
+            "supervisorUser": "Norman",
+            "supervisorUserId": "U06DSKC32E4",
+            "supervisorMessage": "b",
+            "otherStatuses": [],
+            "otherSpecify": "h",
+            "endDate": "2025-06-10",
+            "endTime": "09:12",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F090R03982Z/img_3748.jpg"
+            ],
+            "toolsChecked": "Yes",
+            "extrahelp": null,
+            "supervisorcomment": null,
+            "checkDate": "2025-06-10",
+            "checkTime": "09:13"
         }
     ],
     "project": [
@@ -87,19 +129,19 @@
             "description": "easy job",
             "orderdate": "2025-06-05",
             "ordertime": "09:45",
-            "endDate": null,
-            "endTime": null,
+            "endDate": "2025-06-10",
+            "endTime": "09:13",
             "status": " 👍 Approved and Completed",
-            "timestamp": "6/10/2025, 12:31:04 AM",
-            "remarks": "o",
+            "timestamp": "6/10/2025, 9:18:43 AM",
+            "remarks": "D",
             "supervisorUser": "U06DSKC32E4",
-            "startDate": null,
-            "startTime": null,
+            "startDate": "2025-06-10",
+            "startTime": "09:17",
             "finish_pic": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F090RKZGB26/img_3479.jpg"
+                "https://files.slack.com/files-pri/TH1AQELNT-F090QVDJVKP/img_7499.jpg"
             ],
             "checkDate": "2025-06-10",
-            "checkTime": "00:30",
+            "checkTime": "09:13",
             "toolsChecked": "Yes"
         },
         {
@@ -114,33 +156,6 @@
             "endDate": "2025-06-30",
             "endTime": "18:00",
             "status": "Pending"
-        }
-    ],
-    "regular": [
-        {
-            "jobId": "JOB-20250610-EKNG",
-            "timestamp": "6/10/2025, 12:34:39 AM",
-            "Orderedby": "norman",
-            "machineLocation": "#7 Machine",
-            "finder": "s",
-            "Description": "s",
-            "maintenanceStaff": [
-                "Fai"
-            ],
-            "mStaff_id": [
-                "U08V4M4RT8R"
-            ],
-            "picture": [
-                "https://files.slack.com/files-pri/TH1AQELNT-F09134JA96D/img_3479.jpg"
-            ],
-            "orderdate": "2025-06-10",
-            "ordertime": "00:34",
-            "status": "Rejected by Fai",
-            "messageTs": "1749530079.114709",
-            "rejectdate": "2025-06-10",
-            "rejecttime": "00:36",
-            "rejectreason": "z",
-            "rejectby": "Fai"
         }
     ]
 }
