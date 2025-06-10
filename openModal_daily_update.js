@@ -65,22 +65,29 @@ const openModal_daily_update = async (viewId, JobId) => {
      
 
   // API call to open the modal
-const args = {
-    token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
-    view_id: viewId,  // The trigger ID that comes from the button press
-    view: JSON.stringify(modal)  // Pass the modal structure as JSON
-  };
-
-  try {
-    const result = await axios.post('https://slack.com/api/views.update', qs.stringify(args));
+try {
+    const result = await axios.post(
+      'https://slack.com/api/views.update',
+      {
+        token: process.env.SLACK_BOT_TOKEN,
+        view_id: viewId,
+        view: modal
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        }
+      }
+    );
     
     if (result.data.ok) {
       console.log('Modal opened successfully!');
     } else {
-      console.error('Error opening modal:', result.data.error);  // Log any error response
+      console.error('Error opening modal:', result.data.error, result.data);
     }
   } catch (error) {
-    console.error('Error during modal open request:', error.message);  // Handle network or other errors
+    console.error('Error during modal open request:', error.message);
   }
 };
 module.exports = { openModal_daily_update};
