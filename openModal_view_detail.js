@@ -1,6 +1,6 @@
 const axios = require('axios');
 const qs = require('qs');
-const { db } = require("./appHome");
+const db  = require("./db");
 
 const {
   createTextSection,
@@ -10,8 +10,7 @@ const {
 } = require('./blockBuilder');
 
 const openModal_view_detail = async(trigger_id, jobId) => {
-    const data = await db.getData("/data") || [];
-    console.log(data)
+    const data = await db.getData("/regular").catch(() => []);
     const job = data.find(item => item.jobId === jobId)
     const blocks = [
     createTextSection(`*Job ID:* ${job.jobId}`),
