@@ -60,8 +60,8 @@ async function openModal_projects(trigger_id, userId) {
             description: job.description || null,
             orderdate: extractDate(job.start),
             ordertime: extractTime(job.start),
-            endDate: extractDate(job.end),
-            endTime: extractTime(job.end),
+            orderEndDate: extractDate(job.end),
+            orderEndTime: extractTime(job.end),
             status: "Pending",
           });
         }
@@ -85,8 +85,10 @@ async function openModal_projects(trigger_id, userId) {
             `*Assigned To:* ${job.assignedTo}\n` +
             `*Location:* ${job.location || "(N/A)"}\n` +
             `*Summary:* ${job.summary || "(N/A)"}\n` +
-            `*Start:* ${job.orderdate} ${job.ordertime}\n` +
-            `*End:* ${job.endDate} ${job.endTime}\n` +
+            `*Order Start:* ${job.orderdate} ${job.ordertime}\n` +
+            `*Order End:* ${job.orderEndDate} ${job.OrderEndTime}\n` +            
+            (job.startDate?`*Actual Start:* ${job.startDate} ${job.startTime}\n`:"") +
+            (job.startTime?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
             `*Status:* ${job.status}`
         )
       );

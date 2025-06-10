@@ -95,8 +95,11 @@ async function openModal_daily_job(trigger_id, userId) {
             `*Summary:* ${job.summary || "(N/A)"}\n` +
             `*Order Start:* ${job.orderdate} ${job.ordertime}\n` +
             `*Order End:* ${job.orderEndDate} ${job.OrderEndTime}\n` +            
-            `*Actual Start:* ${job.sdate} ${job.stime}\n` +
-            `*Actual End:* ${job.eDate} ${job.eTime}\n` +
+            (job.startDate?`*Actual Start:* ${job.startDate} ${job.startTime}\n`:"") +
+            (job.startTime?`*Actual End:* ${job.endDate} ${job.endTime}\n`:"")+
+            (job.remarks?`*Remarks:* ${job.remarks}\n`:"")+
+            (job.supervisorMessage?`*Message to supervisor:* ${job.supervisorMessage}`:"")+
+
             `*Status:* ${job.status}`
         )
       );
