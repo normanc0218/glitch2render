@@ -579,6 +579,8 @@ app.post("/slack/actions", async (req, res) => {
         else if (action.action_id === "approve_project") {
           //Open modal for update progress
           const jobId = action.value;
+          console.log(jobId)
+
           await openModal_general_approval(view.id, jobId);
         } else if (action.action_id.match(/add_/)) {
           await openModal(trigger_id);
