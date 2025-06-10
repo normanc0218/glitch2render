@@ -132,11 +132,36 @@
             ],
             "orderdate": "2025-06-10",
             "ordertime": "09:58",
-            "status": "Accepted by Fai",
+            "status": " 👍 *Approved and Completed*",
             "messageTs": "1749564043.000849",
             "startDate": "2025-06-10",
             "startTime": "09:58",
-            "remarks": "g"
+            "remarks": "g",
+            "updatedBy": "Fai",
+            "issueCauses": [
+                "Wear or Tear",
+                "No issue"
+            ],
+            "otherreason": null,
+            "toolsCollected": "Yes",
+            "resetConfirmed": null,
+            "supervisorUser": "Norman",
+            "supervisorUserId": "U06DSKC32E4",
+            "supervisorMessage": "v",
+            "otherStatuses": [
+                "Waiting for parts"
+            ],
+            "otherSpecify": null,
+            "endDate": "2025-06-10",
+            "endTime": "09:58",
+            "finish_pic": [
+                "https://files.slack.com/files-pri/TH1AQELNT-F0915L8C9A5/img_3748.jpg"
+            ],
+            "toolsChecked": "Yes",
+            "extrahelp": null,
+            "supervisorcomment": null,
+            "checkDate": "2025-06-10",
+            "checkTime": "09:58"
         }
     ]
 }

@@ -443,7 +443,7 @@ app.post("/slack/actions", async (req, res) => {
               "https://slack.com/api/chat.postMessage",
               {
                 channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
-                text: `✅ *Project Job ${jobId}* was updated.`,
+                text: `✅ *Project Job ${jobId}* was updated. Please supervisor ${updatedJob.supervisorUser} check the job`,
               },
               {
                 headers: {
