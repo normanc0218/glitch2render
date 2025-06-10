@@ -599,11 +599,11 @@ app.post("/slack/actions", async (req, res) => {
   }
 });
 
-// Serve your JSON file to Power BI
-// app.get("/data-export", (req, res) => {
-//   const filePath = path.join(__dirname, "myDatabase.json");
-//   res.sendFile(filePath);
-// });
+// export my data
+app.get("/data-export", (req, res) => {
+  const filePath = path.join(__dirname, "jobsDB.json");
+  res.sendFile(filePath);
+});
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
