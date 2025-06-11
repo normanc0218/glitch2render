@@ -677,6 +677,7 @@ app.post("/slack/actions", async (req, res) => {
         //
         else if (action.action_id === "open_daily_job") {
           //Open home modal for Daily job
+          console.log("opening daily job")
           await openModal_daily_job(trigger_id, user.id);
         } else if (action.action_id === "update_daily") {
           //Open modal for update progress
