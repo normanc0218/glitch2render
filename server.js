@@ -31,7 +31,6 @@ const db = require("./db");
 const { openModal } = require("./openModal"); // Make sure this file and function exist
 const qs = require("qs");
 const signVerification = require("./signVerification");
-const jsonfile = require("/etc/secrets/firebase_service.json")
 const app = express();
 const port = process.env.PORT || 12000;
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
@@ -76,7 +75,6 @@ app.post("/slack/events", signVerification, async (req, res) => {
   const { type, challenge, event } = req.body;
   if (event.type === "app_home_opened") {
     console.log("App home opened by user:", event.user);
-    console.log(jsonfile)
     await displayHome(event.user); // Ensure this passes correct user ID
   }
   switch (type) {
