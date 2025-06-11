@@ -116,6 +116,7 @@ app.post("/slack/actions", async (req, res) => {
     return res.status(200).send("Unknown command");
   } else {
     // Otherwise it's an interactive payload (e.g. button, modal, etc.)
+    console.log("you are taking actions")
     try {
       let payload;
       try {
