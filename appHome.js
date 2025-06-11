@@ -135,6 +135,7 @@ const updateView = async (user) => {
 
 /* Display App Home */
 const displayHome = async (user, data) => {
+  console.log("now you are in DisplayHome")
   const userId = user.id || user;
   const path = `jobs/regular`;
 
