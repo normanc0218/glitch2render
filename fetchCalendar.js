@@ -1,10 +1,19 @@
 const { google } = require('googleapis');
 const { DateTime } = require('luxon');
-
+const path = require('path');
+let keyFilePath = '/etc/secrets/google_calendar_key.json';
+if (!require('fs').existsSync(keyFilePath)) {
+  keyFilePath = path.join(__dirname, 'google_calendar_key.json'); // fallback for local dev
+}
 const auth = new google.auth.GoogleAuth({
-  keyFile: '/etc/secrets/google_calendar_key.json',
+  keyFile: keyFilePath,
   scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
 });
+
+// const auth = new google.auth.GoogleAuth({
+//   keyFile: '/etc/secrets/google_calendar_key.json',
+//   scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
+// });
 
 const TIME_ZONE = 'America/New_York'; // GMT-4 during DST
 
