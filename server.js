@@ -55,12 +55,15 @@ async function generateUniqueJobId() {
     jobId = `JOB-${dateStr}-${randomStr}`;
     exists = false;
     try {
-      const allJobs = await db.getData("/regular").catch(() => []);
-      if (allJobs.some((job) => job.jobId === jobId)) {
-        exists = true;
-      }
+      // Query all jobs under 'regular'
+      const snapshot = await db.ref("jobs/regular").once("value");
+      const allJobs = snapshot.val() || {};
+
+      // Check if any job already has this jobId
+      exists = Object.values(allJobs).some((job) => job.jobId === jobId);
     } catch (error) {
-      exists = false;
+      console.error("Error checking job ID:", error);
+      exists = false; // Allow job ID if error occurs
     }
   }
   return jobId;
@@ -71,29 +74,27 @@ app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
 
   const { type, challenge, event } = req.body;
-
+  if (event.type === "app_home_opened") {
+    console.log("App home opened by user:", event.user);
+    await displayHome(event.user); // Ensure this passes correct user ID
+  }
   switch (type) {
     case "url_verification":
-      console.log("⚡ Responding to URL verification");
-      return res.send(challenge); // Plain string, not an object
+      // Step 1: Respond to Slack URL Verification
+      return res.send({ challenge });
 
-    case "event_callback":
-      console.log("✅ Event callback received");
-
-      // Only now it's safe to check event.type
-      if (event && event.type === "app_home_opened") {
-        console.log("🏠 App home opened by user:", event.user);
+    case "event_callback": {
+      console.log("✅ Slack request verified");
+      if (event.type === "app_home_opened") {
         await displayHome(event.user);
       }
 
-      return res.sendStatus(200); // Slack requires 200 OK
-
+      return res.sendStatus(200); // Always respond 200 to Slack
+    }
     default:
-      console.warn("❌ Unknown Slack event type:", type);
       return res.sendStatus(400);
   }
 });
-
 // Slack Actions
 
 app.post("/slack/actions", async (req, res) => {
@@ -177,25 +178,53 @@ app.post("/slack/actions", async (req, res) => {
           const messageTs = await notifyNewOrder(data, jobId);
           data.messageTs = messageTs;
 
-          // Save job to DB (create or update)
-          let jobs = await db.getData("/regular").catch(() => []); // or "daily", "project"
+          const ref = db.ref("jobs/regular");
+          const snapshot = await ref.once("value");
+          const jobs = snapshot.val() || {};
 
-          const jobIndex = jobs.findIndex((job) => job.jobId === jobId);
-          if (jobIndex > -1) {
-            jobs[jobIndex] = { ...jobs[jobIndex], ...data };
-          } else {
-            jobs.push(data);
+          let existingKey = null;
+
+          // Check if jobId already exists
+          for (const [key, job] of Object.entries(jobs)) {
+            if (job.jobId === data.jobId) {
+              existingKey = key;
+              break;
+            }
           }
-          await db.push("/regular", data, true);
 
-          await displayHome(user, data);
+          if (existingKey) {
+            // Update existing job
+            await ref.child(existingKey).update(data);
+          } else {
+            // Push new job
+            await ref.push(data);
+          }
         }
         // Accept Modal Submission
         else if (view.callback_id === "accept_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/regular").catch(() => []);
-          const job = data.find((item) => item.jobId === jobId);
+          // Read all jobs under "regular"
+          const ref = db.ref("jobs/regular");
+          const snapshot = await ref.once("value");
+          const jobs = snapshot.val() || {};
+
+          // Find the key of the job with the given jobId
+          let foundKey = null;
+          let job = null;
+
+          for (const [key, item] of Object.entries(jobs)) {
+            if (item.jobId === jobId) {
+              foundKey = key;
+              job = item;
+              break;
+            }
+          }
+
+          if (!foundKey) {
+            console.error(`Job ID ${jobId} not found.`);
+            return;
+          }
           const updatedData = {
             startDate: view.state.values.datepicker.accept_date.selected_date,
             startTime: view.state.values.timepicker.accept_time.selected_time,
@@ -214,9 +243,27 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "reject_form") {
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/regular").catch(() => []);
-          const job = data.find((item) => item.jobId === jobId);
+          // Read all jobs under "regular"
+          const ref = db.ref("jobs/regular");
+          const snapshot = await ref.once("value");
+          const jobs = snapshot.val() || {};
 
+          // Find the key of the job with the given jobId
+          let foundKey = null;
+          let job = null;
+
+          for (const [key, item] of Object.entries(jobs)) {
+            if (item.jobId === jobId) {
+              foundKey = key;
+              job = item;
+              break;
+            }
+          }
+
+          if (!foundKey) {
+            console.error(`Job ID ${jobId} not found.`);
+            return;
+          }
           const updatedData = {
             jobId: jobId,
             rejectdate: view.state.values.datepicker.reject_date.selected_date,
@@ -240,8 +287,28 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/regular").catch(() => []);
-          const job = data.find((item) => item.jobId === jobId);
+          //from previous payloads (or from database)
+          // Read all jobs under "regular"
+          const ref = db.ref("jobs/regular");
+          const snapshot = await ref.once("value");
+          const jobs = snapshot.val() || {};
+
+          // Find the key of the job with the given jobId
+          let foundKey = null;
+          let job = null;
+
+          for (const [key, item] of Object.entries(jobs)) {
+            if (item.jobId === jobId) {
+              foundKey = key;
+              job = item;
+              break;
+            }
+          }
+
+          if (!foundKey) {
+            console.error(`Job ID ${jobId} not found.`);
+            return;
+          }
 
           const updatedData = {
             jobId: jobId,
@@ -304,9 +371,27 @@ app.post("/slack/actions", async (req, res) => {
           // console.log(view.state.values)
           const jobId = view.private_metadata;
           //from previous payloads (or from database)
-          const data = await db.getData("/regular").catch(() => []);
-          const job = data.find((item) => item.jobId === jobId);
+          // Read all jobs under "regular"
+          const ref = db.ref("jobs/regular");
+          const snapshot = await ref.once("value");
+          const jobs = snapshot.val() || {};
 
+          // Find the key of the job with the given jobId
+          let foundKey = null;
+          let job = null;
+
+          for (const [key, item] of Object.entries(jobs)) {
+            if (item.jobId === jobId) {
+              foundKey = key;
+              job = item;
+              break;
+            }
+          }
+
+          if (!foundKey) {
+            console.error(`Job ID ${jobId} not found.`);
+            return;
+          }
           const updatedData = {
             jobId: jobId,
 
@@ -338,22 +423,32 @@ app.post("/slack/actions", async (req, res) => {
         else if (view.callback_id === "daily_update") {
           const jobId = view.private_metadata; // Job ID from the modal
           const ts = new Date();
-          const jobPath = `/daily`;
-          // 1. Read all jobs (array), fallback to []
-          const jobList = await db.getData(jobPath).catch(() => []);
-          try {
-            // 2. Find the job by jobId
-            const index = jobList.findIndex((job) => job.jobId === jobId);
+          const jobRef = db.ref("/jobs/daily"); // Assuming you're storing daily jobs here
 
-            if (index === -1) {
-              console.error(`⚠️ Job ${jobId} not found in DB`);
-              return;
+          try {
+            // 1. Get snapshot of all daily jobs
+            const snapshot = await jobRef.once("value");
+            const jobs = snapshot.val() || {};
+
+            let targetKey = null;
+            let currentJob = null;
+
+            // 2. Find the job's Firebase key by matching jobId
+            for (const [key, job] of Object.entries(jobs)) {
+              if (job.jobId === jobId) {
+                targetKey = key;
+                currentJob = job;
+                break;
+              }
             }
 
+            if (!targetKey) {
+              console.error(`⚠️ Job ${jobId} not found in /jobs/daily`);
+              return;
+            }
             // 3. Build updated job object
             const state = view.state.values;
             const updatedJob = {
-              ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
                 timeZone: "America/New_York",
               }),
@@ -375,10 +470,10 @@ app.post("/slack/actions", async (req, res) => {
                 ) || [],
               status: "Waiting for Supervisor approval",
             };
-            jobList[index] = updatedJob;
+            // 4. Update only that job
+            await jobRef.child(targetKey).update(updatedJob);
 
-            // 4. Save the whole array back
-            await db.push(jobPath, jobList, true);
+            console.log(`✅ Updated job ${jobId} successfully`);
 
             // 5. (Optional) Notify Slack channel
             await axios.post(
@@ -402,21 +497,33 @@ app.post("/slack/actions", async (req, res) => {
 
         // PROJECT JOB UPDATE
         else if (view.callback_id === "update_project") {
-          const jobId = view.private_metadata;
+          const jobId = view.private_metadata; // Job ID from the modal
           const ts = new Date();
-          const jobPath = `/project`;
-          const jobList = await db.getData(jobPath).catch(() => []);
-          try {
-            const index = jobList.findIndex((job) => job.jobId === jobId);
+          const jobRef = db.ref("/jobs/project"); // Assuming you're storing daily jobs here
 
-            if (index === -1) {
-              console.error(`⚠️ Job ${jobId} not found in DB`);
-              return;
+          try {
+            // 1. Get snapshot of all daily jobs
+            const snapshot = await jobRef.once("value");
+            const jobs = snapshot.val() || {};
+
+            let targetKey = null;
+            let currentJob = null;
+
+            // 2. Find the job's Firebase key by matching jobId
+            for (const [key, job] of Object.entries(jobs)) {
+              if (job.jobId === jobId) {
+                targetKey = key;
+                currentJob = job;
+                break;
+              }
             }
 
+            if (!targetKey) {
+              console.error(`⚠️ Job ${jobId} not found in /jobs/project`);
+              return;
+            }
             const state = view.state.values;
             const updatedJob = {
-              ...jobList[index],
               timestamp: ts.toLocaleString("en-US", {
                 timeZone: "America/New_York",
               }),
@@ -437,9 +544,10 @@ app.post("/slack/actions", async (req, res) => {
                 ) || [],
               status: "Waiting for Supervisor approval",
             };
+            // 4. Update only that job
+            await jobRef.child(targetKey).update(updatedJob);
 
-            jobList[index] = updatedJob;
-            await db.push(jobPath, jobList, true);
+            console.log(`✅ Updated job ${jobId} successfully`);
 
             await axios.post(
               "https://slack.com/api/chat.postMessage",
@@ -464,59 +572,70 @@ app.post("/slack/actions", async (req, res) => {
           const jobId = view.private_metadata;
           const ts = new Date();
 
-          // -P for project -D for Daily
-          let jobPath = "/project";
+          // Determine path
+          let jobPath = "/jobs/project"; // Recommended to nest all under /jobs/
           let jobType = "Project";
           if (jobId.endsWith("-D")) {
-            jobPath = "/daily";
+            jobPath = "/jobs/daily";
             jobType = "Daily";
-          } else if (jobId.endsWith("-P")) {
-            jobPath = "/project";
-            jobType = "Project";
           }
 
-          let jobList = await db.getData(jobPath).catch(() => []);
-          const index = jobList.findIndex(
-            (job) => job.jobId === jobId
-          );
+          try {
+            const ref = db.ref(jobPath);
+            const snapshot = await ref.once("value");
+            const jobs = snapshot.val() || {};
 
-          if (index === -1) {
-            console.error(`⚠️ Job ${jobId} not found in ${jobPath}`);
-            return;
+            let targetKey = null;
+            let originalJob = null;
+
+            // Search job by jobId
+            for (const [key, job] of Object.entries(jobs)) {
+              if (job.jobId === jobId) {
+                targetKey = key;
+                originalJob = job;
+                break;
+              }
+            }
+
+            if (!targetKey) {
+              console.error(`⚠️ Job ${jobId} not found in ${jobPath}`);
+              return;
+            }
+            const state = view.state.values;
+            const updatedJob = {
+              timestamp: ts.toLocaleString("en-US", {
+                timeZone: "America/New_York",
+              }),
+              remarks: state.comments?.remarks_input?.value || null,
+              checkDate: state.date?.datepickeraction?.selected_date || null,
+              checkTime: state.time?.timepickeraction?.selected_time || null,
+              finish_pic:
+                state.picture?.file_general_app?.files?.map(
+                  (file) => file.url_private
+                ) || [],
+              status: " 👍 Approved and Completed",
+            };
+
+            if (jobType === "Daily") {
+              updatedJob.toolsChecked =
+                state.tool_id?.Maitenance_tool?.selected_option?.value || null;
+              updatedJob.extrahelp =
+                state.clean_input?.name_clean?.value || null;
+              updatedJob.supervisorcomment =
+                state.other_input?.detailOfJob?.value || null;
+              updatedJob.cleaningNeed =
+                state.clean_id?.working_area?.selected_option?.value || null;
+            } else {
+              // Project
+              updatedJob.toolsChecked =
+                state.tool_id?.Maitenance_tool?.selected_option?.value || null;
+            }
+
+            await ref.child(targetKey).update(updatedJob);
+            console.log(`✅ ${jobType} job ${jobId} updated successfully`);
+          } catch (error) {
+            console.error(`🔥 Error updating ${jobType} job ${jobId}:`, error);
           }
-
-          const state = view.state.values;
-          const updatedJob = {
-            ...jobList[index],
-            timestamp: ts.toLocaleString("en-US", {
-              timeZone: "America/New_York",
-            }),
-            remarks: state.comments?.remarks_input?.value || null,
-            checkDate: state.date?.datepickeraction?.selected_date || null,
-            checkTime: state.time?.timepickeraction?.selected_time || null,
-            finish_pic:
-              state.picture?.file_general_app?.files?.map(
-                (file) => file.url_private
-              ) || [],
-            status: " 👍 Approved and Completed",
-          };
-
-          if (jobType === "Daily") {
-            updatedJob.toolsChecked =
-              state.tool_id?.Maitenance_tool?.selected_option?.value || null;
-            updatedJob.extrahelp = state.clean_input?.name_clean?.value || null;
-            updatedJob.supervisorcomment =
-              state.other_input?.detailOfJob?.value || null;
-            updatedJob.cleaningNeed =
-              state.clean_id?.working_area?.selected_option?.value || null;
-          } else {
-            // Project 
-            updatedJob.toolsChecked =
-              state.tool_id?.Maitenance_tool?.selected_option?.value || null;
-          }
-
-          jobList[index] = updatedJob;
-          await db.push(jobPath, jobList, true);
 
           // Slack 通知
           await axios.post(
@@ -562,7 +681,6 @@ app.post("/slack/actions", async (req, res) => {
         } else if (action.action_id === "update_daily") {
           //Open modal for update progress
           const jobId = action.value;
-          console.log(view);
           await openModal_daily_update(view.id, jobId);
         }
         //
@@ -587,7 +705,7 @@ app.post("/slack/actions", async (req, res) => {
         else if (action.action_id === "approve_project") {
           //Open modal for update progress
           const jobId = action.value;
-          console.log(jobId)
+          console.log(jobId);
 
           await openModal_general_approval(view.id, jobId);
         } else if (action.action_id.match(/add_/)) {
