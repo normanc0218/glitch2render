@@ -82,8 +82,9 @@ async function openModal_daily_job(trigger_id, userId) {
       },
       { type: "divider" },
     ];
-
-    for (const job of allJobs) {
+    const jobPrefix = `JOB-${jobDate}`;
+    const todaysJobs = allJobs.filter(job => job.jobId.startsWith(jobPrefix));
+    for (const job of todaysJobs) {
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
