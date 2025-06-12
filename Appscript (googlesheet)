@@ -1,0 +1,75 @@
+function importFromFirebase() {
+  const firebaseUrl = "https://maintenance-form-602d9-default-rtdb.firebaseio.com/jobs.json";
+
+  // If your Firebase DB has public read access, no need for auth
+  const response = UrlFetchApp.fetch(firebaseUrl);
+  const jsonData = JSON.parse(response.getContentText());
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  function syncSheetByJobID(sheetName, jobsMap) {
+    const items = jobsMap ? Object.values(jobsMap) : [];
+    if (items.length === 0) return;
+
+    let targetSheet = sheet.getSheetByName(sheetName);
+    const headers = [...new Set(items.flatMap(item => Object.keys(item)))];
+
+    // Create sheet if not exists
+    if (!targetSheet) {
+      targetSheet = sheet.insertSheet(sheetName);
+    }
+
+    // Initialize headers if empty
+    if (targetSheet.getLastRow() === 0) {
+      targetSheet.appendRow(headers);
+    }
+
+    const currentHeadersRange = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn());
+    let currentHeaders = currentHeadersRange.getValues()[0];
+
+    // Add missing headers
+    const missingHeaders = headers.filter(h => !currentHeaders.includes(h));
+    if (missingHeaders.length > 0) {
+      currentHeaders.push(...missingHeaders);
+      targetSheet.getRange(1, 1, 1, currentHeaders.length).setValues([currentHeaders]);
+    }
+
+    const dataRange = targetSheet.getDataRange();
+    const existingData = dataRange.getValues();
+
+    const jobIDIndex = currentHeaders.indexOf("jobId");
+    if (jobIDIndex === -1) {
+      throw new Error(`'jobId' column is required in sheet: ${sheetName}`);
+    }
+
+    const jobIDToRowIndex = {};
+    for (let i = 1; i < existingData.length; i++) {
+      const row = existingData[i];
+      const jobID = row[jobIDIndex];
+      if (jobID) jobIDToRowIndex[jobID] = i + 1;
+    }
+
+    // Write data
+    items.forEach(item => {
+      const row = currentHeaders.map(h => {
+        const val = item[h];
+        if (Array.isArray(val)) return val.join(", ");
+        if (typeof val === "object" && val !== null) return JSON.stringify(val);
+        return val !== undefined ? val : "";
+      });
+
+      const itemJobID = item["jobId"];
+      if (itemJobID && jobIDToRowIndex[itemJobID]) {
+        const targetRow = jobIDToRowIndex[itemJobID];
+        targetSheet.getRange(targetRow, 1, 1, currentHeaders.length).setValues([row]);
+      } else {
+        targetSheet.appendRow(row);
+      }
+    });
+  }
+
+  // Import all 3 job types
+  syncSheetByJobID("daily", jsonData.daily);
+  syncSheetByJobID("project", jsonData.project);
+  syncSheetByJobID("regular", jsonData.regular);
+}
