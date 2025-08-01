@@ -1,28 +1,27 @@
-# Hello Node (blank)
+# Slack App - Glitch to Render
 
-[Node.js](https://nodejs.org/en/about/) is a popular runtime that lets you run JavaScript on the server. This project uses the [Fastify](https://www.fastify.io/) framework and basic templating with [Handlebars](https://handlebarsjs.com/).
+This is a simple Slack App originally created on Glitch and migrated to Render for 24/7 uptime. It uses Node.js and Express to handle Slack events and commands.
 
-_Last updated: 14 August 2023_
+## 🚀 Features
 
-## What's in this project?
+- Listens for Slack Events
+- Handles slash commands (optional)
+- Compatible with Glitch or Render deployment
+- Stays online 24/7 when hosted on Render
 
-← `README.md`: That’s this file, where you can tell people what your cool website does and how you built it.
+## 🛠️ Tech Stack
 
-← `public/style.css`: The styling rules for your pages and posts.
+- Node.js
+- Express
+- Slack Bolt SDK
+- Render (for deployment)
 
-← `server.js`: The main server script for your new site.
+## 📦 Getting Started
 
-← `src/`: This folder holds page templates, additional scripts.
+Clone the repo and install dependencies:
 
-### Working in the `src/` folder 📁
-
-← `src/pages/index.hbs`: This is the main page template for your site.
-
-![Glitch](https://cdn.glitch.com/a9975ea6-8949-4bab-addb-8a95021dc2da%2FLogo_Color.svg?v=1602781328576)
-
-## You built this with Glitch!
-
-[Glitch](https://glitch.com) is a friendly community where millions of people come together to build web apps and websites.
-
-- Need more help? [Check out our Help Center](https://help.glitch.com/) for answers to any common questions.
-- Ready to make it official? [Become a paid Glitch member](https://glitch.com/pricing) to boost your app with private sharing, more storage and memory, domains and more.
+```bash
+git clone https://github.com/normanc0218/glitch2render.git
+cd glitch2render
+npm install
+npm start
