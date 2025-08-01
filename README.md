@@ -1,24 +1,29 @@
 # Slack App - Glitch to Render
 
-This is a simple Slack App originally created on Glitch and migrated to Render for 24/7 uptime. It uses Node.js and Express to handle Slack events and commands.
+This is a Slack App originally created using Glitch and now adapted for Render deployment with 24/7 uptime. It uses Firebase Realtime Database for storing submitted events and supports syncing those events to Google Calendar.
+
+---
 
 ## 🚀 Features
 
-- Listens for Slack Events
-- Handles slash commands (optional)
-- Compatible with Glitch or Render deployment
-- Stays online 24/7 when hosted on Render
+- Handles Slack events and commands
+- Stores data in Firebase Realtime Database
+- Syncs event data to Google Calendar via API
+- Fully deployable to Render for always-on access
+
+---
 
 ## 🛠️ Tech Stack
 
-- Node.js
-- Express
+- Node.js + Express
 - Slack Bolt SDK
-- Render (for deployment)
+- Firebase Realtime Database
+- Google Calendar API
+- Hosted on Render
+
+---
 
 ## 📦 Getting Started
-
-Clone the repo and install dependencies:
 
 ```bash
 git clone https://github.com/normanc0218/glitch2render.git
