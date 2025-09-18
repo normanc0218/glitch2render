@@ -138,12 +138,8 @@ app.post("/slack/actions", async (req, res) => {
     //   return res.status(200).send(); // Optionally add a visible message
     // }
     if (command === "/homeapp") {
-      const homeUrl = `https://app.slack.com/client/TH1AQELNT/D08TSCMJ37B`;
-    
-      return res.json({
-        response_type: "ephemeral", // 只显示给自己
-        text: `👉 点这里打开 [App Home](${homeUrl})`,
-      });
+       await openModal_daily_job(trigger_id,user_id);
+       return res.status(200).send(); 
     }
     return res.status(200).send("Unknown command");
   } else {
