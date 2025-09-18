@@ -2,8 +2,7 @@
 
 const maintenanceStaff = {
   Fai: "U08V4M4RT8R",
-  Steven: "value-1",
-  Sam: "value-2"
+  Steven: "value-1"
 };
 
 const managerUsers = [
