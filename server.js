@@ -137,14 +137,14 @@ app.post("/slack/actions", async (req, res) => {
     //   // Respond with 200 OK (Slack expects a response)
     //   return res.status(200).send(); // Optionally add a visible message
     // }
-  if (command === "/homeapp") {
-        // 每个 App Home 的固定链接格式：
-        // https://app.slack.com/app/<你的AppID>
-      await displayHome(user_id); // You must have `openModal` defined for this
-
-      // Respond with 200 OK (Slack expects a response)
-      return res.status(200).send(); // Optionally add a visible message
-      }
+    if (command === "/homeapp") {
+      const homeUrl = `https://app.slack.com/app/${process.env.SLACK_APP_ID}`;
+    
+      return res.json({
+        response_type: "ephemeral", // 只显示给自己
+        text: `👉 点这里打开 [App Home](${homeUrl})`,
+      });
+    }
     return res.status(200).send("Unknown command");
   } else {
     // Otherwise it's an interactive payload (e.g. button, modal, etc.)
