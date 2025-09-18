@@ -138,7 +138,7 @@ app.post("/slack/actions", async (req, res) => {
     //   return res.status(200).send(); // Optionally add a visible message
     // }
     if (command === "/homeapp") {
-      const homeUrl = `https://app.slack.com/app/${process.env.SLACK_APP_ID}`;
+      const homeUrl = `https://app.slack.com/client/TH1AQELNT/D08TSCMJ37B`;
     
       return res.json({
         response_type: "ephemeral", // 只显示给自己
