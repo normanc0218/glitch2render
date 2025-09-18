@@ -18,7 +18,8 @@
 // const db = admin.database();
 // module.exports = db;
 const admin = require("firebase-admin");
-
+console.log("DEBUG FIREBASE_PRIVATE_KEY length:", process.env.FIREBASE_PRIVATE_KEY?.length);
+console.log("DEBUG FIREBASE_PRIVATE_KEY snippet:", process.env.FIREBASE_PRIVATE_KEY?.slice(0,50));
 // Railway 上直接用环境变量初始化，不需要 JSON 文件
 if (!admin.apps.length) {
   admin.initializeApp({
