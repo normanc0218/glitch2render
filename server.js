@@ -130,14 +130,24 @@ app.post("/slack/actions", async (req, res) => {
 
     console.log("Slash command received:", command);
 
-    if (command === "/newjob") {
-      // You could open a modal here or respond with a message
-      await openModal(trigger_id); // You must have `openModal` defined for this
+    // if (command === "/newjob") {
+    //   // You could open a modal here or respond with a message
+    //   await openModal(trigger_id); // You must have `openModal` defined for this
 
-      // Respond with 200 OK (Slack expects a response)
-      return res.status(200).send(); // Optionally add a visible message
-    }
-
+    //   // Respond with 200 OK (Slack expects a response)
+    //   return res.status(200).send(); // Optionally add a visible message
+    // }
+  if (command === "/homeapp") {
+        // 每个 App Home 的固定链接格式：
+        // https://app.slack.com/app/<你的AppID>
+        const homeUrl = `https://app.slack.com/app/${process.env.SLACK_APP_ID}`;
+  
+        // 返回一个只对用户自己可见的消息
+        return res.json({
+          response_type: "ephemeral",
+          text: `👉 [点这里打开 App Home](${homeUrl})`,
+        });
+      }
     return res.status(200).send("Unknown command");
   } else {
     // Otherwise it's an interactive payload (e.g. button, modal, etc.)
