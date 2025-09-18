@@ -71,29 +71,54 @@ async function generateUniqueJobId() {
 //events
 app.post("/slack/events", signVerification, async (req, res) => {
   console.log("🔥 /slack/events reached");
+  console.log("BODY:", req.body); // 🔍 调试用，能看到 Slack 传的内容
 
   const { type, challenge, event } = req.body;
-  if (event.type === "app_home_opened") {
-    console.log("App home opened by user:", event.user);
-    await displayHome(event.user); // Ensure this passes correct user ID
+
+  if (type === "url_verification") {
+    console.log("✅ Responding to Slack challenge");
+    return res.json({ challenge });  // 确保返回 JSON
   }
-  switch (type) {
-    case "url_verification":
-      // Step 1: Respond to Slack URL Verification
-      return res.send({ challenge });
 
-    case "event_callback": {
-      console.log("✅ Slack request verified");
-      if (event.type === "app_home_opened") {
-        await displayHome(event.user);
-      }
+  if (type === "event_callback") {
+    console.log("✅ Slack event callback received");
 
-      return res.sendStatus(200); // Always respond 200 to Slack
+    if (event && event.type === "app_home_opened") {
+      console.log("App home opened by user:", event.user);
+      await displayHome(event.user);
     }
-    default:
-      return res.sendStatus(400);
+
+    return res.sendStatus(200);
   }
+
+  return res.sendStatus(400);
 });
+
+// app.post("/slack/events", signVerification, async (req, res) => {
+//   console.log("🔥 /slack/events reached");
+//   console.log("BODY:", req.body);
+//   const { type, challenge, event } = req.body;
+//   if (event.type === "app_home_opened") {
+//     console.log("App home opened by user:", event.user);
+//     await displayHome(event.user); // Ensure this passes correct user ID
+//   }
+//   switch (type) {
+//     case "url_verification":
+//       // Step 1: Respond to Slack URL Verification
+//       return res.send({ challenge });
+
+//     case "event_callback": {
+//       console.log("✅ Slack request verified");
+//       if (event.type === "app_home_opened") {
+//         await displayHome(event.user);
+//       }
+
+//       return res.sendStatus(200); // Always respond 200 to Slack
+//     }
+//     default:
+//       return res.sendStatus(400);
+//   }
+// });
 // Slack Actions
 
 app.post("/slack/actions", async (req, res) => {
