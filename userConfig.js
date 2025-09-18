@@ -1,8 +1,8 @@
 // userConfig.js
 
 const maintenanceStaff = {
-  Fai: "U08V4M4RT8R",
-  Steven: "value-1"
+  Fai: "U09FZM0USQ2",
+  Steven: "U09GE45CBAM"
 };
 
 const managerUsers = [
