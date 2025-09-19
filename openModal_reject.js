@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 const {
   createInputBlock,
   createInputBlock_select,
@@ -24,14 +25,14 @@ function getNYTimeString() {
 }
 const initialTime = getNYTimeString();
 
-
+const mStaffName = Object.keys(maintenanceStaff);
 const openModal_reject = async (trigger_id, jobId) => {
   const blocks=[]
   blocks.push(createInputBlock_select({
     block_id: "reject_block",
     label: "Your Name",
     action_id: "whoreject",
-    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+    options: mStaffName, // <-- make sure this is passed in like this
   }));
   blocks.push(createInputBlock("reason", "Specify Your Reason To Reject", "reason_input", "Enter your reason here"));
   blocks.push(createInputBlock("signature", "Reject the Job and Sign", "remarks_input", "Enter your signature here"));
