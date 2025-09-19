@@ -2,6 +2,7 @@ const axios = require('axios');
 const qs = require('qs');
 const {createTextSection, 
        createInputBlock,               //block_id, label, action_id, placeholder
+	   createMultiInputBlock,
        createInputBlock_multistatic,   //block_id, label, action_id, placeholder, options
        createInputBlock_pic,           //block_id, label, action_id
        createInputBlock_date,          //block_id, label, action_id, initial_date
@@ -49,7 +50,7 @@ const openModal = async(trigger_id) => {
     options: machineOptions, // <-- make sure this is passed in like this
   }));
   blocks.push(createInputBlock(`reporter_block`,`Who found the issue?`,`reporter`,`Name of the Finder`));
-  blocks.push(createInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
+  blocks.push(createMultiInputBlock(`Description`,`Description of the issue`,`issue`,`What is the issue?`));
   blocks.push(createInputBlock_multistatic(`maintenanceStaff`,`Assign the job to`,`pickedGuy`,`Select the person`,staffOptions));
   blocks.push(createInputBlock_pic(`picture`,`Picture of the defect`,`file_input_action_id_1`));
   blocks.push(createInputBlock_date(`date`,`Start Date`,`datepickeraction`,initialDate));  
