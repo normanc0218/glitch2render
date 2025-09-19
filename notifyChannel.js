@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-async function threadNotify(message, threadTs = null) {
+async function threadNotify(message, threadTs = null,delayInSeconds = null) {
   try {
     const payload = {
       channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
@@ -10,6 +10,14 @@ async function threadNotify(message, threadTs = null) {
     // Add thread_ts if replying to a thread
     if (threadTs) {
       payload.thread_ts = threadTs;
+    }
+    if (delayInSeconds) {
+      // Use scheduleMessage instead of postMessage
+      payload.post_at = Math.floor(Date.now() / 1000) + delayInSeconds;
+      url = "https://slack.com/api/chat.scheduleMessage";
+    } else {
+      // Immediate message
+      url = "https://slack.com/api/chat.postMessage";
     }
 
     const response = await axios.post("https://slack.com/api/chat.postMessage", payload, {
