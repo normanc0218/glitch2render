@@ -1,5 +1,4 @@
 
-
 function createInputBlock(block_id, label, action_id, placeholder = "",option=false) {
   return {
     type: "input",
@@ -11,6 +10,26 @@ function createInputBlock(block_id, label, action_id, placeholder = "",option=fa
     element: {
       type: "plain_text_input",
       action_id,
+      placeholder: {
+        type: "plain_text",
+        text: placeholder
+      }
+    },
+    "optional": option
+  };
+}
+function createMultiInputBlock(block_id, label, action_id, placeholder = "",option=false) {
+  return {
+    type: "input",
+    block_id,
+    label: {
+      type: "plain_text",
+      text: label
+    },
+    element: {
+      type: "plain_text_input",
+      action_id,
+	  multiline: true,
       placeholder: {
         type: "plain_text",
         text: placeholder
@@ -234,6 +253,7 @@ function createD4Button(text, value, action_id) {
 }
 module.exports = {
   createInputBlock,
+  createMultiInputBlock,
   createInputBlock_multistatic,
   createInputBlock_pic,
   createInputBlock_date,
