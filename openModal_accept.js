@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { maintenanceStaff, managerUsers } = require('./userConfig');
 const {
   createInputBlock,
   createInputBlock_select,
@@ -23,14 +24,14 @@ function getNYTimeString() {
   return `${hh}:${mm}`;
 }
 const initialTime = getNYTimeString();
-
+const mStaffName = Object.keys(maintenanceStaff);
 const openModal_accept = async (trigger_id, jobId) => {
   const blocks=[]
   blocks.push(createInputBlock_select({
     block_id: "accept_block",
     label: "Your Name",
     action_id: "whoaccept",
-    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+    options: mStaffName, // <-- make sure this is passed in like this
   }));
   blocks.push(createInputBlock("signature", "Specify the reason if you are currently occupied.", "remarks_input", "Enter your remarks here"));
   blocks.push(createTextSection("Plan to Start Date"));
