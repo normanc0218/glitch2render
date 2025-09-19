@@ -14,8 +14,9 @@ const { maintenanceStaff, managerUsers } = require("./userConfig");
 const updateView = async (user) => {
   let blocks = [
     createButton("📅 Daily Job", "daily_job", "open_daily_job"),
-    createButton(":dart:Projects:dart:", "long_project", "long_project"),
-    {
+    createButton(":dart:Projects:dart:", "long_project", "long_project")];
+  if (managerUsers.includes(user)) {
+    blocks.push({
       "type": "actions",
       "elements": [
         {
@@ -27,10 +28,7 @@ const updateView = async (user) => {
           "url": "https://docs.google.com/spreadsheets/d/1RNT-dSBH2nC1C369jUwyajtLaNSdHHeMEhL7OK_Yrdg/edit?usp=sharing",
         }
       ]
-    }
-  ];
-  if (managerUsers.includes(user)) {
-    blocks.push(
+    },
       createTextSection(
         "This is the Form for Manager and Supervisors to assign Maintenance jobs to Maintenance people."
       ),
