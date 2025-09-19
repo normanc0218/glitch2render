@@ -1,4 +1,7 @@
 const axios = require('axios');
+const { maintenanceStaff, managerUsers } = require('./userConfig');
+
+
 const {
   createInputBlock,
   createInputBlock_select,
@@ -31,14 +34,14 @@ const initialTime = getNYTimeString();
 // list of managerUser IDs
 const {Supervisors} = require('./userConfig');
 const superOption=Object.entries(Supervisors)
-
+const MStaff = Object.keys(maintenanceStaff);
 const openModal_update_progress = async (trigger_id, jobId) => {
   const blocks=[]
   blocks.push(createInputBlock_select({
     block_id: "accept_block",
     label: "Your Name",
     action_id: "whoupdate",
-    options: ["Fai","Sam","Steven"], // <-- make sure this is passed in like this
+    options: MStaff , // <-- make sure this is passed in like this
   }));
   blocks.push(createInputBlock_checkboxes({
     block_id: "reason_defect_block",
