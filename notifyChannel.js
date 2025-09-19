@@ -1,26 +1,23 @@
 const axios = require("axios");
 
-async function threadNotify(message, threadTs = null,delayInSeconds = null) {
+async function threadNotify(message, threadTs = null, delayInSeconds = null) {
   try {
+    let url = "https://slack.com/api/chat.postMessage";
     const payload = {
       channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
       text: message,
     };
 
-    // Add thread_ts if replying to a thread
     if (threadTs) {
       payload.thread_ts = threadTs;
     }
+
     if (delayInSeconds) {
-      // Use scheduleMessage instead of postMessage
       payload.post_at = Math.floor(Date.now() / 1000) + delayInSeconds;
       url = "https://slack.com/api/chat.scheduleMessage";
-    } else {
-      // Immediate message
-      url = "https://slack.com/api/chat.postMessage";
     }
 
-    const response = await axios.post("https://slack.com/api/chat.postMessage", payload, {
+    const response = await axios.post(url, payload, {
       headers: {
         Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
         "Content-Type": "application/json",
@@ -29,11 +26,14 @@ async function threadNotify(message, threadTs = null,delayInSeconds = null) {
 
     if (!response.data.ok) {
       console.error("Slack API error:", response.data);
+    } else {
+      return response.data; // return full Slack response (includes ts or scheduled_message_id)
     }
   } catch (error) {
     console.error("Failed to send Slack notification:", error.response?.data || error.message);
   }
 }
+
 
 async function notifyNewOrder(orderData, jobId) {
   const mentions = orderData.mStaff_id.map(id => `<@${id}>`).join(" and ");
