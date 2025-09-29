@@ -48,10 +48,11 @@ async function openModal_projects(trigger_id, userId) {
 
     for (const { calendarId, assignedTo } of calendarAssignments) {
       const events = await fetchCalendar(calendarId);
+      console.log(`📅 ${assignedTo} events fetched:`, events?.length);
       if (!events || events.length === 0) continue;
       for (const job of events) {
         const jobId = `JOB-${job.etag?.slice(-7, -1)}-P`;
-        console.error(jobId，job);
+        console.log("Processing:", jobId);
         const exists = allJobs.some((j) => j.jobId === jobId);
         if (!exists) {
           const newJob = {
