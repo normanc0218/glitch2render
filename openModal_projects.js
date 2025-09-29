@@ -51,6 +51,7 @@ async function openModal_projects(trigger_id, userId) {
       if (!events || events.length === 0) continue;
       for (const job of events) {
         const jobId = `JOB-${job.etag?.slice(-7, -1)}-P`;
+        console.error(jobId，job);
         const exists = allJobs.some((j) => j.jobId === jobId);
         if (!exists) {
           const newJob = {
