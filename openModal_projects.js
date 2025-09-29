@@ -75,12 +75,15 @@ async function openModal_projects(trigger_id, userId) {
     const blocks = [createHeader("Maintenance Projects"), createDivider()];
 
     for (const job of allJobs) {
-      if (
-        job.status !== "Pending" &&
-        job.orderEndDate &&
-        new Date(job.orderEndDate) < new Date(today)
+      if (  
+        job.status === "👍 *Approved and Completed*"
+         // 已经完成批准的，直接跳过
+        // job.status !== "Pending" &&
+        // job.orderEndDate &&
+        // new Date(job.orderEndDate) < new Date(today)
       )
-        continue;
+      { 
+        continue;}
       blocks.push(
         createTextSection(
           `*Job ID:* ${job.jobId}\n` +
