@@ -18,8 +18,8 @@ async function fetchCalendar(cId) {
 
   const now = DateTime.now().setZone(TIME_ZONE);
 
-  const startOfDay = now.startOf('day').toISO();
-  const endOfDay = now.endOf('day').toISO();
+  const startOfDay = now.minus({ weeks: 2 }).startOf('day').toISO();
+  const endOfDay = now.plus({ weeks: 2 }).endOf('day').toISO();
 
   const res = await calendar.events.list({
     calendarId: cId,
