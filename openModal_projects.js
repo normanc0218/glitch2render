@@ -76,7 +76,7 @@ async function openModal_projects(trigger_id, userId) {
 
     for (const job of allJobs) {
       if (
-        job.status === "Pending" &&
+        job.status !== "Pending" &&
         job.orderEndDate &&
         new Date(job.orderEndDate) < new Date(today)
       )
