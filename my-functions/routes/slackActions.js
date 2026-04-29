@@ -28,6 +28,7 @@ const {
   openModal_dispatch,
   openModal_submit_training,
   openModal_unfinished,
+  updateUnfinishedPage,
   openModal_finished,
   updateFinishedPage,
   openModal_view_dispatch
@@ -124,7 +125,11 @@ module.exports = async (req, res) => {
           break;  
         case "openModal_unfinished":
           await openModal_unfinished(trigger_id);
-          break;  
+          break;
+        case "unfinished_prev_page":
+        case "unfinished_next_page":
+          await updateUnfinishedPage(viewId, parseInt(action.value));
+          break;
         case "openModal_finished":
           await openModal_finished(trigger_id);
           break;

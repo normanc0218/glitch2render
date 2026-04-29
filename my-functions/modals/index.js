@@ -18,7 +18,7 @@ const openModal_manage_dispatch = require('./openModal_manage_dispatch');
 const openModal_view_dispatch = require('./openModal_view_dispatch');
 const openModal_dispatch = require('./openModal_dispatch');
 const openModal_submit_training = require('./openModal_submit_training');
-const openModal_unfinished  = require('./openModal_unfinished');
+const { openModal_unfinished, updateUnfinishedPage } = require('./openModal_unfinished');
 const { openModal_finished, updateFinishedPage } = require('./openModal_finished');
 
 module.exports = {
@@ -42,6 +42,7 @@ module.exports = {
   openModal_dispatch,
   openModal_submit_training,
   openModal_unfinished,
+  updateUnfinishedPage,
   openModal_finished,
   updateFinishedPage,
 };
