@@ -29,7 +29,8 @@ const {
   openModal_submit_training,
   openModal_unfinished,
   openModal_finished,
-  openModal_view_dispatch 
+  updateFinishedPage,
+  openModal_view_dispatch
 } = require("../modals");
 
 const { generateUniqueJobId } = require("../utils/generateUniqueJobId");
@@ -126,7 +127,11 @@ module.exports = async (req, res) => {
           break;  
         case "openModal_finished":
           await openModal_finished(trigger_id);
-          break;  
+          break;
+        case "finished_prev_page":
+        case "finished_next_page":
+          await updateFinishedPage(viewId, parseInt(action.value));
+          break;
         // 打开详情
         case "openModal_viewDetail_home":
           await openModal_view_detail_home(trigger_id, jobId);
