@@ -1,0 +1,48 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm test
+        env:
+          NODE_ENV: test
+
+  deploy:
+    name: Deploy to Firebase
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm install -g firebase-tools
+
+      - name: Write service account key
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: |
+          echo "$SERVICE_ACCOUNT" > service-account.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/service-account.json" >> $GITHUB_ENV
+
+      - name: Deploy to Firebase
+        run: firebase deploy --only functions:slackHandler --debug
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          SLACK_NOTIFICATION_CHANNEL_ID: ${{ secrets.SLACK_NOTIFICATION_CHANNEL_ID }}
