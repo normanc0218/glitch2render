@@ -32,56 +32,59 @@ const { maintenanceStaff, managerUsers } = require('../userConfig');
 
 const openModal_finished = async (trigger_id) => {
   try {
-        // 1️⃣ 从 Firebase 获取派工任务
-        const snapshot = await db.ref("jobs/Release").once("value");
-        const releaseData = snapshot.val() || {};
+    // 1️⃣ 先开 loading modal（3秒内响应 Slack）
+    const loadingResult = await axios.post(
+      "https://slack.com/api/views.open",
+      qs.stringify({
+        token: process.env.SLACK_BOT_TOKEN,
+        trigger_id,
+        view: JSON.stringify({
+          type: "modal",
+          callback_id: "view_finished_joblist",
+          title: { type: "plain_text", text: "✅ Finished Jobs" },
+          close: { type: "plain_text", text: "Close" },
+          blocks: [{ type: "section", text: { type: "mrkdwn", text: "⏳ Loading jobs..." } }],
+        }),
+      })
+    );
 
-        const allJobs = Object.values(releaseData)
-          .flatMap(category =>
-            Object.entries(category || {}).map(([id, job]) => ({
-              id,
-              ...job,
-            }))
-          );
+    const view_id = loadingResult.data.view?.id;
+    if (!view_id) return;
 
-        // 确保 allJobs 是数组
-        const jobList = (allJobs || [])
-          .filter(job =>
-            job.status &&
-            (job.status.toLowerCase().includes("complete") ||
-            job.status.toLowerCase().includes("checked"))
-          )
-          .sort((a, b) => new Date(b.orderdate || 0) - new Date(a.orderdate || 0));
+    // 2️⃣ 并行查三个分类
+    const categories = ["Regular", "Daily", "Project"];
+    const snapshots = await Promise.all(
+      categories.map(cat => db.ref(`jobs/Release/${cat}`).once("value"))
+    );
 
-        // console.log("✅ jobList ready:", jobList.length);
-        // console.log("✅ job ready:", jobList);
+    // 3️⃣ 合并 + 过滤已完成
+    const jobList = [];
+    snapshots.forEach((snap, i) => {
+      const jobs = snap.val() || {};
+      Object.entries(jobs).forEach(([id, job]) => {
+        const status = (job.status || "").toLowerCase();
+        if (status.includes("complete") || status.includes("checked")) {
+          jobList.push({ id, category: categories[i], ...job });
+        }
+      });
+    });
 
-    // 3️⃣ 生成 Slack blocks
+    jobList.sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
+
+    // 4️⃣ 生成 blocks
     const blocks = [];
-
     if (jobList.length === 0) {
-      blocks.push({
-        type: "section",
-        text: { type: "mrkdwn", text: "_No finished jobs found._" },
-      });
+      blocks.push({ type: "section", text: { type: "mrkdwn", text: "_No finished jobs found._" } });
     } else {
-      blocks.push({
-        type: "section",
-        text: { type: "mrkdwn", text: "*📋 Finished Jobs List*" },
-      });
+      blocks.push({ type: "section", text: { type: "mrkdwn", text: `*📋 Finished Jobs (${jobList.length})*` } });
       blocks.push(createDivider());
 
-      for (const job of jobList) {
-
+      for (const job of jobList.slice(0, 15)) {
         blocks.push({
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `${job.id || "Untitled Job"}*\n*${job.description || "Untitled Job"}*\n📍 ${
-              job.machineLocation|| "N/A"
-            }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
-              job.orderDate || "N/A"
-            }\n⚙️ Status: ${job.status || "Pending"}`,
+            text: `*${job.id}*\n*${job.description || "Untitled Job"}*\n📍 ${job.machineLocation || "N/A"}\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${job.orderDate || "N/A"}\n⚙️ Status: ${job.status || "N/A"}`,
           },
           accessory: {
             type: "button",
@@ -95,34 +98,25 @@ const openModal_finished = async (trigger_id) => {
       }
     }
 
-    // 4️⃣ 构建 Slack Modal
-    const modal = {
-      type: "modal",
-      callback_id: "view_unfinished_joblist",
-      title: { type: "plain_text", text: "📦 View finished Jobs" },
-      close: { type: "plain_text", text: "Close" },
-      blocks,
-    };
-
-    // 5️⃣ 打开 Slack Modal
-    const args = {
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id,
-      view: JSON.stringify(modal),
-    };
-
-    const result = await axios.post(
-      "https://slack.com/api/views.open",
-      qs.stringify(args)
+    // 5️⃣ 用 views.update 替换 loading modal
+    await axios.post(
+      "https://slack.com/api/views.update",
+      qs.stringify({
+        token: process.env.SLACK_BOT_TOKEN,
+        view_id,
+        view: JSON.stringify({
+          type: "modal",
+          callback_id: "view_finished_joblist",
+          title: { type: "plain_text", text: "✅ Finished Jobs" },
+          close: { type: "plain_text", text: "Close" },
+          blocks,
+        }),
+      })
     );
 
-    if (!result.data.ok) {
-      console.error("❌ Slack API Error:", result.data);
-    } else {
-      console.log("✅ Finished Jobs modal opened successfully");
-    }
+    console.log("✅ Finished Jobs modal updated successfully");
   } catch (err) {
-    console.error("❌ Failed to open finished Jobs modal:", err);
+    console.error("❌ Failed to open Finished Jobs modal:", err);
   }
 };
 
