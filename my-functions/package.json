@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "functions-framework --target=slackHandler",
-    "dev": "nodemon --watch . --ext js,json --exec \"functions-framework --target=slackHandler\""
+    "dev": "nodemon --watch . --ext js,json --exec \"functions-framework --target=slackHandler\"",
+    "test": "echo 'No tests yet' && exit 0"
   },
   "keywords": [],
   "author": "",
