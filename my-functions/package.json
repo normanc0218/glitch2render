@@ -1,0 +1,31 @@
+{
+  "name": "my-functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=slackHandler",
+    "dev": "nodemon --watch . --ext js,json --exec \"functions-framework --target=slackHandler\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@slack/web-api": "^7.12.0",
+    "axios": "^1.13.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^7.0.1",
+    "googleapis": "^164.1.0",
+    "luxon": "^3.7.2",
+    "qs": "^6.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": "20"
+  }
+}
