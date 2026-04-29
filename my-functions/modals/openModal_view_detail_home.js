@@ -1,6 +1,6 @@
 const axios = require("axios");
 const qs = require("qs");
-const db = require("../db");
+const { findJobById } = require("../services/firebaseService");
 
 const {
   createTextSection,
@@ -10,57 +10,19 @@ const {
 } = require("../utils/blockBuilder");
 
 const openModal_view_detail_home = async (trigger_id, jobId) => {
-  const ref = db.ref("/jobs");
   let job = null;
 
-    try {
-      // 1️⃣ 获取整个 jobs 数据
-      const snapshot = await ref.once("value");
-      const jobsData = snapshot.val() || {};
-
-      const allJobs = [];
-
-      // 2️⃣ 遍历每个顶层分类
-      for (const [category, subData] of Object.entries(jobsData)) {
-        if (!subData || typeof subData !== "object") continue;
-
-        // 第二层循环
-        for (const [key, value] of Object.entries(subData)) {
-          // 🧩 如果 value 是对象，继续判断它是不是 job 列表还是 job 本身
-          if (value && typeof value === "object" && !value.description) {
-            // 📦 三层结构: jobs/Release/daily/{jobId}
-            for (const [innerJobId, jobData] of Object.entries(value)) {
-              allJobs.push({
-                id: innerJobId,
-                category, // 第一层
-                subType: key, // 第二层
-                ...jobData,
-              });
-            }
-          } else {
-            // 📁 两层结构: jobs/Schedule/{jobId}
-            allJobs.push({
-              id: key,
-              category, // 第一层
-              subType: null,
-              ...value,
-            });
-          }
-        }
-      }
-
-      // 3️⃣ 查找对应 job
-      job = allJobs.find((j) => j.id === jobId);
-
-      if (!job) {
-        console.error(`⚠️ Job ${jobId} not found in any category.`);
-        return;
-      }
-
-      console.log(`✅ Found job in /jobs/${job.category}${job.subType ? "/" + job.subType : ""}`);
-    } catch (error) {
-      console.error("❌ Error fetching job:", error.message);
-    };
+  try {
+    job = await findJobById(jobId);
+    if (!job) {
+      console.error(`⚠️ Job ${jobId} not found in any category.`);
+      return;
+    }
+    console.log(`✅ Found job in /jobs/${job.category}${job.subType ? "/" + job.subType : ""}`);
+  } catch (error) {
+    console.error("❌ Error fetching job:", error.message);
+    return;
+  }
   const blocks = [
     createTextSection(`*Job ID:* ${job.id}`),
     createTextSection(

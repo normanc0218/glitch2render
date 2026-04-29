@@ -14,55 +14,35 @@ async function getAll(path) {
  * ✅ 更新或新建一条记录（jobId 作为父层 key）
  */
 async function saveJob(basePath, data) {
-  const all = await getAll(basePath);
-  let existingKey = null;
-
-  for (const [key, job] of Object.entries(all)) {
-    if (job.jobId === data.jobId) {
-      existingKey = key;
-      break;
-    }
-  }
-
-  const jobKey = existingKey || data.jobId;
   const { jobId, ...payload } = data;
-  const fullPath = `${basePath}/${jobKey}`;
-
-  // ✅ Admin SDK 写法（不再需要 getDatabase/ref/set）
-  await db.ref(fullPath).set(payload);
+  await db.ref(`${basePath}/${jobId}`).set(payload);
 }
 
 async function saveJobSmart(jobId, data, notify=false, msg= '') {
-  const jobsRef = db.ref("jobs/Release");
-  let targetPath = null;
-  let targetEntry =null;
+  // 并行读三条精准路径，找 jobId 在哪个子类
+  const [rSnap, dSnap, pSnap] = await Promise.all([
+    db.ref(`jobs/Release/Regular/${jobId}`).once("value"),
+    db.ref(`jobs/Release/Daily/${jobId}`).once("value"),
+    db.ref(`jobs/Release/Project/${jobId}`).once("value"),
+  ]);
 
-  // 1️⃣ 读取 jobs/Release 下所有分支
-  const snapshot = await jobsRef.once("value");
-  const releaseData = snapshot.val() || {};
+  const found = [
+    { snap: rSnap, category: "Regular" },
+    { snap: dSnap, category: "Daily" },
+    { snap: pSnap, category: "Project" },
+  ].find(({ snap }) => snap.exists());
 
-  // 2️⃣ 遍历子层（Daily, Project, Regular...）
-  for (const [category, jobs] of Object.entries(releaseData)) {
-    if (jobs && typeof jobs === "object" && jobId in jobs) {
-      targetPath = `jobs/Release/${category}/${jobId}`;
-      targetEntry=db.ref(targetPath);
-      break;
-    }
-  }
+  const targetPath = found
+    ? `jobs/Release/${found.category}/${jobId}`
+    : `jobs/Release/Regular/${jobId}`;
 
-  // 3️⃣ 如果没找到，就写到 Regular
-  if (!targetPath) {
-    targetPath = `jobs/Release/Regular/${jobId}`;
-  }
-
-  // 4️⃣ 保存
   await db.ref(targetPath).update(data);
   console.log(`✅ Job saved to ${targetPath}`);
+
   if (notify === true) {
-    const entrySnapshot = await targetEntry.once("value");
+    const entrySnapshot = await db.ref(targetPath).once("value");
     const entryData = entrySnapshot.val() || {};
-    // console.log(entryData);
-    await threadNotify (jobId, msg,entryData .messageTs)
+    await threadNotify(jobId, msg, entryData.messageTs);
   }
 }
 
@@ -197,9 +177,38 @@ async function notifyNewOrder(data, jobId) {
 
 
 
+async function findJobById(jobId) {
+  let snap;
+
+  if (jobId.startsWith("PRJ")) {
+    snap = await db.ref(`jobs/Release/Project/${jobId}`).once("value");
+    if (snap.exists()) return { id: jobId, category: "Release", subType: "Project", ...snap.val() };
+  } else if (jobId.startsWith("DSP")) {
+    snap = await db.ref(`jobs/Dispatch/${jobId}`).once("value");
+    if (snap.exists()) return { id: jobId, category: "Dispatch", subType: null, ...snap.val() };
+  } else if (jobId.startsWith("SCH")) {
+    snap = await db.ref(`jobs/Schedule/${jobId}`).once("value");
+    if (snap.exists()) return { id: jobId, category: "Schedule", subType: null, ...snap.val() };
+  } else if (jobId.startsWith("TRAIN")) {
+    snap = await db.ref(`jobs/Train/${jobId}`).once("value");
+    if (snap.exists()) return { id: jobId, category: "Train", subType: null, ...snap.val() };
+  } else {
+    // JOB- 前缀：Regular 和 Daily 并行查
+    const [rSnap, dSnap] = await Promise.all([
+      db.ref(`jobs/Release/Regular/${jobId}`).once("value"),
+      db.ref(`jobs/Release/Daily/${jobId}`).once("value"),
+    ]);
+    if (rSnap.exists()) return { id: jobId, category: "Release", subType: "Regular", ...rSnap.val() };
+    if (dSnap.exists()) return { id: jobId, category: "Release", subType: "Daily", ...dSnap.val() };
+  }
+
+  return null;
+}
+
 module.exports = {
   threadNotify,
   notifyNewOrder,
   saveJob,
-  saveJobSmart
+  saveJobSmart,
+  findJobById,
 };

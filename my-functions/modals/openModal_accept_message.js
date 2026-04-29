@@ -31,27 +31,26 @@ function getNYTimeString() {
 const initialTime = getNYTimeString();
 const mStaffName = Object.keys(maintenanceStaff);
 const openModal_accept_message = async (trigger_id, userId, jobId) => {
-  // Find the desired branch
-    const releaseSnap = await db.ref("jobs/Release").once("value");
-    const release = releaseSnap.val() || {};
+  // 并行读三条精准路径，找 jobId 在哪个子类
+    const [rSnap, dSnap, pSnap] = await Promise.all([
+      db.ref(`jobs/Release/Regular/${jobId}`).once("value"),
+      db.ref(`jobs/Release/Daily/${jobId}`).once("value"),
+      db.ref(`jobs/Release/Project/${jobId}`).once("value"),
+    ]);
 
-    let foundBranch = null;
+    const found = [
+      { snap: rSnap, category: "Regular" },
+      { snap: dSnap, category: "Daily" },
+      { snap: pSnap, category: "Project" },
+    ].find(({ snap }) => snap.exists());
 
-    for (const branch of ["Daily", "Regular", "Project"]) {
-      if (release[branch] && release[branch][jobId]) {
-        foundBranch = branch;
-        break;
-      }
-    }
-
-    if (!foundBranch) {
+    if (!found) {
       console.error(`❌ Job ${jobId} not found in any branch.`);
       return;
     }
 
-    console.log(`✅ Found job ${jobId} in branch ${foundBranch}`);
-    //Update the 
-    const jobRef = db.ref(`jobs/Release/${foundBranch}/${jobId}`);
+    console.log(`✅ Found job ${jobId} in branch ${found.category}`);
+    const jobRef = db.ref(`jobs/Release/${found.category}/${jobId}`);
     await jobRef.update({
       status: "Accepted",
       acceptDate: new Date().toISOString().slice(0, 10),
