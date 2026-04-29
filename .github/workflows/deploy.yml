@@ -44,7 +44,7 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/service-account.json" >> $GITHUB_ENV
 
       - name: Deploy to Firebase
-        run: firebase deploy --only functions:slackHandler --project maintenance-form-602d9 --debug
+        run: firebase deploy --only functions:slack-app --project maintenance-form-602d9 --debug
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}
