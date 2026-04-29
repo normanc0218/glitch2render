@@ -14,8 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install
-      - run: npm test
+      - name: Install dependencies
+        run: cd my-functions && npm install
+      - name: Run tests
+        run: cd my-functions && npm test
         env:
           NODE_ENV: test
 
@@ -28,7 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install
+      - name: Install my-functions dependencies
+        run: cd my-functions && npm install
+      - name: Install functions dependencies
+        run: cd functions && npm install
       - run: npm install -g firebase-tools
 
       - name: Write service account key
