@@ -124,8 +124,10 @@ async function handleUpdateProgress(payload) {
     statusOther:   vals?.other_status?.other_status?.selected_option?.value || null,
     partsNeeded:   vals?.parts_needed?.parts_needed?.value || null,
     finishPicture: vals?.finishPicture?.file_input_action_id_1?.files?.map(f => f.url_private) || [],
-    endDate: vals?.endDate?.datepickeraction?.selected_date,
-    endTime: vals?.endTime?.timepickeraction?.selected_time,
+    startDate: vals?.startDate?.datepickeraction?.selected_date,
+    startTime: vals?.startTime?.timepickeraction?.selected_time,
+    endDate:   vals?.endDate?.datepickeraction?.selected_date,
+    endTime:   vals?.endTime?.timepickeraction?.selected_time,
     status: "Completed and waiting for approval",
   };
 

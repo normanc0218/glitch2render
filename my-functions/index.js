@@ -6,6 +6,7 @@ const verifySlackSignature  = require("./utils/verifySlackSignature");
 // 路由模块
 const slackEvents = require("./routes/slackEvents");
 const slackActions = require("./routes/slackActions");
+const slackOptions = require("./routes/slackOptions");
 const { onRequest } = require("firebase-functions/v2/https");
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Slack 路由
 app.post("/slack/events", verifySlackSignature, slackEvents);
 app.post("/slack/actions", verifySlackSignature, slackActions);
+app.post("/slack/options", verifySlackSignature, slackOptions);
 
 // --- 本地运行 + Google Cloud Functions 兼容 ---
 if (require.main === module) {

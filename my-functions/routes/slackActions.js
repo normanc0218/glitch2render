@@ -153,14 +153,27 @@ module.exports = async (req, res) => {
     }
   }
 
-  // For update_form, validate end date/time >= order date/time
+  // For update_form, validate start > order date and end > start
   if (type === "view_submission" && (view?.callback_id === "update_form" || view?.callback_id === "update_daily" || view?.callback_id === "update_project")) {
-    const vals = view.state?.values || {};
-    const endDate = vals?.endDate?.datepickeraction?.selected_date;
-    const endTime = vals?.endTime?.timepickeraction?.selected_time;
-    const jobId = view.private_metadata;
+    const vals      = view.state?.values || {};
+    const startDate = vals?.startDate?.datepickeraction?.selected_date;
+    const startTime = vals?.startTime?.timepickeraction?.selected_time;
+    const endDate   = vals?.endDate?.datepickeraction?.selected_date;
+    const endTime   = vals?.endTime?.timepickeraction?.selected_time;
+    const jobId     = view.private_metadata;
+    const errors    = {};
 
-    if (endDate && endTime && jobId) {
+    // end must be later than start
+    if (startDate && startTime && endDate && endTime) {
+      const startMs = new Date(`${startDate}T${startTime}`).getTime();
+      const endMs   = new Date(`${endDate}T${endTime}`).getTime();
+      if (endMs <= startMs) {
+        errors["endDate"] = `End date/time must be later than start (${startDate} ${startTime}).`;
+      }
+    }
+
+    // start must be later than order date (RTDB jobs only — SQL tasks have no orderDate)
+    if (jobId && !jobId.startsWith("sql:") && startDate && startTime && !errors["startDate"]) {
       try {
         const releaseSnap = await db.ref("jobs/Release").once("value");
         const release = releaseSnap.val() || {};
@@ -170,19 +183,18 @@ module.exports = async (req, res) => {
         }
         if (job?.orderDate && job?.orderTime) {
           const orderMs = new Date(`${job.orderDate}T${job.orderTime}`).getTime();
-          const endMs   = new Date(`${endDate}T${endTime}`).getTime();
-          if (endMs < orderMs) {
-            return res.json({
-              response_action: "errors",
-              errors: {
-                endDate: `End date/time cannot be earlier than the order date (${job.orderDate} ${job.orderTime}).`,
-              },
-            });
+          const startMs = new Date(`${startDate}T${startTime}`).getTime();
+          if (startMs < orderMs) {
+            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.orderDate} ${job.orderTime}).`;
           }
         }
       } catch (err) {
-        console.error("End date validation error:", err.message);
+        console.error("Date validation error:", err.message);
       }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.json({ response_action: "errors", errors });
     }
   }
 
