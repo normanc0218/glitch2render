@@ -31,9 +31,10 @@ const STATUS_OPTIONS = [
 const OTHER_SITUATION_OPTIONS = [
   ["Waiting for parts", "waiting_for_parts"],
   ["Temporarily fixed", "temporarily_fixed"],
+  ["Follow up check", "follow_up_check"],
 ];
 
-function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatus = null) {
+function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatus = null, selectedOtherStatus = null) {
   const p = getNYParts();
   const initialDate = `${p.year}-${p.month}-${p.day}`;
   const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
@@ -87,12 +88,22 @@ function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatu
   }));
 
   if (showOtherOptions) {
+    const otherInitial = selectedOtherStatus
+      ? OTHER_SITUATION_OPTIONS.find(([, v]) => v === selectedOtherStatus) || null
+      : null;
+
     blocks.push(createInputBlock_radio({
       block_id: "other_status",
       label: "Other Situation",
       action_id: "other_status",
+      dispatch_action: true,
       options: OTHER_SITUATION_OPTIONS,
+      initial_option: otherInitial,
     }));
+
+    if (selectedOtherStatus === "waiting_for_parts") {
+      blocks.push(createInputBlock("parts_needed", "What parts need to be purchased?", "parts_needed", "e.g. Bearing 6205, conveyor belt 50mm"));
+    }
   }
 
   blocks.push(createInputBlock_pic("finishPicture", "Picture of the Job (Max: 5 pics)", "file_input_action_id_1"));

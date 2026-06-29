@@ -339,6 +339,17 @@ module.exports = async (req, res) => {
           break;
         }
 
+        case "other_status": {
+          const { buildUpdateProgressModal } = require("../modals/openModal_update_progress");
+          const selected = action.selected_option?.value;
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildUpdateProgressModal(view.private_metadata, true, "other_situation", selected),
+          });
+          break;
+        }
+
         case "update_daily_job":
           await openModal_daily_update(trigger_id, jobId);
           break;
