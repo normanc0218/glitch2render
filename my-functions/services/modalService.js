@@ -76,7 +76,7 @@ async function getTasksForTechnician(techNames) {
       LEFT JOIN Technicians tech ON t.technician_id = tech.id
       LEFT JOIN TaskEquipment te ON te.task_id = t.id
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
-      WHERE t.status != 'completed'
+      WHERE t.status NOT IN ('completed and waiting for approval', 'checked by supervisor')
         AND tech.name IN (${placeholders})
         AND (
           t.scheduled_date IS NULL
@@ -105,7 +105,7 @@ async function getTasksPendingApproval() {
       LEFT JOIN Technicians tech ON t.technician_id = tech.id
       LEFT JOIN TaskEquipment te ON te.task_id = t.id
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
-      WHERE t.status = 'completed'
+      WHERE t.status = 'completed and waiting for approval'
       GROUP BY t.id, t.title, t.description, t.scheduled_date, t.status,
                t.done_by, t.notify_supervisor, t.notes, t.updated_at, tech.name
       ORDER BY t.updated_at DESC
@@ -130,7 +130,7 @@ async function getUpcomingTasks() {
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
       WHERE t.scheduled_date >= CAST(GETDATE() AS DATE)
         AND t.scheduled_date <= DATEADD(day, 3, CAST(GETDATE() AS DATE))
-        AND t.status != 'completed'
+        AND t.status NOT IN ('completed and waiting for approval', 'checked by supervisor')
       GROUP BY t.id, t.title, t.scheduled_date, t.status, tech.name
       ORDER BY t.scheduled_date ASC
     `);

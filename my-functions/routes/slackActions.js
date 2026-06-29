@@ -385,6 +385,29 @@ module.exports = async (req, res) => {
         case "review":
           await handleReview(payload);
           break;
+
+        case "sql_task_check": {
+          const taskId = view.private_metadata;
+          const { displayHome } = require("../services/modalService");
+          const pool = await getPool();
+          const nameRes = await pool.request()
+            .input("slackId", sql.NVarChar, user.id)
+            .query("SELECT name FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
+          const checkBy = nameRes.recordset[0]?.name || user.username;
+          await pool.request()
+            .input("id",      sql.UniqueIdentifier, taskId)
+            .input("checkBy", sql.NVarChar,         checkBy)
+            .query(`
+              UPDATE Tasks SET
+                status     = 'checked by supervisor',
+                check_by   = @checkBy,
+                check_date = GETDATE(),
+                updated_at = GETDATE()
+              WHERE id = @id
+            `);
+          await displayHome(user.id);
+          break;
+        }
         case "trainingRecord":
           await handleNewTrainRecord(payload);
           break;

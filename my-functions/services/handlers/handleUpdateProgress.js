@@ -67,7 +67,7 @@ async function handleSqlTaskUpdate(taskId, vals, user) {
   const pool = await getPool();
   await pool.request()
     .input("id",               sql.UniqueIdentifier, taskId)
-    .input("status",           sql.NVarChar,         "completed")
+    .input("status",           sql.NVarChar,         "completed and waiting for approval")
     .input("notes",            sql.NVarChar,         notes)
     .input("doneBy",           sql.NVarChar,         doneBy)
     .input("notifySupervisor", sql.NVarChar,         notifySupervisor)
