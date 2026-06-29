@@ -203,7 +203,7 @@ async function displayHome(userId) {
           const date = fmtDate(t.scheduled_date) || "N/A";
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
+            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
           });
         }
