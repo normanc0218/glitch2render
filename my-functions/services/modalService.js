@@ -204,7 +204,7 @@ async function displayHome(userId) {
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
-            accessory: { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
+            accessory: { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" },
           });
         }
         blocks.push(divider);

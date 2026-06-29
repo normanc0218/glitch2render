@@ -98,16 +98,12 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
     }
   }
 
-  const needsCheck = task?.status === "completed and waiting for approval";
-
   await client.views.open({
     trigger_id,
     view: {
       type: "modal",
-      callback_id: needsCheck ? "sql_task_check" : "sql_task_view",
-      private_metadata: needsCheck ? taskId : "",
+      callback_id: "sql_task_view",
       title: { type: "plain_text", text: "PM Task Details", emoji: true },
-      ...(needsCheck && { submit: { type: "plain_text", text: "Mark as Checked", emoji: true } }),
       close: { type: "plain_text", text: "Close", emoji: true },
       blocks,
     },
