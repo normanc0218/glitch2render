@@ -203,7 +203,7 @@ async function displayHome(userId) {
           const date = fmtDate(t.scheduled_date) || "N/A";
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${t.title}*\n📅 Scheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
+            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
           });
         }
@@ -259,7 +259,7 @@ async function displayHome(userId) {
 
       // Azure SQL PM Tasks
       if (azureTasks.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📅 Your PM Tasks:*" } });
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Your PM Tasks:*" } });
         for (const task of azureTasks.slice(0, 10)) {
           const date      = fmtDate(task.scheduled_date) || "N/A";
           const startTime = fmtTime(task.scheduled_date);
@@ -267,7 +267,7 @@ async function displayHome(userId) {
           const timeRange = startTime && endTime ? ` ${startTime} – ${endTime}` : startTime ? ` ${startTime}` : "";
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${task.title}*  •  ${task.status}\n📅 ${date}${timeRange}  •  📍 ${task.equipment_ids || "N/A"}${task.description ? `\n${task.description}` : ""}` },
+            text: { type: "mrkdwn", text: `*${task.title}*  •  ${task.status}\n${date}${timeRange}  •  📍 ${task.equipment_ids || "N/A"}${task.description ? `\n${task.description}` : ""}` },
             accessory: {
               type: "button",
               text: { type: "plain_text", text: "Update Task" },
@@ -392,7 +392,7 @@ async function displayHome(userId) {
       }).join("\n\n");
 
       blocks.push(divider);
-      blocks.push({ type: "header", text: { type: "plain_text", text: "📅 Upcoming 3 Days" } });
+      blocks.push({ type: "header", text: { type: "plain_text", text: "Upcoming 3 Days" } });
       blocks.push({ type: "section", text: { type: "mrkdwn", text: calendarText } });
     } catch (err) {
       console.error("Error building calendar view:", err);
