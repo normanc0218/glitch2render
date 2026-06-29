@@ -28,7 +28,8 @@ async function fetchSqlTask(taskId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
-        SELECT t.id, t.title, t.description, t.scheduled_date, t.status, t.notes,
+        SELECT t.id, t.title, t.description, t.scheduled_date, t.plan_end_time,
+               t.is_all_day, t.status, t.notes,
                tech.name AS technician_name,
                STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
         FROM Tasks t
@@ -36,7 +37,8 @@ async function fetchSqlTask(taskId) {
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
-        GROUP BY t.id, t.title, t.description, t.scheduled_date, t.status, t.notes, tech.name
+        GROUP BY t.id, t.title, t.description, t.scheduled_date, t.plan_end_time,
+                 t.is_all_day, t.status, t.notes, tech.name
       `);
     return result.recordset[0] || null;
   } catch (err) {
@@ -61,12 +63,24 @@ const openModal_daily_update = async (trigger_id, jobId) => {
   if (isSqlTask) {
     const task = await fetchSqlTask(taskId);
     if (task) {
-      const d = task.scheduled_date ? (task.scheduled_date instanceof Date ? task.scheduled_date : new Date(task.scheduled_date)) : null;
-      const scheduled = d && !isNaN(d)
-        ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-        : "N/A";
+      const toDate = (v) => { if (!v) return null; const d = v instanceof Date ? v : new Date(v); return isNaN(d) ? null : d; };
+      const fmtLocalDate = (d) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : null;
+      const fmtLocalTime = (d) => d ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : null;
+
+      const startDt  = toDate(task.scheduled_date);
+      const endDt    = toDate(task.plan_end_time);
+      const dateStr  = fmtLocalDate(startDt) || "N/A";
+      const isAllDay = task.is_all_day;
+
+      let timeRange = "";
+      if (!isAllDay && startDt) {
+        const startT = fmtLocalTime(startDt);
+        const endT   = fmtLocalTime(endDt);
+        timeRange = endT ? `  🕐 ${startT} – ${endT}` : `  🕐 ${startT}`;
+      }
+
       blocks.push(createTextSection(
-        `*${task.title}*\n📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nStatus: ${task.status}${task.description ? `\n${task.description}` : ""}`
+        `*${task.title}*\n📅 ${dateStr}${timeRange}  •  📍 ${task.equipment_ids || "N/A"}\nStatus: ${task.status}${task.description ? `\n${task.description}` : ""}`
       ));
       blocks.push({ type: "divider" });
     }
