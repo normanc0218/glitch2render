@@ -1,6 +1,10 @@
+const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
+const userConfig = require("../../userConfig");
+
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 async function resolveDisplayName(slackUserId, fallback) {
   try {
@@ -11,6 +15,34 @@ async function resolveDisplayName(slackUserId, fallback) {
     return result.recordset[0]?.name || fallback;
   } catch {
     return fallback;
+  }
+}
+
+async function sendSupervisorNotification(supervisorName, taskId, taskTitle, doneBy) {
+  const slackId = userConfig.Supervisors[supervisorName];
+  if (!slackId) return;
+  try {
+    await client.chat.postMessage({
+      channel: slackId,
+      text: `✅ PM Task *${taskTitle}* has been completed by ${doneBy}.`,
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `✅ PM Task *${taskTitle}* has been completed by *${doneBy}*.\nPlease review.`,
+          },
+          accessory: {
+            type: "button",
+            text: { type: "plain_text", text: "View Task" },
+            value: `sql:${taskId}`,
+            action_id: "view_sql_task",
+          },
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Failed to notify supervisor:", err.message);
   }
 }
 
@@ -54,6 +86,14 @@ async function handleSqlTaskUpdate(taskId, vals, user) {
         updated_at        = GETDATE()
       WHERE id = @id
     `);
+
+  if (notifySupervisor) {
+    const titleRes = await pool.request()
+      .input("id", sql.UniqueIdentifier, taskId)
+      .query("SELECT title FROM Tasks WHERE id = @id");
+    const taskTitle = titleRes.recordset[0]?.title || "PM Task";
+    await sendSupervisorNotification(notifySupervisor, taskId, taskTitle, doneBy);
+  }
 }
 
 async function handleUpdateProgress(payload) {
