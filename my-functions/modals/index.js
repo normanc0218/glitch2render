@@ -20,6 +20,7 @@ const openModal_dispatch = require('./openModal_dispatch');
 const openModal_submit_training = require('./openModal_submit_training');
 const { openModal_unfinished, updateUnfinishedPage } = require('./openModal_unfinished');
 const { openModal_finished, updateFinishedPage } = require('./openModal_finished');
+const openModal_sql_task_view = require('./openModal_sql_task_view');
 
 module.exports = {
   openModal_accept,
@@ -45,4 +46,5 @@ module.exports = {
   updateUnfinishedPage,
   openModal_finished,
   updateFinishedPage,
+  openModal_sql_task_view,
 };
