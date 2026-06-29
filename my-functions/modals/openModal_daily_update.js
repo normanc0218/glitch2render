@@ -79,9 +79,10 @@ const openModal_daily_update = async (trigger_id, jobId) => {
         timeRange = endT ? `  🕐 ${startT} – ${endT}` : `  🕐 ${startT}`;
       }
 
-      blocks.push(createTextSection(
-        `*${task.title}*\n📅 ${dateStr}${timeRange}  •  📍 ${task.equipment_ids || "N/A"}\nStatus: ${task.status}${task.description ? `\n${task.description}` : ""}`
-      ));
+      blocks.push(createTextSection(`*${task.title}*`));
+      blocks.push(createTextSection(`📅 ${dateStr}${timeRange}`));
+      blocks.push(createTextSection(`📍 ${task.equipment_ids || "N/A"}  •  Status: ${task.status}`));
+      if (task.description) blocks.push(createTextSection(task.description));
       blocks.push({ type: "divider" });
     }
   }
