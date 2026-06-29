@@ -7,7 +7,12 @@
  */
 
 const axios = require("axios");
+const { WebClient } = require("@slack/web-api");
 const db = require("../db");
+const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
+const { buildOrderModalView } = require("../utils/orderModalBuilder");
+const { buildDispatchModalView } = require("../modals/openModal_dispatch");
+const { buildTrainingModalView } = require("../modals/openModal_submit_training");
 const {
   openModal,
   openModal_accept,
@@ -19,10 +24,6 @@ const {
   openModal_supervisor_approval,
   openModal_daily_update,
   openModal_project_update,
-  openModal_create_project,
-  openModal_add_schedule,
-  openModal_manage_schedule,
-  openModal_modify_schedule,
   openModal_manage_dispatch,
   openModal_assign_dispatch,
   openModal_dispatch,
@@ -31,15 +32,13 @@ const {
   updateUnfinishedPage,
   openModal_finished,
   updateFinishedPage,
-  openModal_view_dispatch
+  openModal_view_dispatch,
+  openModal_sql_task_view,
 } = require("../modals");
 
 const { generateUniqueJobId } = require("../utils/generateUniqueJobId");
 const { 
   handleNewJobForm,
-  handleNewProjectForm,
-  handleNewScheduleForm,
-  handleModifyScheduleForm,
   handleNewDispatchForm,
   handleAssignDispatchForm,
   handleUpdateProgress,
@@ -50,6 +49,7 @@ const {
 } = require("../services/handlers");
 const { threadNotify } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
+const { getPool, sql } = require("../db-sql");
 
 // ✅ 导出为一个标准 Express handler
 module.exports = async (req, res) => {
@@ -65,11 +65,151 @@ module.exports = async (req, res) => {
     return res.status(400).send("Invalid payload");
   }
 
+  const { type, user, actions, trigger_id, view } = payload;
+
+  // For review, validate check date/time >= end date/time
+  if (type === "view_submission" && view?.callback_id === "review") {
+    const vals = view.state?.values || {};
+    const checkDate = vals?.checkDate?.datepickeraction?.selected_date;
+    const checkTime = vals?.checkTime?.timepickeraction?.selected_time;
+    const jobId = view.private_metadata;
+
+    if (checkDate && checkTime && jobId) {
+      try {
+        const releaseSnap = await db.ref("jobs/Release").once("value");
+        const release = releaseSnap.val() || {};
+        let job = null;
+        for (const branch of ["Regular", "Daily", "Project"]) {
+          if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
+        }
+        if (job?.endDate && job?.endTime) {
+          const endMs   = new Date(`${job.endDate}T${job.endTime}`).getTime();
+          const checkMs = new Date(`${checkDate}T${checkTime}`).getTime();
+          if (checkMs < endMs) {
+            return res.json({
+              response_action: "errors",
+              errors: {
+                checkDate: `Check date/time cannot be earlier than end date/time (${job.endDate} ${job.endTime}).`,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Check date validation error:", err.message);
+      }
+    }
+  }
+
+  // For update_daily SQL tasks: validate actual start date >= scheduled date
+  if (type === "view_submission" && view?.callback_id === "update_daily" && view?.private_metadata?.startsWith("sql:")) {
+    const vals = view.state?.values || {};
+    const startDate = vals?.startDate?.datepickeraction?.selected_date;
+    const taskId = view.private_metadata.slice(4);
+
+    if (startDate && taskId) {
+      try {
+        const pool = await getPool();
+        const result = await pool.request()
+          .input("id", sql.UniqueIdentifier, taskId)
+          .query("SELECT scheduled_date FROM Tasks WHERE id = @id");
+        const row = result.recordset[0];
+        if (row?.scheduled_date) {
+          const sd = row.scheduled_date;
+          const scheduledDateStr = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+          if (startDate < scheduledDateStr) {
+            return res.json({
+              response_action: "errors",
+              errors: {
+                startDate: `Actual start date cannot be earlier than the scheduled date (${scheduledDateStr}).`,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Start date validation error:", err.message);
+      }
+    }
+  }
+
+  // For update_daily SQL tasks: validate end date/time > start date/time
+  if (type === "view_submission" && view?.callback_id === "update_daily" && view?.private_metadata?.startsWith("sql:")) {
+    const vals = view.state?.values || {};
+    const startDate = vals?.startDate?.datepickeraction?.selected_date;
+    const startTime = vals?.startTime?.timepickeraction?.selected_time;
+    const endDate   = vals?.endDate?.datepickeraction?.selected_date;
+    const endTime   = vals?.endTime?.timepickeraction?.selected_time;
+
+    if (startDate && startTime && endDate && endTime) {
+      const startMs = new Date(`${startDate}T${startTime}`).getTime();
+      const endMs   = new Date(`${endDate}T${endTime}`).getTime();
+      if (endMs <= startMs) {
+        return res.json({
+          response_action: "errors",
+          errors: {
+            endDate: `End date/time must be later than start date/time (${startDate} ${startTime}).`,
+          },
+        });
+      }
+    }
+  }
+
+  // For update_form, validate end date/time >= order date/time
+  if (type === "view_submission" && (view?.callback_id === "update_form" || view?.callback_id === "update_daily" || view?.callback_id === "update_project")) {
+    const vals = view.state?.values || {};
+    const endDate = vals?.endDate?.datepickeraction?.selected_date;
+    const endTime = vals?.endTime?.timepickeraction?.selected_time;
+    const jobId = view.private_metadata;
+
+    if (endDate && endTime && jobId) {
+      try {
+        const releaseSnap = await db.ref("jobs/Release").once("value");
+        const release = releaseSnap.val() || {};
+        let job = null;
+        for (const branch of ["Regular", "Daily", "Project"]) {
+          if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
+        }
+        if (job?.orderDate && job?.orderTime) {
+          const orderMs = new Date(`${job.orderDate}T${job.orderTime}`).getTime();
+          const endMs   = new Date(`${endDate}T${endTime}`).getTime();
+          if (endMs < orderMs) {
+            return res.json({
+              response_action: "errors",
+              errors: {
+                endDate: `End date/time cannot be earlier than the order date (${job.orderDate} ${job.orderTime}).`,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("End date validation error:", err.message);
+      }
+    }
+  }
+
+  // For submitOrder, validate before responding so we can return inline errors
+  if (type === "view_submission" && view?.callback_id === "submitOrder") {
+    const vals = view.state?.values || {};
+    const area = vals?.area?.area?.selected_option?.value;
+    const errors = {};
+
+    if (!area) {
+      errors["area"] = "Please select an area.";
+    } else if (area !== "__other__") {
+      const machineLine = vals?.machineLine?.machineLine?.selected_option?.value;
+      const equipmentId = vals?.equipmentId?.equipmentId?.selected_option?.value;
+      if (!machineLine) errors["machineLine"] = "Please select a machine line.";
+      if (!equipmentId) errors["equipmentId"] = "Please select an equipment.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.json({ response_action: "errors", errors });
+    }
+  }
+
   // ✅ Slack 要求 3 秒内响应
   res.send();
 
   try {
-    const { type, user, actions, trigger_id, view } = payload;
     // const channelId =
     //     payload.channel?.id ||
     //     payload.container?.channel_id ||
@@ -86,23 +226,35 @@ module.exports = async (req, res) => {
         //Submit Order
         case "openModal":
           await openModal(trigger_id);
-          break; 
-        //Create Project 
-        case "openModal_create_project":
-          await openModal_create_project(trigger_id);
-          break;  
-        // Manage Schedule Job
-        case "openModal_manage_schedule":
-          await openModal_manage_schedule(trigger_id);
           break;
-        // Add Schedule Job
-        case "openModal_add_schedule":
-          await openModal_add_schedule(viewId);
-          break;  
-       // Modify Schedule Job
-        case "openModal_modify_schedule":
-          await openModal_modify_schedule(viewId,jobId);
+
+        // Cascading area selection → enable Machine Line
+        case "area": {
+          const selected = action.selected_option;
+          const state = { area: selected?.value, areaLabel: selected?.text?.text };
+          const callbackId = view?.callback_id;
+          const updatedView = callbackId === "dispatch"       ? buildDispatchModalView(state)
+                            : callbackId === "trainingRecord" ? buildTrainingModalView(state)
+                            : buildOrderModalView(state);
+          await slackClient.views.update({ view_id: viewId, view: updatedView });
           break;
+        }
+
+        // Cascading machine line selection → enable Equipment
+        case "machineLine": {
+          const areaOpt = view?.state?.values?.area?.area?.selected_option;
+          const lineOpt = action.selected_option;
+          const state = {
+            area: areaOpt?.value, areaLabel: areaOpt?.text?.text,
+            machineLine: lineOpt?.value, machineLineLabel: lineOpt?.text?.text,
+          };
+          const callbackId = view?.callback_id;
+          const updatedView = callbackId === "dispatch"       ? buildDispatchModalView(state)
+                            : callbackId === "trainingRecord" ? buildTrainingModalView(state)
+                            : buildOrderModalView(state);
+          await slackClient.views.update({ view_id: viewId, view: updatedView });
+          break;
+        }
         // Assign Dispatch
         case "openModal_assign_dispatch":
           await openModal_assign_dispatch(viewId,jobId);
@@ -163,12 +315,6 @@ module.exports = async (req, res) => {
         case "update_progress":
           await openModal_update_progress(trigger_id, jobId);
           break;
-        case "delete_schedule": {
-            // 删除数据库中的对应记录
-            const scheduleRef = db.ref(`jobs/Schedule/${jobId}`);
-            await scheduleRef.remove();
-            break;
-          }
         case "delete_dispatch": {
             // 删除数据库中的对应记录
             const dispatchRef = db.ref(`jobs/Dispatch/${jobId}`);
@@ -184,6 +330,12 @@ module.exports = async (req, res) => {
         case "update_daily_job":
           await openModal_daily_update(trigger_id, jobId);
           break;
+
+        case "view_sql_task": {
+          const taskId = jobId.startsWith("sql:") ? jobId.slice(4) : jobId;
+          await openModal_sql_task_view(trigger_id, taskId);
+          break;
+        }
 
         case "update_project":
           await openModal_project_update(trigger_id, jobId);
@@ -210,15 +362,6 @@ module.exports = async (req, res) => {
       switch (callback_id) {
         case "submitOrder":
           await handleNewJobForm(payload);
-          break;
-        case "createProject":
-          await handleNewProjectForm(payload);
-          break;
-        case "createSchedule":
-          await handleNewScheduleForm(payload);
-          break;
-        case "modifySchedule":
-          await handleModifyScheduleForm(payload);
           break;
         case "dispatch":
           await handleNewDispatchForm(payload);
