@@ -327,6 +327,18 @@ module.exports = async (req, res) => {
           break;
 
         // Daily / Project 按钮逻辑
+        case "complete_job": {
+          const { buildUpdateProgressModal } = require("../modals/openModal_update_progress");
+          const selected = action.selected_option?.value;
+          const showOther = selected === "other_situation";
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildUpdateProgressModal(view.private_metadata, showOther, selected),
+          });
+          break;
+        }
+
         case "update_daily_job":
           await openModal_daily_update(trigger_id, jobId);
           break;

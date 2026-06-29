@@ -163,25 +163,27 @@ function createInputBlock_checkboxes({ block_id, label, action_id, options=[],op
   };
 }
 
-function createInputBlock_radio({ block_id, label, action_id, options=[]}) {
+function createInputBlock_radio({ block_id, label, action_id, options=[], dispatch_action=false, initial_option=null }) {
+  const element = {
+    type: "radio_buttons",
+    action_id,
+    options: options.map(([name, value]) => ({
+      text: { type: "mrkdwn", text: name },
+      value,
+    })),
+  };
+  if (initial_option) {
+    element.initial_option = {
+      text: { type: "mrkdwn", text: initial_option[0] },
+      value: initial_option[1],
+    };
+  }
   return {
     type: "input",
+    dispatch_action,
     block_id,
-    label: {
-      type: "plain_text",
-      text: label,
-    },
-    element: {
-      type: "radio_buttons",
-      action_id,
-      options: options.map(([name, value]) => ({
-  text: {
-    type: "mrkdwn",
-    text: name
-  },
-  value: value
-      })),
-    },
+    label: { type: "plain_text", text: label },
+    element,
   };
 }
 //
