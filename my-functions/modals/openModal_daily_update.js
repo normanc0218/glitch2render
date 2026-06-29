@@ -1,88 +1,104 @@
-const axios = require('axios');
-const qs = require('qs');
-const { 
-  createInputBlock, 
-  createInputBlock_pic, 
-  createInputBlock_date, 
-  createInputBlock_time, 
-  createInputBlock_radio 
-} = require('../utils/blockBuilder'); // Importing your block builders
-const nyDate = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date()); // e.g. "2025-05-28"
-const [month, day, year] = nyDate.split('/');
-const initialDate = `${year}-${month}-${day}`;
+const { WebClient } = require("@slack/web-api");
+const { getPool, sql } = require("../db-sql");
+const {
+  createInputBlock,
+  createInputBlock_pic,
+  createInputBlock_date,
+  createInputBlock_time,
+  createInputBlock_radio,
+  createTextSection,
+} = require("../utils/blockBuilder");
+const userConfig = require("../userConfig");
 
-function getNYTimeString() {
-  const d = new Date();
-  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const hh = ny.getHours().toString().padStart(2, '0');
-  const mm = ny.getMinutes().toString().padStart(2, '0');
-  return `${hh}:${mm}`;
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+
+function getNYParts() {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(new Date()).map(p => [p.type, p.value])
+  );
 }
-const initialTime = getNYTimeString();
 
-// list of managerUser IDs
-const {Supervisors} = require('../userConfig');
-const superOption=Object.entries(Supervisors)
+async function fetchSqlTask(taskId) {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input("id", sql.UniqueIdentifier, taskId)
+      .query(`
+        SELECT t.id, t.title, t.description, t.scheduled_date, t.status, t.notes,
+               tech.name AS technician_name,
+               STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
+        FROM Tasks t
+        LEFT JOIN Technicians tech ON t.technician_id = tech.id
+        LEFT JOIN TaskEquipment te ON te.task_id = t.id
+        LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
+        WHERE t.id = @id
+        GROUP BY t.id, t.title, t.description, t.scheduled_date, t.status, t.notes, tech.name
+      `);
+    return result.recordset[0] || null;
+  } catch (err) {
+    console.error("fetchSqlTask error:", err.message);
+    return null;
+  }
+}
 
 const openModal_daily_update = async (trigger_id, jobId) => {
-  const modal = {
-    type: "modal",
-    callback_id: "update_daily",
-    private_metadata: jobId, // Store the Job ID in private metadata
-    title: {
-      type: "plain_text",
-      text: "Update Your Job",
-      emoji: true
-    },
-    submit: {
-      type: "plain_text",
-      text: "Submit",
-      emoji: true
-    },
-    close: {
-      type: "plain_text",
-      text: "Cancel",
-      emoji: true
-    },
-    blocks: [
-      createInputBlock_pic("finishPicture", "Picture of Your Job Update", "file_general_input"),
-      createInputBlock("supervisor_message", "Comments", "supervisor_message","comments"),
-      createInputBlock_radio({
-        block_id: "supervisor_notify",
-        label: "Notify the supervisor",
-        action_id: "supervisor_notify",
-        options: superOption.slice(1,6)
-      }),
-      createInputBlock_date("startDate", "Actual Start Date", "datepickeraction"),
-      createInputBlock_time("startTime", "Actual Start Time", "timepickeraction"),
-      createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate),
-      createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime)
-    ]
-  }
-     
+  const isSqlTask = jobId.startsWith("sql:");
+  const taskId = isSqlTask ? jobId.slice(4) : null;
 
-  // API call to open the modal
-const args = {
-    token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
-    trigger_id: trigger_id,
-    view: JSON.stringify(modal)  // Pass the modal structure as JSON
-  };
+  const p = getNYParts();
+  const initialDate = `${p.year}-${p.month}-${p.day}`;
+  const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
 
-  try {
-    const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
-    
-    if (result.data.ok) {
-      console.log('Modal opened successfully!');
-    } else {
-      console.error('Error opening modal:', result.data.error);  // Log any error response
+  // Computed fresh each call so the cache is warm and the list is current
+  const superNameOptions = Object.keys(userConfig.Supervisors).map(name => [name, name]);
+
+  const blocks = [];
+
+  if (isSqlTask) {
+    const task = await fetchSqlTask(taskId);
+    if (task) {
+      const d = task.scheduled_date ? (task.scheduled_date instanceof Date ? task.scheduled_date : new Date(task.scheduled_date)) : null;
+      const scheduled = d && !isNaN(d)
+        ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+        : "N/A";
+      blocks.push(createTextSection(
+        `*${task.title}*\n📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nStatus: ${task.status}${task.description ? `\n${task.description}` : ""}`
+      ));
+      blocks.push({ type: "divider" });
     }
-  } catch (error) {
-    console.error('Error during modal open request:', error.message);  // Handle network or other errors
   }
+
+  blocks.push(
+    createInputBlock_pic("finishPicture", "Picture of your job update (optional)", "file_general_input", true),
+    createInputBlock("supervisor_message", "Comments", "supervisor_message", "Comments or notes about this task"),
+    ...(superNameOptions.length > 0 ? [createInputBlock_radio({
+      block_id: "supervisor_notify",
+      label: "Notify the supervisor",
+      action_id: "supervisor_notify",
+      options: superNameOptions,
+    })] : []),
+    createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate),
+    createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime),
+    createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate),
+    createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime),
+  );
+
+  await client.views.open({
+    trigger_id,
+    view: {
+      type: "modal",
+      callback_id: "update_daily",
+      private_metadata: jobId,
+      title: { type: "plain_text", text: isSqlTask ? "Update PM Task" : "Update Your Job", emoji: true },
+      submit: { type: "plain_text", text: "Submit", emoji: true },
+      close: { type: "plain_text", text: "Cancel", emoji: true },
+      blocks,
+    },
+  });
 };
+
 module.exports = openModal_daily_update;
