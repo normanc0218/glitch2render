@@ -193,18 +193,19 @@ async function displayHome(userId) {
       });
       blocks.push(divider);
 
-      // Azure SQL PM Tasks completed, pending supervisor review
-      const myTasksApproval = azureTasksApproval
-        .filter(t => !t.notify_supervisor || t.notify_supervisor === supervisorName)
-        .slice(0, 10);
-      if (myTasksApproval.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🔧 PM Tasks completed — pending your review:*" } });
-        for (const t of myTasksApproval) {
+      // Azure SQL PM Tasks completed, pending supervisor review (visible to all supervisors)
+      const allTasksApproval = azureTasksApproval.slice(0, 10);
+      if (allTasksApproval.length > 0) {
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🔧 PM Tasks completed — pending review:*" } });
+        for (const t of allTasksApproval) {
           const date = fmtDate(t.scheduled_date) || "N/A";
+          const isAssigned = t.notify_supervisor && t.notify_supervisor === supervisorName;
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
-            accessory: { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" },
+            accessory: isAssigned
+              ? { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" }
+              : { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
           });
         }
         blocks.push(divider);
@@ -247,7 +248,7 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      if (myTasksApproval.length === 0 && myProjects.length === 0 && rtdbFinished.length === 0) {
+      if (allTasksApproval.length === 0 && myProjects.length === 0 && rtdbFinished.length === 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "_No jobs waiting for approval._" } });
       }
     }
