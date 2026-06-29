@@ -30,6 +30,13 @@ function fmtDate(d) {
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 
+function fmtTime(d) {
+  if (!d) return null;
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return null;
+  return dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
 function toPhotoArray(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -56,8 +63,32 @@ async function fetchAzureSqlProject(projectId) {
   }
 }
 
+async function fetchSqlTask(taskId) {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input("id", sql.UniqueIdentifier, taskId)
+      .query(`
+        SELECT t.id, t.title, t.description, t.done_by, t.notify_supervisor,
+               t.actual_start, t.actual_end, t.finish_picture,
+               STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
+        FROM Tasks t
+        LEFT JOIN TaskEquipment te ON te.task_id = t.id
+        LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
+        WHERE t.id = @id
+        GROUP BY t.id, t.title, t.description, t.done_by, t.notify_supervisor,
+                 t.actual_start, t.actual_end, t.finish_picture
+      `);
+    return result.recordset[0] || null;
+  } catch (err) {
+    console.error("fetchSqlTask error:", err.message);
+    return null;
+  }
+}
+
 const openModal_supervisor_approval = async (trigger_id, jobId) => {
-  const isAzureProject = UUID_RE.test(jobId);
+  const isSqlTask     = jobId.startsWith("sqltask:");
+  const isAzureProject = !isSqlTask && UUID_RE.test(jobId);
 
   const p = getNYParts();
   const initialDate = `${p.year}-${p.month}-${p.day}`;
@@ -65,15 +96,41 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 
   const blocks = [];
 
-  if (isAzureProject) {
+  if (isSqlTask) {
+    // ── PM Task summary ──
+    const taskId = jobId.slice(8);
+    const task = await fetchSqlTask(taskId);
+    if (task) {
+      const equipment   = task.equipment_ids || "N/A";
+      const doneBy      = task.done_by       || "N/A";
+      const actualStart = task.actual_start;
+      const actualEnd   = task.actual_end;
+      const startStr    = actualStart ? `${fmtDate(actualStart)} ${fmtTime(actualStart)}` : "N/A";
+      const endStr      = actualEnd   ? `${fmtDate(actualEnd)} ${fmtTime(actualEnd)}`     : "N/A";
+
+      blocks.push(createTextSection(`*${task.title}*`));
+      blocks.push(createTextSection(`📍 ${equipment}`));
+      blocks.push(createTextSection(`Done by: *${doneBy}*\nStart: ${startStr}  •  End: ${endStr}`));
+      if (task.description) blocks.push(createTextSection(`_${task.description}_`));
+
+      const finishPics = toPhotoArray(task.finish_picture);
+      if (finishPics.length > 0) {
+        blocks.push(createTextSection("*Finish Pictures:*"));
+        for (const url of finishPics.slice(0, 5)) {
+          blocks.push({ type: "image", image_url: url, alt_text: "Finish picture" });
+        }
+      }
+      blocks.push({ type: "divider" });
+    }
+  } else if (isAzureProject) {
     // ── Azure SQL project summary ──
     const project = await fetchAzureSqlProject(jobId);
     if (project) {
       const location   = project.equipment_id || project.machine_location || "N/A";
-      const startDate  = fmtDate(project.start_date)        || "N/A";
-      const finishDate = fmtDate(project.finish_date)        || "N/A";
-      const finishTime = project.finish_time                 || "";
-      const doneBy     = project.done_by                     || "N/A";
+      const startDate  = fmtDate(project.start_date)  || "N/A";
+      const finishDate = fmtDate(project.finish_date)  || "N/A";
+      const finishTime = project.finish_time            || "";
+      const doneBy     = project.done_by                || "N/A";
       blocks.push(createTextSection(
         `*${project.title}*\n📍 ${location}  •  Start: ${startDate}  •  Finished: ${finishDate}${finishTime ? ` ${finishTime}` : ""}\nDone by: ${doneBy}${project.description ? `\n_${project.description}_` : ""}`
       ));
@@ -133,7 +190,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
     }
   }
 
-  // ── Review form (same for both paths) ──
+  // ── Review form (shared across all paths) ──
   blocks.push(createInputBlock_select({
     block_id: "tool_check",
     label: "Assigned maintenance has/have collected their tools and materials",
@@ -155,9 +212,9 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
     trigger_id,
     view: {
       type: "modal",
-      callback_id: "review",
+      callback_id: isSqlTask ? "sql_task_review" : "review",
       private_metadata: jobId,
-      title: { type: "plain_text", text: "Review Progress" },
+      title: { type: "plain_text", text: "Review & Approve" },
       submit: { type: "plain_text", text: "Approve" },
       close: { type: "plain_text", text: "Cancel" },
       blocks,

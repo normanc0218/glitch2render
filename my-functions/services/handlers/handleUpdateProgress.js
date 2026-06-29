@@ -34,9 +34,10 @@ async function sendSupervisorNotification(supervisorName, taskId, taskTitle, don
           },
           accessory: {
             type: "button",
-            text: { type: "plain_text", text: "View Task" },
+            text: { type: "plain_text", text: "Check and Approve" },
             value: `sql:${taskId}`,
-            action_id: "view_sql_task",
+            action_id: "approve_sql_task",
+            style: "primary",
           },
         },
       ],

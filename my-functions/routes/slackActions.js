@@ -337,6 +337,12 @@ module.exports = async (req, res) => {
           break;
         }
 
+        case "approve_sql_task": {
+          const taskId = jobId.startsWith("sql:") ? jobId.slice(4) : jobId;
+          await openModal_supervisor_approval(trigger_id, `sqltask:${taskId}`);
+          break;
+        }
+
         case "update_project":
           await openModal_project_update(trigger_id, jobId);
           break;
@@ -385,6 +391,50 @@ module.exports = async (req, res) => {
         case "review":
           await handleReview(payload);
           break;
+
+        case "sql_task_review": {
+          const taskId = view.private_metadata.replace(/^sqltask:/, "");
+          const vals = view.state.values;
+          const { displayHome } = require("../services/modalService");
+          const pool = await getPool();
+
+          const nameRes = await pool.request()
+            .input("slackId", sql.NVarChar, user.id)
+            .query("SELECT name FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
+          const checkBy = nameRes.recordset[0]?.name || user.username;
+
+          const toolCheck    = vals?.tool_check?.tool_check?.selected_option?.value       || null;
+          const cleanNeeded  = vals?.working_area?.working_area?.selected_option?.value;
+          const cleanCheck   = cleanNeeded === "Yes" ? "Yes" : "No";
+          const whoCleanUp   = vals?.clean_input?.clean_input?.value                      || null;
+          const checkDetail  = vals?.detailOfJob?.detailOfJob?.value                      || null;
+          const checkDate    = vals?.checkDate?.datepickeraction?.selected_date            || null;
+          const checkTime    = vals?.checkTime?.timepickeraction?.selected_time            || null;
+          const checkDatetime = checkDate && checkTime ? `${checkDate}T${checkTime}:00` : null;
+
+          await pool.request()
+            .input("id",          sql.UniqueIdentifier, taskId)
+            .input("checkBy",     sql.NVarChar,         checkBy)
+            .input("checkDate",   sql.DateTime2,        checkDatetime)
+            .input("toolCheck",   sql.NVarChar,         toolCheck)
+            .input("cleanCheck",  sql.NVarChar,         cleanCheck)
+            .input("whoCleanUp",  sql.NVarChar,         whoCleanUp)
+            .input("checkDetail", sql.NVarChar,         checkDetail)
+            .query(`
+              UPDATE Tasks SET
+                status       = 'checked by supervisor',
+                check_by     = @checkBy,
+                check_date   = COALESCE(@checkDate, GETDATE()),
+                tool_check   = COALESCE(@toolCheck, tool_check),
+                clean_check  = @cleanCheck,
+                who_clean_up = COALESCE(@whoCleanUp, who_clean_up),
+                check_detail = COALESCE(@checkDetail, check_detail),
+                updated_at   = GETDATE()
+              WHERE id = @id
+            `);
+          await displayHome(user.id);
+          break;
+        }
 
         case "sql_task_check": {
           const taskId = view.private_metadata;
