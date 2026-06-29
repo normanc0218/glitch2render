@@ -1,81 +1,57 @@
-const axios = require('axios');
-const qs = require('qs');
-const {createTextSection, 
-       createInputBlock,               //block_id, label, action_id, placeholder
-	   createMultiInputBlock,
-       createInputBlock_multistatic,   //block_id, label, action_id, placeholder, options
-       createInputBlock_pic,           //block_id, label, action_id
-       createInputBlock_date,          //block_id, label, action_id, initial_date
-       createInputBlock_time,          //block_id, label, action_id, initial_time
-       createInputBlock_select,        //block_id, label, action_id, options 
-       createDivider } = require("../utils/blockBuilder");
+const { WebClient } = require("@slack/web-api");
+const { buildCascadeBlocks } = require("../utils/orderModalBuilder");
+const {
+  createInputBlock,
+  createMultiInputBlock,
+  createInputBlock_pic,
+  createInputBlock_date,
+  createInputBlock_time,
+} = require("../utils/blockBuilder");
 
-const nyDate = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date()); // e.g. "2025-05-28"
-const [month, day, year] = nyDate.split('/');
-const initialDate = `${year}-${month}-${day}`;
-function getNYTimeString() {
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+
+function getNYDate() {
+  const nyDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+  const [month, day, year] = nyDate.split("/");
+  return `${year}-${month}-${day}`;
+}
+
+function getNYTime() {
   const d = new Date();
   const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const hh = ny.getHours().toString().padStart(2, '0');
-  const mm = ny.getMinutes().toString().padStart(2, '0');
-  return `${hh}:${mm}`;
-};
-const initialTime = getNYTimeString();
-const { maintenanceStaff, managerUsers } = require('../userConfig');
+  return `${ny.getHours().toString().padStart(2, "0")}:${ny.getMinutes().toString().padStart(2, "0")}`;
+}
 
-const machineOptions = [
-  "#7 Machine", "#8 Machine", "#9 Machine", "#10 Machine", "#11 Machine",
-  "Packaging", "Warehouse", "Loading dock", "Washroom", "Die Washroom",
-  "Office", "Boiler room", "Compressor", "Others"
-];
+function buildDispatchModalView({ area = null, areaLabel = null, machineLine = null, machineLineLabel = null } = {}) {
+  const blocks = buildCascadeBlocks({ area, areaLabel, machineLine, machineLineLabel });
 
-const openModal_dispatch = async(trigger_id) => {
-  const blocks=[]
-  blocks.push(createInputBlock_select({
-    block_id: "machineLocation",
-    label: "Machine and Location",
-    action_id: "machineLocation",
-    options: machineOptions, // <-- make sure this is passed in like this
-  }));
-  blocks.push(createInputBlock(`reporter`,`Who found the issue?`,`reporter`,`Name of the Finder`));
-  blocks.push(createMultiInputBlock(`description`,`Description of the issue`,`issue`,`What is the issue?`));
-  blocks.push(createInputBlock_pic(`issuePicture`,`Picture of the defect`,`file_input_action_id_1`));
-  blocks.push(createInputBlock_date(`dispatchDate`,`Dispatch Date`,`datepickeraction`,initialDate));  
-  blocks.push(createInputBlock_time(`dispatchTime`,`Dispatch Time`,`timepickeraction`,initialTime));
+  blocks.push(
+    createInputBlock("reporter", "Who found the issue?", "reporter", "Name of the finder"),
+    createMultiInputBlock("description", "Description of the issue", "issue", "What is the issue?"),
+    createInputBlock_pic("issuePicture", "Picture of the defect", "file_input_action_id_1"),
+    createInputBlock_date("dispatchDate", "Dispatch Date", "datepickeraction", getNYDate()),
+    createInputBlock_time("dispatchTime", "Dispatch Time", "timepickeraction", getNYTime()),
+  );
 
-
-  const modal = {
-	"type": "modal",
-  "callback_id":"dispatch",
-	"title": {
-		"type": "plain_text",
-		"text": "Dispatch Form",
-		"emoji": true
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "Submit",
-		"emoji": true
-	},
-	"close": {
-		"type": "plain_text",
-		"text": "Cancel",
-		"emoji": true
-	},
-	blocks
-};
-
-  const args = {
-    token: process.env.SLACK_BOT_TOKEN,
-    trigger_id: trigger_id,
-    view: JSON.stringify(modal)
+  return {
+    type: "modal",
+    callback_id: "dispatch",
+    title: { type: "plain_text", text: "Dispatch Form", emoji: true },
+    submit: { type: "plain_text", text: "Submit", emoji: true },
+    close: { type: "plain_text", text: "Cancel", emoji: true },
+    blocks,
   };
-  
-  const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
+}
+
+const openModal_dispatch = async (trigger_id) => {
+  await client.views.open({
+    trigger_id,
+    view: buildDispatchModalView(),
+  });
 };
+
 module.exports = openModal_dispatch;
+module.exports.buildDispatchModalView = buildDispatchModalView;
