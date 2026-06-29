@@ -2,7 +2,7 @@ const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
-const userConfig = require("../../userConfig");
+const userConfig = require("../slackUserService");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 

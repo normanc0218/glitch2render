@@ -1,7 +1,7 @@
 const { WebClient } = require("@slack/web-api");
 const db = require("../db");
 const { getPool, sql } = require("../db-sql");
-const userConfig = require("../userConfig");
+const userConfig = require("./slackUserService");
 const token = process.env.SLACK_BOT_TOKEN;
 const client = new WebClient(token);
 const { createButton } = require("../utils/blockBuilder");

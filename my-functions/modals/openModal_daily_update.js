@@ -8,7 +8,7 @@ const {
   createInputBlock_radio,
   createTextSection,
 } = require("../utils/blockBuilder");
-const userConfig = require("../userConfig");
+const userConfig = require("../services/slackUserService");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
