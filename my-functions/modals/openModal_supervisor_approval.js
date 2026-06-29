@@ -69,14 +69,14 @@ async function fetchSqlTask(taskId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
-        SELECT t.id, t.title, t.description, t.done_by, t.notify_supervisor,
+        SELECT t.id, t.title, t.done_by, t.notify_supervisor,
                t.actual_start, t.actual_end, t.finish_picture,
                STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
         FROM Tasks t
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
-        GROUP BY t.id, t.title, t.description, t.done_by, t.notify_supervisor,
+        GROUP BY t.id, t.title, t.done_by, t.notify_supervisor,
                  t.actual_start, t.actual_end, t.finish_picture
       `);
     return result.recordset[0] || null;

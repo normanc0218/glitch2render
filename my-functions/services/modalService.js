@@ -68,7 +68,7 @@ async function getTasksForTechnician(techNames) {
     }).join(", ");
 
     const result = await req.query(`
-      SELECT t.id, t.title, t.description, t.scheduled_date, t.plan_end_time,
+      SELECT t.id, t.title, t.scheduled_date, t.plan_end_time,
              t.status, t.priority, t.notes,
              tech.name AS technician_name,
              STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
@@ -82,7 +82,7 @@ async function getTasksForTechnician(techNames) {
           t.scheduled_date IS NULL
           OR CAST(t.scheduled_date AS DATE) <= CAST(GETDATE() AS DATE)
         )
-      GROUP BY t.id, t.title, t.description, t.scheduled_date, t.plan_end_time,
+      GROUP BY t.id, t.title, t.scheduled_date, t.plan_end_time,
                t.status, t.priority, t.notes, tech.name
       ORDER BY t.scheduled_date ASC
     `);
@@ -97,7 +97,7 @@ async function getTasksPendingApproval() {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT t.id, t.title, t.description, t.scheduled_date, t.status,
+      SELECT t.id, t.title, t.scheduled_date, t.status,
              t.done_by, t.notify_supervisor, t.notes, t.updated_at,
              tech.name AS technician_name,
              STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
@@ -106,7 +106,7 @@ async function getTasksPendingApproval() {
       LEFT JOIN TaskEquipment te ON te.task_id = t.id
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
       WHERE t.status = 'completed and waiting for approval'
-      GROUP BY t.id, t.title, t.description, t.scheduled_date, t.status,
+      GROUP BY t.id, t.title, t.scheduled_date, t.status,
                t.done_by, t.notify_supervisor, t.notes, t.updated_at, tech.name
       ORDER BY t.updated_at DESC
     `);

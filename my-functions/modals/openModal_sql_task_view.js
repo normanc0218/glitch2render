@@ -9,7 +9,7 @@ async function fetchSqlTaskFull(taskId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
-        SELECT t.id, t.title, t.description, t.scheduled_date, t.status,
+        SELECT t.id, t.title, t.scheduled_date, t.status,
                t.actual_start, t.actual_end,
                t.done_by, t.notify_supervisor, t.notes, t.finish_picture,
                tech.name AS technician_name,
@@ -19,7 +19,7 @@ async function fetchSqlTaskFull(taskId) {
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
-        GROUP BY t.id, t.title, t.description, t.scheduled_date, t.status,
+        GROUP BY t.id, t.title, t.scheduled_date, t.status,
                  t.actual_start, t.actual_end,
                  t.done_by, t.notify_supervisor, t.notes, t.finish_picture, tech.name
       `);
@@ -61,7 +61,7 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${task.title}*\n${task.description ? `${task.description}\n` : ""}📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nAssigned to: ${task.technician_name || "N/A"}`,
+        text: `*${task.title}*\n📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nAssigned to: ${task.technician_name || "N/A"}`,
       },
     });
     blocks.push({ type: "divider" });
