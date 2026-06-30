@@ -9,6 +9,13 @@ const {
   createImage,
 } = require("../utils/blockBuilder");
 
+function toUrlArray(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.filter(Boolean);
+  if (typeof v === 'object') return Object.values(v).filter(Boolean);
+  return [];
+}
+
 const openModal_view_detail = async (viewId, jobId) => {
   let job = null;
 
@@ -87,27 +94,22 @@ const openModal_view_detail = async (viewId, jobId) => {
         }\n*Specify other Status:* ${job.otherSpecify || "None"}\n*End Date:* ${
           job.endDate || "None"
         }\n*End Time:* ${job.endTime || "None"}`
-      ),
-      createHeader("Picture for Finished Job")
+      )
     );
 
-    if (Array.isArray(job.finishPicture)) {
-      blocks.push(
-        ...job.finishPicture
-          .slice(0, 5)
-          .map((url, i) => createImage(url, `Job image ${i + 1}`))
-      );
+    const finishPics = toUrlArray(job.finishPicture);
+    if (finishPics.length > 0) {
+      blocks.push(createHeader("Finish Pictures"));
+      blocks.push(...finishPics.slice(0, 5).map((url, i) => createImage(url, `Finish image ${i + 1}`)));
     }
 
     blocks.push(createDivider());
   }
-  blocks.push(createHeader("Picture for Job Order"));
-  if (Array.isArray(job.issuePicture)) {
-    blocks.push(
-      ...job.issuePicture
-        .slice(0, 5)
-        .map((url, i) => createImage(url, `Job image ${i + 1}`))
-    );
+
+  const issuePics = toUrlArray(job.issuePicture);
+  if (issuePics.length > 0) {
+    blocks.push(createHeader("Issue Pictures"));
+    blocks.push(...issuePics.slice(0, 5).map((url, i) => createImage(url, `Issue image ${i + 1}`)));
   }
 
   const modal = {
