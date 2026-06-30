@@ -96,19 +96,20 @@ const openModal_view_detail_home = async (trigger_id, jobId) => {
       )
     );
 
-    const issuePics  = toUrlArray(job.issuePicture);
     const finishPics = toUrlArray(job.finishPicture);
-
-    if (issuePics.length > 0) {
-      blocks.push(createHeader("Issue Pictures"));
-      blocks.push(...issuePics.slice(0, 5).map((url, i) => createImage(url, `Issue image ${i + 1}`)));
-    }
     if (finishPics.length > 0) {
       blocks.push(createHeader("Finish Pictures"));
       blocks.push(...finishPics.slice(0, 5).map((url, i) => createImage(url, `Finish image ${i + 1}`)));
     }
 
     blocks.push(createDivider());
+  }
+
+  // Issue pictures always shown regardless of status
+  const issuePics = toUrlArray(job.issuePicture);
+  if (issuePics.length > 0) {
+    blocks.push(createHeader("Issue Pictures"));
+    blocks.push(...issuePics.slice(0, 5).map((url, i) => createImage(url, `Issue image ${i + 1}`)));
   }
 
   const modal = {
