@@ -10,10 +10,6 @@ const openModal_update_progress = require('./openModal_update_progress');
 const openModal_view_detail = require('./openModal_view_detail');
 const openModal_view_detail_home = require('./openModal_view_detail_home');
 const openModal = require('./openModal');
-const openModal_create_project = require('./openModal_create_project');
-const openModal_manage_schedule = require('./openModal_manage_schedule');
-const openModal_modify_schedule = require('./openModal_modify_schedule');
-const openModal_add_schedule = require('./openModal_add_schedule');
 const openModal_manage_dispatch = require('./openModal_manage_dispatch');
 const openModal_view_dispatch = require('./openModal_view_dispatch');
 const openModal_dispatch = require('./openModal_dispatch');
@@ -35,10 +31,6 @@ module.exports = {
   openModal_view_detail_home,
   openModal_view_dispatch,
   openModal,
-  openModal_create_project,
-  openModal_manage_schedule,
-  openModal_modify_schedule,
-  openModal_add_schedule,
   openModal_manage_dispatch,
   openModal_dispatch,
   openModal_submit_training,

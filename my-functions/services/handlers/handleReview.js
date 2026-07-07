@@ -1,13 +1,52 @@
+const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function disableApproveButton(channel, ts, checkedBy) {
+  if (!channel || !ts) return;
+  try {
+    await client.chat.update({
+      channel,
+      ts,
+      text: `✅ Approved by *${checkedBy}*`,
+      blocks: [{
+        type: "section",
+        text: { type: "mrkdwn", text: `✅ Approved by *${checkedBy}*` },
+      }],
+    });
+  } catch (err) {
+    console.error("chat.update after approval failed:", err.message);
+  }
+}
+
+async function resolveCheckBy(pool, slackUserId, fallback) {
+  try {
+    const r = await pool.request()
+      .input("slackId", sql.NVarChar, slackUserId)
+      .query("SELECT name FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
+    return r.recordset[0]?.name || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 async function handleReview(payload) {
   const { user, view } = payload;
   const ts    = new Date();
-  const jobId = view.private_metadata;
+  const rawMeta = view.private_metadata;
+  let jobId, reviewMsgTs = null, reviewChannel = null;
+  try {
+    const meta = JSON.parse(rawMeta);
+    jobId         = meta.jobId;
+    reviewMsgTs   = meta.msgTs   || null;
+    reviewChannel = meta.channel || null;
+  } catch {
+    jobId = rawMeta;
+  }
   const vals  = view.state.values;
 
   const toolCheck   = vals?.tool_check?.tool_check?.selected_option?.value   || "N/A";
@@ -21,9 +60,10 @@ async function handleReview(payload) {
     // ── Azure SQL project approval ──
     const checkDatetime = checkDate && checkTime ? `${checkDate}T${checkTime}:00` : null;
     const pool = await getPool();
+    const checkBy = await resolveCheckBy(pool, user?.id, user?.username || null);
     await pool.request()
       .input("id",          sql.UniqueIdentifier, jobId)
-      .input("checkBy",     sql.NVarChar,         user?.username || null)
+      .input("checkBy",     sql.NVarChar,         checkBy)
       .input("checkDate",   sql.DateTime2,        checkDatetime)
       .input("checkTime",   sql.NVarChar(10),     checkTime || null)
       .input("checkDetail", sql.NVarChar(sql.MAX), checkDetail)
@@ -43,13 +83,16 @@ async function handleReview(payload) {
           updated_at   = GETDATE()
         WHERE id = @id
       `);
+    await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
     await displayHome(user.id);
     return;
   }
 
   // ── RTDB job approval ──
+  const pool2 = await getPool();
+  const checkBy = await resolveCheckBy(pool2, user?.id, user?.username || null);
   const data = {
-    checkBy:    user?.username,
+    checkBy,
     timestamp:  ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     toolCheck,
     cleanCheck,
@@ -62,6 +105,7 @@ async function handleReview(payload) {
 
   const msg = `✅ Job *${jobId}* was *Reviewed* by <@${user.id}>`;
   await saveJobSmart(jobId, data, true, msg);
+  await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
   await displayHome(user.id);
 }
 

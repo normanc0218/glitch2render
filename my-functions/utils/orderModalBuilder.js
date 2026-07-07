@@ -5,6 +5,7 @@ const {
   createInputBlock_pic,
   createInputBlock_date,
   createInputBlock_time,
+  createInputBlock_select,
 } = require("./blockBuilder");
 const userService = require("../services/slackUserService");
 
@@ -44,6 +45,13 @@ function buildOrderModalView({ area = null, areaLabel = null, machineLine = null
     createInputBlock("reporter", "Who found the issue?", "reporter", "Name of the finder"),
     createMultiInputBlock("description", "Description of the issue", "issue", "What is the issue?"),
     createInputBlock_multistatic("assignedTo", "Assign the job to", "pickedGuy", "Select the person", staffOptions),
+    createInputBlock_select({
+      block_id: "priority",
+      label: "Priority",
+      action_id: "priority",
+      options: ["high", "medium", "low"],
+      initial_option: "medium",
+    }),
     createInputBlock_pic("issuePicture", "Picture of the defect", "file_input_action_id_1"),
     createInputBlock_date("orderDate", "Order Date", "datepickeraction", getNYDate()),
     createInputBlock_time("orderTime", "Order Time", "timepickeraction", getNYTime()),

@@ -35,13 +35,25 @@ function getUserRoles(userId) {
 
 // ── Azure SQL helpers ────────────────────────────────────────────────────────
 
+async function getPromotedRtdbJobIds() {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(
+      `SELECT source_rtdb_job_id FROM Projects WHERE source_rtdb_job_id IS NOT NULL`
+    );
+    return new Set(result.recordset.map(r => r.source_rtdb_job_id));
+  } catch {
+    return new Set();
+  }
+}
+
 async function getProjectsPendingApproval() {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
       SELECT p.id, p.title, p.description, p.status,
              p.machine_location, p.equipment_id,
-             p.start_date, p.plan2finish_date,
+             p.scheduled_start, p.scheduled_end,
              p.ordered_by, p.assigned_to, p.notify_supervisor,
              p.done_by, p.updated_at
       FROM Projects p
@@ -68,8 +80,8 @@ async function getTasksForTechnician(techNames) {
     }).join(", ");
 
     const result = await req.query(`
-      SELECT t.id, t.title, t.scheduled_date, t.plan_end_time,
-             t.status, t.priority, t.notes,
+      SELECT t.id, t.title, t.scheduled_start, t.scheduled_end,
+             t.status, t.priority, t.description,
              tech.name AS technician_name,
              STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
       FROM Tasks t
@@ -79,12 +91,12 @@ async function getTasksForTechnician(techNames) {
       WHERE t.status NOT IN ('completed and waiting for approval', 'checked by supervisor')
         AND tech.name IN (${placeholders})
         AND (
-          t.scheduled_date IS NULL
-          OR CAST(t.scheduled_date AS DATE) <= CAST(GETDATE() AS DATE)
+          t.scheduled_start IS NULL
+          OR CAST(t.scheduled_start AS DATE) <= CAST(GETDATE() AS DATE)
         )
-      GROUP BY t.id, t.title, t.scheduled_date, t.plan_end_time,
-               t.status, t.priority, t.notes, tech.name
-      ORDER BY t.scheduled_date ASC
+      GROUP BY t.id, t.title, t.scheduled_start, t.scheduled_end,
+               t.status, t.priority, t.description, tech.name
+      ORDER BY t.scheduled_start ASC
     `);
     return result.recordset;
   } catch (err) {
@@ -97,8 +109,8 @@ async function getTasksPendingApproval() {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT t.id, t.title, t.scheduled_date, t.status,
-             t.done_by, t.notify_supervisor, t.notes, t.updated_at,
+      SELECT t.id, t.title, t.scheduled_start, t.status,
+             t.done_by, t.notify_supervisor, t.description, t.updated_at,
              tech.name AS technician_name,
              STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
       FROM Tasks t
@@ -106,8 +118,8 @@ async function getTasksPendingApproval() {
       LEFT JOIN TaskEquipment te ON te.task_id = t.id
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
       WHERE t.status = 'completed and waiting for approval'
-      GROUP BY t.id, t.title, t.scheduled_date, t.status,
-               t.done_by, t.notify_supervisor, t.notes, t.updated_at, tech.name
+      GROUP BY t.id, t.title, t.scheduled_start, t.status,
+               t.done_by, t.notify_supervisor, t.description, t.updated_at, tech.name
       ORDER BY t.updated_at DESC
     `);
     return result.recordset;
@@ -117,22 +129,52 @@ async function getTasksPendingApproval() {
   }
 }
 
+async function getProjectsForTechnician(techNames) {
+  try {
+    const names = Array.isArray(techNames) ? techNames : [techNames];
+    if (names.length === 0) return [];
+    const pool = await getPool();
+    const req  = pool.request();
+    const placeholders = names.map((n, i) => {
+      req.input(`pn${i}`, sql.NVarChar, n);
+      return `@pn${i}`;
+    }).join(", ");
+    const result = await req.query(`
+      SELECT p.id, p.title, p.description, p.status,
+             p.machine_location, p.equipment_id,
+             p.scheduled_start, p.scheduled_end,
+             tech.name AS technician_name,
+             e.equipment_name
+      FROM Projects p
+      JOIN Technicians tech ON p.technician_id = tech.id
+      LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
+      WHERE tech.name IN (${placeholders})
+        AND p.status NOT IN ('Completed and waiting for approval','Checked by Supervisor','Cancelled','Completed')
+      ORDER BY p.scheduled_start ASC
+    `);
+    return result.recordset;
+  } catch (err) {
+    console.error("Azure SQL projects for technician error:", err.message);
+    return [];
+  }
+}
+
 async function getUpcomingTasks() {
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT t.id, t.title, t.scheduled_date, t.status,
+      SELECT t.id, t.title, t.scheduled_start, t.status,
              tech.name AS technician_name,
              STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
       FROM Tasks t
       LEFT JOIN Technicians tech ON t.technician_id = tech.id
       LEFT JOIN TaskEquipment te ON te.task_id = t.id
       LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
-      WHERE t.scheduled_date >= CAST(GETDATE() AS DATE)
-        AND t.scheduled_date <= DATEADD(day, 3, CAST(GETDATE() AS DATE))
+      WHERE t.scheduled_start >= CAST(GETDATE() AS DATE)
+        AND t.scheduled_start <= DATEADD(day, 3, CAST(GETDATE() AS DATE))
         AND t.status NOT IN ('completed and waiting for approval', 'checked by supervisor')
-      GROUP BY t.id, t.title, t.scheduled_date, t.status, tech.name
-      ORDER BY t.scheduled_date ASC
+      GROUP BY t.id, t.title, t.scheduled_start, t.status, tech.name
+      ORDER BY t.scheduled_start ASC
     `);
     return result.recordset;
   } catch (err) {
@@ -160,13 +202,24 @@ async function displayHome(userId) {
 
     // Parallel fetch: RTDB + Azure SQL
     const dbStart = Date.now();
-    const [releaseSnap, usersSnap, azureProjects, azureTasks, upcomingTasks, azureTasksApproval] = await Promise.all([
+    const [releaseSnap, usersSnap, azureProjects, azureTasks, techProjects, upcomingTasks, azureTasksApproval, promotedIds, slackUserRow] = await Promise.all([
       db.ref("jobs/Release").once("value"),
       db.ref("users").once("value"),
       roles.includes("supervisor") ? getProjectsPendingApproval() : Promise.resolve([]),
-      techNames.length > 0 ? getTasksForTechnician(techNames) : Promise.resolve([]),
+      techNames.length > 0 ? getTasksForTechnician(techNames)       : Promise.resolve([]),
+      techNames.length > 0 ? getProjectsForTechnician(techNames)    : Promise.resolve([]),
       getUpcomingTasks(),
       roles.includes("supervisor") ? getTasksPendingApproval() : Promise.resolve([]),
+      getPromotedRtdbJobIds(),
+      (async () => {
+        try {
+          const pool = await getPool();
+          const r = await pool.request()
+            .input("slackId", sql.NVarChar, userId)
+            .query("SELECT TOP 1 name, role FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
+          return r.recordset[0] || null;
+        } catch { return null; }
+      })(),
     ]);
     console.log(`📊 DB queries: ${Date.now() - dbStart}ms`);
 
@@ -175,8 +228,17 @@ async function displayHome(userId) {
 
     const buildStart = Date.now();
     const divider = { type: "divider" };
+
+    const displayName = slackUserRow?.name || "there";
+    const roleLabel   = slackUserRow?.role === "supervisor" ? "Supervisor"
+      : slackUserRow?.role === "maintenance" ? "Technician"
+      : slackUserRow?.role === "manager"     ? "Manager"
+      : slackUserRow?.role === "trainer"     ? "Trainer"
+      : "";
+    const greeting = `Hi ${displayName}${roleLabel ? ` (${roleLabel})` : ""}, welcome to Maintenance Assistant`;
+
     let blocks = [
-      { type: "header", text: { type: "plain_text", text: "👋 Welcome to Maintenance Assistant", emoji: true } },
+      { type: "header", text: { type: "plain_text", text: `👋 ${greeting}`, emoji: true } },
       divider,
     ];
 
@@ -198,11 +260,11 @@ async function displayHome(userId) {
       if (allTasksApproval.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🔧 PM Tasks completed — pending review:*" } });
         for (const t of allTasksApproval) {
-          const date = fmtDate(t.scheduled_date) || "N/A";
+          const date = fmtDate(t.scheduled_start) || "N/A";
           const isAssigned = t.notify_supervisor && t.notify_supervisor === supervisorName;
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.notes ? `  •  ${t.notes}` : ""}` },
+            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.description ? `  •  ${t.description}` : ""}` },
             accessory: isAssigned
               ? { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" }
               : { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
@@ -216,7 +278,7 @@ async function displayHome(userId) {
       if (myProjects.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📋 Projects pending approval:*" } });
         for (const p of myProjects) {
-          const date = fmtDate(p.start_date) || "N/A";
+          const date = fmtDate(p.scheduled_start) || "N/A";
           const location = p.equipment_id || p.machine_location || "N/A";
           blocks.push({
             type: "section",
@@ -227,10 +289,11 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      // RTDB Regular jobs pending approval (existing flow)
+      // RTDB Regular jobs pending approval (existing flow — excludes promoted jobs)
       const rtdbFinished = Object.entries(release.Regular || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(j => {
+          if (promotedIds.has(j.id)) return false;
           const s = (j.status || "").toLowerCase();
           return (s.includes("waiting") || s.includes("completed")) && userConfig.Supervisors[j.notifySupervisor] === userId;
         })
@@ -241,7 +304,7 @@ async function displayHome(userId) {
         for (const job of rtdbFinished) {
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.machineLocation || "N/A"}  •  ${job.orderDate || ""}  •  ${job.status || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.machineLocation || "N/A"}  •  ${job.scheduledDate || ""}  •  ${job.status || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "Approve" }, style: "primary", value: job.id, action_id: "review_progress" },
           });
         }
@@ -262,9 +325,9 @@ async function displayHome(userId) {
       if (azureTasks.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Your PM Tasks:*" } });
         for (const task of azureTasks.slice(0, 10)) {
-          const date      = fmtDate(task.scheduled_date) || "N/A";
-          const startTime = fmtTime(task.scheduled_date);
-          const endTime   = fmtTime(task.plan_end_time);
+          const date      = fmtDate(task.scheduled_start) || "N/A";
+          const startTime = fmtTime(task.scheduled_start);
+          const endTime   = fmtTime(task.scheduled_end);
           const timeRange = startTime && endTime ? ` ${startTime} – ${endTime}` : startTime ? ` ${startTime}` : "";
           blocks.push({
             type: "section",
@@ -281,12 +344,35 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      // RTDB Regular jobs
+      // Azure SQL Projects assigned to this technician
+      if (techProjects.length > 0) {
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🏗️ Your Assigned Projects:*" } });
+        for (const p of techProjects.slice(0, 10)) {
+          const location = p.equipment_name || p.equipment_id || p.machine_location || "N/A";
+          const startStr = fmtDate(p.scheduled_start)   || "N/A";
+          const endStr   = fmtDate(p.scheduled_end)     || "N/A";
+          blocks.push({
+            type: "section",
+            text: { type: "mrkdwn", text: `*${p.title}*  •  ${p.status}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${endStr}${p.description ? `\n${p.description}` : ""}` },
+            accessory: {
+              type: "button",
+              text: { type: "plain_text", text: "Update Project" },
+              style: "primary",
+              value: String(p.id),
+              action_id: "update_project",
+            },
+          });
+        }
+        blocks.push(divider);
+      }
+
+      // RTDB Regular jobs — excludes jobs that have been promoted to a SQL Project
       const regularJobs = Object.entries(release.Regular || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(job => {
+          if (promotedIds.has(job.id)) return false;
           const s = (job.status || "").toLowerCase();
-          return !["complete", "completed", "approved", "rejected", "checked"].some(w => s.includes(w));
+          return !["complete", "completed", "approved", "rejected", "checked", "promoted"].some(w => s.includes(w));
         })
         .slice(0, 10);
 
@@ -296,7 +382,7 @@ async function displayHome(userId) {
           const assignedMatch = userConfig.maintenanceStaff[job.assignedTo] === userId;
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.machineLocation || "N/A"}  •  ${job.orderDate || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.machineLocation || "N/A"}  •  ${job.scheduledDate || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail_home" },
           });
           if (assignedMatch) {
@@ -322,7 +408,7 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      if (azureTasks.length === 0 && regularJobs.length === 0) {
+      if (azureTasks.length === 0 && techProjects.length === 0 && regularJobs.length === 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "_You have no assigned jobs._" } });
       }
     }
@@ -357,7 +443,7 @@ async function displayHome(userId) {
 
       // RTDB Regular jobs
       Object.entries(release.Regular || {}).forEach(([id, job]) => {
-        const date = job.startDate || job.orderDate;
+        const date = job.actualStartDate || job.scheduledDate;
         if (date && dayMap[date]) {
           dayMap[date].push({
             description: job.description || "Untitled",
@@ -370,7 +456,7 @@ async function displayHome(userId) {
 
       // Azure SQL PM Tasks
       upcomingTasks.forEach(t => {
-        const date = fmtDate(t.scheduled_date);
+        const date = fmtDate(t.scheduled_start);
         if (date && dayMap[date]) {
           dayMap[date].push({
             description: t.title,

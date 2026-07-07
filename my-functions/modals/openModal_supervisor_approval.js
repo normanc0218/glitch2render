@@ -51,8 +51,8 @@ async function fetchAzureSqlProject(projectId) {
       .query(`
         SELECT id, title, description, status,
                machine_location, equipment_id,
-               start_date, plan2finish_date,
-               finish_date, finish_time,
+               scheduled_start, scheduled_end,
+               actual_end,
                done_by, issue_picture, finish_picture
         FROM Projects WHERE id = @id
       `);
@@ -70,14 +70,14 @@ async function fetchSqlTask(taskId) {
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
         SELECT t.id, t.title, t.done_by, t.notify_supervisor,
-               t.actual_start, t.actual_end, t.finish_picture,
+               t.actual_start, t.actual_end, t.issue_picture, t.finish_picture,
                STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
         FROM Tasks t
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
         GROUP BY t.id, t.title, t.done_by, t.notify_supervisor,
-                 t.actual_start, t.actual_end, t.finish_picture
+                 t.actual_start, t.actual_end, t.issue_picture, t.finish_picture
       `);
     return result.recordset[0] || null;
   } catch (err) {
@@ -86,7 +86,7 @@ async function fetchSqlTask(taskId) {
   }
 }
 
-const openModal_supervisor_approval = async (trigger_id, jobId) => {
+const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, channel = null) => {
   const isSqlTask     = jobId.startsWith("sqltask:");
   const isAzureProject = !isSqlTask && UUID_RE.test(jobId);
 
@@ -113,7 +113,14 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
       blocks.push(createTextSection(`Done by: *${doneBy}*\nStart: ${startStr}  •  End: ${endStr}`));
       if (task.description) blocks.push(createTextSection(`_${task.description}_`));
 
+      const issuePics  = toPhotoArray(task.issue_picture);
       const finishPics = toPhotoArray(task.finish_picture);
+      if (issuePics.length > 0) {
+        blocks.push(createTextSection("*Issue Pictures:*"));
+        for (const url of issuePics.slice(0, 5)) {
+          blocks.push({ type: "image", image_url: url, alt_text: "Issue picture" });
+        }
+      }
       if (finishPics.length > 0) {
         blocks.push(createTextSection("*Finish Pictures:*"));
         for (const url of finishPics.slice(0, 5)) {
@@ -127,10 +134,10 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
     const project = await fetchAzureSqlProject(jobId);
     if (project) {
       const location   = project.equipment_id || project.machine_location || "N/A";
-      const startDate  = fmtDate(project.start_date)  || "N/A";
-      const finishDate = fmtDate(project.finish_date)  || "N/A";
-      const finishTime = project.finish_time            || "";
-      const doneBy     = project.done_by                || "N/A";
+      const startDate  = fmtDate(project.scheduled_start) || "N/A";
+      const finishDate = fmtDate(project.actual_end)      || "N/A";
+      const finishTime = project.actual_end ? fmtTime(project.actual_end) : "";
+      const doneBy     = project.done_by                  || "N/A";
       blocks.push(createTextSection(
         `*${project.title}*\n📍 ${location}  •  Start: ${startDate}  •  Finished: ${finishDate}${finishTime ? ` ${finishTime}` : ""}\nDone by: ${doneBy}${project.description ? `\n_${project.description}_` : ""}`
       ));
@@ -167,7 +174,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
 
     if (job) {
       blocks.push(createTextSection(
-        `*Start:*  ${job.startDate || "_N/A_"}  ${job.startTime || ""}    •    *End:*  ${job.endDate || "_N/A_"}  ${job.endTime || ""}`
+        `*Start:*  ${job.actualStartDate || "_N/A_"}  ${job.actualStartTime || ""}    •    *End:*  ${job.actualEndDate || "_N/A_"}  ${job.actualEndTime || ""}`
       ));
 
       const toArr = v => Array.isArray(v) ? v : (v ? [v] : []);
@@ -213,7 +220,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId) => {
     view: {
       type: "modal",
       callback_id: isSqlTask ? "sql_task_review" : "review",
-      private_metadata: jobId,
+      private_metadata: msgTs ? JSON.stringify({ jobId, msgTs, channel }) : jobId,
       title: { type: "plain_text", text: "Review & Approve" },
       submit: { type: "plain_text", text: "Approve" },
       close: { type: "plain_text", text: "Cancel" },

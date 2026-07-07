@@ -82,14 +82,14 @@ module.exports = async (req, res) => {
         for (const branch of ["Regular", "Daily", "Project"]) {
           if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
         }
-        if (job?.endDate && job?.endTime) {
-          const endMs   = new Date(`${job.endDate}T${job.endTime}`).getTime();
+        if (job?.actualEndDate && job?.actualEndTime) {
+          const endMs   = new Date(`${job.actualEndDate}T${job.actualEndTime}`).getTime();
           const checkMs = new Date(`${checkDate}T${checkTime}`).getTime();
           if (checkMs < endMs) {
             return res.json({
               response_action: "errors",
               errors: {
-                checkDate: `Check date/time cannot be earlier than end date/time (${job.endDate} ${job.endTime}).`,
+                checkDate: `Check date/time cannot be earlier than end date/time (${job.actualEndDate} ${job.actualEndTime}).`,
               },
             });
           }
@@ -111,10 +111,10 @@ module.exports = async (req, res) => {
         const pool = await getPool();
         const result = await pool.request()
           .input("id", sql.UniqueIdentifier, taskId)
-          .query("SELECT scheduled_date FROM Tasks WHERE id = @id");
+          .query("SELECT scheduled_start FROM Tasks WHERE id = @id");
         const row = result.recordset[0];
-        if (row?.scheduled_date) {
-          const sd = row.scheduled_date;
+        if (row?.scheduled_start) {
+          const sd = row.scheduled_start;
           const scheduledDateStr = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
           if (startDate < scheduledDateStr) {
             return res.json({
@@ -160,7 +160,9 @@ module.exports = async (req, res) => {
     const startTime = vals?.startTime?.timepickeraction?.selected_time;
     const endDate   = vals?.endDate?.datepickeraction?.selected_date;
     const endTime   = vals?.endTime?.timepickeraction?.selected_time;
-    const jobId     = view.private_metadata;
+    const rawMeta = view.private_metadata;
+    let jobId;
+    try { jobId = JSON.parse(rawMeta).jobId; } catch { jobId = rawMeta; }
     const errors    = {};
 
     // end must be later than start
@@ -181,11 +183,11 @@ module.exports = async (req, res) => {
         for (const branch of ["Regular", "Daily", "Project"]) {
           if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
         }
-        if (job?.orderDate && job?.orderTime) {
-          const orderMs = new Date(`${job.orderDate}T${job.orderTime}`).getTime();
+        if (job?.scheduledDate && job?.scheduledTime) {
+          const orderMs = new Date(`${job.scheduledDate}T${job.scheduledTime}`).getTime();
           const startMs = new Date(`${startDate}T${startTime}`).getTime();
           if (startMs < orderMs) {
-            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.orderDate} ${job.orderTime}).`;
+            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.scheduledDate} ${job.scheduledTime}).`;
           }
         }
       } catch (err) {
@@ -334,19 +336,86 @@ module.exports = async (req, res) => {
             break;
           }
         // 审核
-        case "review_progress":
-          await openModal_supervisor_approval(trigger_id, jobId);
+        case "review_progress": {
+          const reviewMsgTs = payload.container?.message_ts || null;
+          const reviewChan  = payload.container?.channel_id || null;
+          const UUID_RE_ACTION = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          let alreadyDone = false;
+          let doneBy = "supervisor";
+          if (UUID_RE_ACTION.test(jobId)) {
+            // SQL Project — check current status
+            try {
+              const pool = await getPool();
+              const r = await pool.request()
+                .input("id", sql.UniqueIdentifier, jobId)
+                .query("SELECT status, check_by FROM Projects WHERE id = @id");
+              const proj = r.recordset[0];
+              if (proj && (proj.status === "Checked by Supervisor" || proj.status === "Completed")) {
+                alreadyDone = true;
+                doneBy = proj.check_by || "supervisor";
+              }
+            } catch (err) { console.error("review_progress pre-check error:", err.message); }
+          } else {
+            // RTDB job — check status across branches
+            try {
+              const snap = await db.ref("jobs/Release").once("value");
+              const release = snap.val() || {};
+              for (const branch of ["Regular", "Daily", "Project"]) {
+                const job = release[branch]?.[jobId];
+                if (job) {
+                  if (job.status === "Checked by Supervisor") { alreadyDone = true; doneBy = job.checkBy || "supervisor"; }
+                  break;
+                }
+              }
+            } catch (err) { console.error("review_progress RTDB pre-check error:", err.message); }
+          }
+          if (alreadyDone) {
+            if (reviewChan && reviewMsgTs) {
+              await slackClient.chat.update({
+                channel: reviewChan, ts: reviewMsgTs,
+                text: `✅ Already approved by *${doneBy}*`,
+                blocks: [{ type: "section", text: { type: "mrkdwn", text: `✅ Already approved by *${doneBy}*` } }],
+              }).catch(() => {});
+            }
+            await slackClient.chat.postEphemeral({
+              channel: reviewChan || payload.user.id,
+              user: payload.user.id,
+              text: "This job has already been approved via the web app.",
+            }).catch(() => {});
+            break;
+          }
+          await openModal_supervisor_approval(trigger_id, jobId, reviewMsgTs, reviewChan);
           break;
+        }
 
         // Daily / Project 按钮逻辑
+        case "reason_defect": {
+          const { buildUpdateProgressModal } = require("../modals/openModal_update_progress");
+          const selected = action.selected_option?.value;
+          const showOtherReason = selected === "other";
+          const vals = view.state?.values || {};
+          const currentStatus = vals?.complete_job?.complete_job?.selected_option?.value || null;
+          const showOtherStatus = currentStatus === "other_situation";
+          const currentOtherStatus = vals?.other_status?.other_status?.selected_option?.value || null;
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildUpdateProgressModal(view.private_metadata, showOtherStatus, currentStatus, currentOtherStatus, showOtherReason, selected),
+          });
+          break;
+        }
+
         case "complete_job": {
           const { buildUpdateProgressModal } = require("../modals/openModal_update_progress");
           const selected = action.selected_option?.value;
           const showOther = selected === "other_situation";
+          const vals = view.state?.values || {};
+          const currentReason = vals?.reason_defect_block?.reason_defect?.selected_option?.value || null;
+          const showOtherReason = currentReason === "other";
           await slackClient.views.update({
             view_id: view.id,
             hash: view.hash,
-            view: buildUpdateProgressModal(view.private_metadata, showOther, selected),
+            view: buildUpdateProgressModal(view.private_metadata, showOther, selected, null, showOtherReason, currentReason),
           });
           break;
         }
@@ -354,10 +423,13 @@ module.exports = async (req, res) => {
         case "other_status": {
           const { buildUpdateProgressModal } = require("../modals/openModal_update_progress");
           const selected = action.selected_option?.value;
+          const vals = view.state?.values || {};
+          const currentReason = vals?.reason_defect_block?.reason_defect?.selected_option?.value || null;
+          const showOtherReason = currentReason === "other";
           await slackClient.views.update({
             view_id: view.id,
             hash: view.hash,
-            view: buildUpdateProgressModal(view.private_metadata, true, "other_situation", selected),
+            view: buildUpdateProgressModal(view.private_metadata, true, "other_situation", selected, showOtherReason, currentReason),
           });
           break;
         }
@@ -373,8 +445,33 @@ module.exports = async (req, res) => {
         }
 
         case "approve_sql_task": {
-          const taskId = jobId.startsWith("sql:") ? jobId.slice(4) : jobId;
-          await openModal_supervisor_approval(trigger_id, `sqltask:${taskId}`);
+          const taskId  = jobId.startsWith("sql:") ? jobId.slice(4) : jobId;
+          const msgTs   = payload.container?.message_ts  || null;
+          const channel = payload.container?.channel_id  || null;
+          // Check if already approved via web app before opening the modal
+          try {
+            const pool = await getPool();
+            const r = await pool.request()
+              .input("id", sql.UniqueIdentifier, taskId)
+              .query("SELECT status, check_by FROM Tasks WHERE id = @id");
+            const task = r.recordset[0];
+            if (task?.status === "checked by supervisor") {
+              if (channel && msgTs) {
+                await slackClient.chat.update({
+                  channel, ts: msgTs,
+                  text: `✅ Already approved by *${task.check_by || "supervisor"}*`,
+                  blocks: [{ type: "section", text: { type: "mrkdwn", text: `✅ Already approved by *${task.check_by || "supervisor"}*` } }],
+                }).catch(() => {});
+              }
+              await slackClient.chat.postEphemeral({
+                channel: channel || payload.user.id,
+                user: payload.user.id,
+                text: "This task has already been approved via the web app.",
+              }).catch(() => {});
+              break;
+            }
+          } catch (err) { console.error("approve_sql_task pre-check error:", err.message); }
+          await openModal_supervisor_approval(trigger_id, `sqltask:${taskId}`, msgTs, channel);
           break;
         }
 
@@ -428,7 +525,16 @@ module.exports = async (req, res) => {
           break;
 
         case "sql_task_review": {
-          const taskId = view.private_metadata.replace(/^sqltask:/, "");
+          let taskId, reviewMsgTs = null, reviewChannel = null;
+          try {
+            const meta = JSON.parse(view.private_metadata);
+            taskId = meta.jobId.replace(/^sqltask:/, "");
+            reviewMsgTs   = meta.msgTs   || null;
+            reviewChannel = meta.channel || null;
+          } catch {
+            taskId = view.private_metadata.replace(/^sqltask:/, "");
+          }
+
           const vals = view.state.values;
           const { displayHome } = require("../services/modalService");
           const pool = await getPool();
@@ -446,6 +552,11 @@ module.exports = async (req, res) => {
           const checkDate    = vals?.checkDate?.datepickeraction?.selected_date            || null;
           const checkTime    = vals?.checkTime?.timepickeraction?.selected_time            || null;
           const checkDatetime = checkDate && checkTime ? `${checkDate}T${checkTime}:00` : null;
+
+          const titleRes = await pool.request()
+            .input("id", sql.UniqueIdentifier, taskId)
+            .query("SELECT title FROM Tasks WHERE id = @id");
+          const taskTitle = titleRes.recordset[0]?.title || "PM Task";
 
           await pool.request()
             .input("id",          sql.UniqueIdentifier, taskId)
@@ -467,6 +578,29 @@ module.exports = async (req, res) => {
                 updated_at   = GETDATE()
               WHERE id = @id
             `);
+
+          // Replace the original notification message button with a checked status
+          if (reviewMsgTs && reviewChannel) {
+            try {
+              await slackClient.chat.update({
+                channel: reviewChannel,
+                ts: reviewMsgTs,
+                text: `✅ PM Task *${taskTitle}* — checked by *${checkBy}*`,
+                blocks: [
+                  {
+                    type: "section",
+                    text: {
+                      type: "mrkdwn",
+                      text: `✅ PM Task *${taskTitle}* has been *checked by ${checkBy}*.`,
+                    },
+                  },
+                ],
+              });
+            } catch (err) {
+              console.error("Failed to update approval message:", err.message);
+            }
+          }
+
           await displayHome(user.id);
           break;
         }

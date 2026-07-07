@@ -1,34 +1,11 @@
-// userConfig.js
-
-// 🧰 Maintenance Technicians
-const maintenanceStaff = {
-  Fai: "U09FZM0USQ2",
-  Steven: "U09GE45CBAM"
-};
-//Steven: "U09GE45CBAM",
-
-// 👔 Managers
-const managerUsers = {
-  Chris: "U06D0NAAL5N",
-  Norman: "U06DSKC32E4"
-};
-
-// 🧑‍🏫 Trainers
-const trainUsers = {
-  Norman: "U06DSKC32E4",
-};
-
-// 👨‍💼 Supervisors
-const Supervisors = {
-  Chris: "U06D0NAAL5N",
-  Norman: "U06DSKC32E4",
-  Justin: "U06D0NA0H16",
-  Grace: "U09G4R4FC3X",
-};
+// All user data comes from the SlackUsers table in Azure SQL via slackUserService.
+// This file exists only for backward compatibility with modules that require('../userConfig').
+const svc = require("./services/slackUserService");
 
 module.exports = {
-  maintenanceStaff,
-  managerUsers,
-  trainUsers,
-  Supervisors,
+  get maintenanceStaff() { return svc.maintenanceStaff; },
+  get Supervisors()      { return svc.Supervisors; },
+  get managerUsers()     { return svc.managerUsers; },
+  get trainUsers()       { return svc.trainUsers; },
+  refreshIfStale:        () => svc.refreshIfStale(),
 };

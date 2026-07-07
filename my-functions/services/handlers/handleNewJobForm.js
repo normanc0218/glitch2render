@@ -3,6 +3,21 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
+const { getPool, sql } = require("../../db-sql");
+
+async function resolveEquipmentName(equipmentId) {
+  if (!equipmentId) return null;
+  try {
+    const pool = await getPool();
+    const r = await pool.request()
+      .input("id", sql.NVarChar, equipmentId)
+      .query("SELECT equipment_name FROM Equipment WHERE equipment_id = @id");
+    return r.recordset[0]?.equipment_name || equipmentId;
+  } catch {
+    return equipmentId;
+  }
+}
+
 /**
  * ✅ 处理新任务表单提交
  */
@@ -11,8 +26,11 @@ async function handleNewJobForm(payload) {
   const ts = new Date();
   const jobId = await generateUniqueJobId();
 
-  console.log("Slack view.state:", JSON.stringify(view.state, null, 2));
-  console.log(jobId);
+  const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value  || null;
+  const otherEquipment      = view.state.values?.otherEquipment?.otherEquipment?.value             || null;
+  const machineLocation = selectedEquipmentId
+    ? await resolveEquipmentName(selectedEquipmentId)
+    : (otherEquipment || "N/A");
 
   const data = {
     jobId,
@@ -20,9 +38,7 @@ async function handleNewJobForm(payload) {
     orderedBy: user?.username || "Unknown",
     area:            view.state.values?.area?.area?.selected_option?.value || null,
     machineLine:     view.state.values?.machineLine?.machineLine?.selected_option?.value || null,
-    machineLocation: view.state.values?.equipmentId?.equipmentId?.selected_option?.value
-                  || view.state.values?.otherEquipment?.otherEquipment?.value
-                  || "N/A",
+    machineLocation,
     reporter: view.state.values?.reporter?.reporter?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:
@@ -33,9 +49,10 @@ async function handleNewJobForm(payload) {
       view.state.values?.issuePicture?.file_input_action_id_1?.files?.map(
         (file) => file.url_private
       ) || [],
-    orderDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    orderTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    scheduledDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
+    scheduledTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
     status: "Pending",
+    priority: view.state.values?.priority?.priority?.selected_option?.value || "medium",
   };
   // 通知频道
   const messageTs = await notifyNewOrder(data, jobId);

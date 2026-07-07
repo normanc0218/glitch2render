@@ -28,12 +28,12 @@ async function handleAssignDispatchForm(payload) {
         (opt) => opt.text.text 
       ) || [],
     issuePicture: metadata.issuePicture,
-    orderDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    orderTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    scheduledDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
+    scheduledTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
     dispatchDate: metadata?.dispatchDate|| "",
     dispatchTime: metadata?.dispatchTime|| "",
     status: "Pending",
-
+    priority: "medium",
   };
   // 通知频道
   const messageTs = await notifyNewOrder(data, jobId);

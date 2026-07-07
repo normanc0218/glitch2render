@@ -28,8 +28,8 @@ async function fetchSqlTask(taskId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
-        SELECT t.id, t.title, t.scheduled_date, t.plan_end_time,
-               t.is_all_day, t.status, t.notes,
+        SELECT t.id, t.title, t.scheduled_start, t.scheduled_end,
+               t.is_all_day, t.status, t.description, t.issue_picture,
                tech.name AS technician_name,
                STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
         FROM Tasks t
@@ -37,8 +37,8 @@ async function fetchSqlTask(taskId) {
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
-        GROUP BY t.id, t.title, t.scheduled_date, t.plan_end_time,
-                 t.is_all_day, t.status, t.notes, tech.name
+        GROUP BY t.id, t.title, t.scheduled_start, t.scheduled_end,
+                 t.is_all_day, t.status, t.description, t.issue_picture, tech.name
       `);
     return result.recordset[0] || null;
   } catch (err) {
@@ -67,8 +67,8 @@ const openModal_daily_update = async (trigger_id, jobId) => {
       const fmtLocalDate = (d) => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : null;
       const fmtLocalTime = (d) => d ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : null;
 
-      const startDt  = toDate(task.scheduled_date);
-      const endDt    = toDate(task.plan_end_time);
+      const startDt  = toDate(task.scheduled_start);
+      const endDt    = toDate(task.scheduled_end);
       const dateStr  = fmtLocalDate(startDt) || "N/A";
       const isAllDay = task.is_all_day;
 
@@ -83,6 +83,18 @@ const openModal_daily_update = async (trigger_id, jobId) => {
       blocks.push(createTextSection(`📅 ${dateStr}${timeRange}`));
       blocks.push(createTextSection(`📍 ${task.equipment_ids || "N/A"}  •  Status: ${task.status}`));
       if (task.description) blocks.push(createTextSection(task.description));
+
+      if (task.issue_picture) {
+        try {
+          const urls = JSON.parse(task.issue_picture);
+          if (Array.isArray(urls) && urls.length > 0) {
+            blocks.push(createTextSection("*Issue Pictures:*"));
+            urls.slice(0, 5).forEach((url, i) => {
+              blocks.push({ type: "image", image_url: url, alt_text: `Issue picture ${i + 1}` });
+            });
+          }
+        } catch { /* not a JSON array — skip */ }
+      }
       blocks.push({ type: "divider" });
     }
   }

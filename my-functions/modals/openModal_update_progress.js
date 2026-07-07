@@ -1,9 +1,11 @@
 const { WebClient } = require("@slack/web-api");
 const userConfig = require("../services/slackUserService");
+const { findJobById } = require("../services/firebaseService");
 const {
   createInputBlock,
   createInputBlock_select,
   createTextSection,
+  createDivider,
   createInputBlock_date,
   createInputBlock_time,
   createInputBlock_checkboxes,
@@ -34,22 +36,56 @@ const OTHER_SITUATION_OPTIONS = [
   ["Follow up check", "follow_up_check"],
 ];
 
-function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatus = null, selectedOtherStatus = null) {
+function buildUpdateProgressModal(metaOrJobId, showOtherOptions = false, selectedStatus = null, selectedOtherStatus = null, showOtherReason = false, selectedReason = null) {
+  let jobId, jobInfo = null;
+  try {
+    const parsed = JSON.parse(metaOrJobId);
+    jobId = parsed.jobId;
+    jobInfo = parsed;
+  } catch {
+    jobId = metaOrJobId;
+  }
+
   const p = getNYParts();
   const initialDate = `${p.year}-${p.month}-${p.day}`;
   const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
 
   const superNameOptions = Object.keys(userConfig.Supervisors).map(name => [name, name]);
 
+  const REASON_OPTIONS = [
+    ["Wear or Tear", "wear_or_tear"],
+    ["Operator error", "operator_error"],
+    ["Unknown issue", "unknown_issue"],
+    ["Other", "other"],
+  ];
+
   const blocks = [];
 
-  blocks.push(createInputBlock_checkboxes({
+  // Job summary header
+  if (jobInfo) {
+    const loc  = jobInfo.machineLocation || "N/A";
+    const desc = jobInfo.description     || "N/A";
+    const when = [jobInfo.scheduledDate, jobInfo.scheduledTime].filter(Boolean).join("  ");
+    blocks.push(createTextSection(`*Job ID:* ${jobId}  •  📍 ${loc}${when ? `\n🕐 Ordered: ${when}` : ""}\n📋 ${desc}`));
+    blocks.push(createDivider());
+  }
+
+  const reasonInitial = selectedReason
+    ? REASON_OPTIONS.find(([, v]) => v === selectedReason) || null
+    : null;
+
+  blocks.push(createInputBlock_radio({
     block_id: "reason_defect_block",
     label: "What is the cause of this issue?",
     action_id: "reason_defect",
-    options: ["Wear or Tear", "Operator error", "No issue", "Unknown issue", "Other"],
+    dispatch_action: true,
+    options: REASON_OPTIONS,
+    initial_option: reasonInitial,
   }));
-  blocks.push(createInputBlock("other_reason_input", "Specify the other reason if any?", "otherreason", "Enter other reason", true));
+
+  if (showOtherReason) {
+    blocks.push(createInputBlock("other_reason_input", "Specify the other reason (required)", "otherreason", "Enter other reason"));
+  }
   blocks.push(createTextSection("Clean-up Checklist"));
   blocks.push(createInputBlock_select({
     block_id: "select_tools",
@@ -113,7 +149,7 @@ function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatu
   return {
     type: "modal",
     callback_id: "update_form",
-    private_metadata: jobId,
+    private_metadata: metaOrJobId,
     title: { type: "plain_text", text: "Update progress" },
     submit: { type: "plain_text", text: "Submit" },
     close: { type: "plain_text", text: "Cancel" },
@@ -122,9 +158,24 @@ function buildUpdateProgressModal(jobId, showOtherOptions = false, selectedStatu
 }
 
 const openModal_update_progress = async (trigger_id, jobId) => {
+  let meta = jobId;
+  try {
+    const job = await findJobById(jobId);
+    if (job) {
+      meta = JSON.stringify({
+        jobId,
+        description:     job.description     || null,
+        machineLocation: job.machineLocation  || null,
+        scheduledDate:   job.scheduledDate     || null,
+        scheduledTime:   job.scheduledTime     || null,
+      });
+    }
+  } catch {
+    // fall back to plain jobId string
+  }
   await client.views.open({
     trigger_id,
-    view: buildUpdateProgressModal(jobId),
+    view: buildUpdateProgressModal(meta),
   });
 };
 

@@ -1,88 +1,107 @@
-const axios = require('axios');
-const qs = require('qs');
-const { 
-  createInputBlock, 
-  createInputBlock_pic, 
-  createInputBlock_date, 
-  createInputBlock_time, 
-  createInputBlock_radio 
-} = require('../utils/blockBuilder'); // Importing your block builders
-const nyDate = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date()); // e.g. "2025-05-28"
-const [month, day, year] = nyDate.split('/');
-const initialDate = `${year}-${month}-${day}`;
+const { WebClient } = require("@slack/web-api");
+const userConfig = require("../services/slackUserService");
+const { getPool, sql } = require("../db-sql");
+const {
+  createInputBlock,
+  createInputBlock_pic,
+  createInputBlock_date,
+  createInputBlock_time,
+  createInputBlock_radio,
+  createTextSection,
+  createDivider,
+} = require("../utils/blockBuilder");
 
-function getNYTimeString() {
-  const d = new Date();
-  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const hh = ny.getHours().toString().padStart(2, '0');
-  const mm = ny.getMinutes().toString().padStart(2, '0');
-  return `${hh}:${mm}`;
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+
+function getNYParts() {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(new Date()).map(p => [p.type, p.value])
+  );
 }
-const initialTime = getNYTimeString();
 
-// list of managerUser IDs
-const {Supervisors} = require('../userConfig');
-const superOption=Object.entries(Supervisors)
+function fmtDate(d) {
+  if (!d) return null;
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) return null;
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+async function fetchProject(projectId) {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input("id", sql.UniqueIdentifier, projectId)
+      .query(`
+        SELECT p.title, p.description, p.status,
+               p.machine_location, p.equipment_id,
+               p.scheduled_start, p.scheduled_end,
+               e.equipment_name,
+               tech.name AS technician_name
+        FROM Projects p
+        LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
+        LEFT JOIN Technicians tech ON tech.id = p.technician_id
+        WHERE p.id = @id
+      `);
+    return result.recordset[0] || null;
+  } catch (err) {
+    console.error("fetchProject error:", err.message);
+    return null;
+  }
+}
 
 const openModal_project_update = async (trigger_id, jobId) => {
-  const modal = {
-    type: "modal",
-    callback_id: "update_project",
-    private_metadata: jobId, // Store the Job ID in private metadata
-    title: {
-      type: "plain_text",
-      text: "Update Your Job",
-      emoji: true
-    },
-    submit: {
-      type: "plain_text",
-      text: "Submit",
-      emoji: true
-    },
-    close: {
-      type: "plain_text",
-      text: "Cancel",
-      emoji: true
-    },
-    blocks: [
-      createInputBlock_pic("finishPicture", "Picture of Your Job Update", "file_input_action_id_1"),
-      createInputBlock("supervisor_message", "Comments", "supervisor_message","comments"),
-      createInputBlock_radio({
-        block_id: "supervisor_notify",
-        label: "Notify the supervisor",
-        action_id: "supervisor_notify",
-        options: superOption.slice(0,2) //Only Chris and Norman
-      }),
-      createInputBlock_date("startDate", "Actual Start Date", "datepickeraction"),
-      createInputBlock_time("startTime", "Actual Start Time", "timepickeraction"),
-      createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate),
-      createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime)
-    ]
-  }
-     
+  await userConfig.refreshIfStale();
 
-  // API call to open the modal
-const args = {
-    token: process.env.SLACK_BOT_TOKEN,  // Ensure correct bot token
-    trigger_id: trigger_id,
-    view: JSON.stringify(modal)  // Pass the modal structure as JSON
-  };
+  const p = getNYParts();
+  const initialDate = `${p.year}-${p.month}-${p.day}`;
+  const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
 
-  try {
-    const result = await axios.post('https://slack.com/api/views.open', qs.stringify(args));
-    
-    if (result.data.ok) {
-      console.log('Modal opened successfully!');
-    } else {
-      console.error('Error opening modal:', result.data.error);  // Log any error response
-    }
-  } catch (error) {
-    console.error('Error during modal open request:', error.message);  // Handle network or other errors
+  const superOptions = Object.keys(userConfig.Supervisors).map(name => [name, name]);
+
+  const project = await fetchProject(jobId);
+
+  const blocks = [];
+
+  if (project) {
+    const location  = project.equipment_name || project.equipment_id || project.machine_location || "N/A";
+    const startStr  = fmtDate(project.scheduled_start)  || "N/A";
+    const dueStr    = fmtDate(project.scheduled_end)    || "N/A";
+    const desc      = project.description || "";
+    blocks.push(createTextSection(
+      `*${project.title}*  •  ${project.status}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${dueStr}${desc ? `\n📋 ${desc}` : ""}`
+    ));
+    blocks.push(createDivider());
   }
+
+  blocks.push(createInputBlock_pic("finishPicture", "Picture of Your Job Update", "file_input_action_id_1"));
+  blocks.push(createInputBlock("supervisor_message", "Comments", "supervisor_message", "comments"));
+  blocks.push(createInputBlock_radio({
+    block_id: "supervisor_notify",
+    label: "Notify the supervisor",
+    action_id: "supervisor_notify",
+    options: superOptions,
+  }));
+  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime));
+  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime));
+
+  await client.views.open({
+    trigger_id,
+    view: {
+      type: "modal",
+      callback_id: "update_project",
+      private_metadata: jobId,
+      title:  { type: "plain_text", text: "Update Your Job" },
+      submit: { type: "plain_text", text: "Submit" },
+      close:  { type: "plain_text", text: "Cancel" },
+      blocks,
+    },
+  });
 };
-module.exports =  openModal_project_update;
+
+module.exports = openModal_project_update;

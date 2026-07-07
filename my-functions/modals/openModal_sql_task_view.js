@@ -9,9 +9,9 @@ async function fetchSqlTaskFull(taskId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, taskId)
       .query(`
-        SELECT t.id, t.title, t.scheduled_date, t.status,
+        SELECT t.id, t.title, t.scheduled_start, t.status,
                t.actual_start, t.actual_end,
-               t.done_by, t.notify_supervisor, t.notes, t.finish_picture,
+               t.done_by, t.notify_supervisor, t.description, t.issue_picture, t.finish_picture,
                tech.name AS technician_name,
                STRING_AGG(COALESCE(e.equipment_name, te.equipment_id), ', ') AS equipment_ids
         FROM Tasks t
@@ -19,9 +19,9 @@ async function fetchSqlTaskFull(taskId) {
         LEFT JOIN TaskEquipment te ON te.task_id = t.id
         LEFT JOIN Equipment e ON e.equipment_id = te.equipment_id
         WHERE t.id = @id
-        GROUP BY t.id, t.title, t.scheduled_date, t.status,
+        GROUP BY t.id, t.title, t.scheduled_start, t.status,
                  t.actual_start, t.actual_end,
-                 t.done_by, t.notify_supervisor, t.notes, t.finish_picture, tech.name
+                 t.done_by, t.notify_supervisor, t.description, t.issue_picture, t.finish_picture, tech.name
       `);
     return result.recordset[0] || null;
   } catch (err) {
@@ -55,7 +55,7 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
   if (!task) {
     blocks.push({ type: "section", text: { type: "mrkdwn", text: "_Task not found._" } });
   } else {
-    const scheduled = fmtDate(task.scheduled_date);
+    const scheduled = fmtDate(task.scheduled_start);
 
     blocks.push({
       type: "section",
@@ -77,8 +77,24 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
       ],
     });
 
-    if (task.notes) {
-      blocks.push({ type: "section", text: { type: "mrkdwn", text: `*Notes:*\n${task.notes}` } });
+    if (task.description) {
+      blocks.push({ type: "section", text: { type: "mrkdwn", text: `*Notes:*\n${task.description}` } });
+    }
+
+    // Issue pictures
+    if (task.issue_picture) {
+      try {
+        const urls = JSON.parse(task.issue_picture);
+        if (Array.isArray(urls) && urls.length > 0) {
+          blocks.push({ type: "divider" });
+          blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Issue Pictures:*" } });
+          urls.slice(0, 5).forEach((url, i) => {
+            blocks.push({ type: "image", image_url: url, alt_text: `Issue picture ${i + 1}` });
+          });
+        }
+      } catch {
+        // not a JSON array — skip
+      }
     }
 
     // Finish pictures
