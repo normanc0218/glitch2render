@@ -180,7 +180,7 @@ function buildRtdbBlocks(job) {
     createTextSection(`*Job ID:* ${job.id}`),
     createTextSection(
       `*Category:* ${job.category || "N/A"}  •  *Ordered By:* ${job.orderedBy || "N/A"}\n` +
-      `*Machine Location:* ${job.machineLocation || "N/A"}  •  *Finder:* ${job.reporter || "N/A"}`
+      `*Machine Location:* ${job.equipment_name || "N/A"}  •  *Finder:* ${job.reporter || "N/A"}`
     ),
     createTextSection(`*Description:* ${job.description || "N/A"}`),
     createTextSection(

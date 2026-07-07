@@ -304,7 +304,7 @@ async function displayHome(userId) {
         for (const job of rtdbFinished) {
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.machineLocation || "N/A"}  •  ${job.scheduledDate || ""}  •  ${job.status || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.equipment_name || "N/A"}  •  ${job.scheduledDate || ""}  •  ${job.status || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "Approve" }, style: "primary", value: job.id, action_id: "review_progress" },
           });
         }
@@ -382,7 +382,7 @@ async function displayHome(userId) {
           const assignedMatch = userConfig.maintenanceStaff[job.assignedTo] === userId;
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.machineLocation || "N/A"}  •  ${job.scheduledDate || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.equipment_name || "N/A"}  •  ${job.scheduledDate || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail_home" },
           });
           if (assignedMatch) {
@@ -448,7 +448,7 @@ async function displayHome(userId) {
           dayMap[date].push({
             description: job.description || "Untitled",
             assigned: job.assignedTo || "Unassigned",
-            location: job.machineLocation || "N/A",
+            location: job.equipment_name || "N/A",
             source: "Regular",
           });
         }

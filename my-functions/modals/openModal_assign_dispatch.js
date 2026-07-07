@@ -71,7 +71,7 @@ const openModal_assign_dispatch = async(viewId,jobId) => {
         label: "Machine and Location",
         action_id: "machineLocation",
         options: machineOptions, // <-- make sure this is passed in like this
-        initial_option: job.machineLocation || []
+        initial_option: job.equipment_name || []
       }),
     createDivider(),
     // createInputBlock(`reporter`,`Who found the issue?`,`reporter`,`Name of the Finder`,job.reporter|| ""),

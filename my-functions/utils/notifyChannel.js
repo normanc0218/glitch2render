@@ -24,7 +24,7 @@ async function notifyNewOrder(data, jobId) {
         text: `📋 *New Maintenance Job Submitted and Assigned To ${assignedDisplay}*
   *Job ID:* ${jobId}
   *Ordered by:* ${data.orderedBy}
-  *Location:* ${data.machineLocation}
+  *Location:* ${data.equipment_name}
   *Description:* ${data.description}`,
       },
     },

@@ -35,9 +35,10 @@ async function handleNewDispatchForm(payload) {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     orderedBy: user?.username || "Unknown",
-    area:            view.state.values?.area?.area?.selected_option?.value || null,
-    machineLine:     view.state.values?.machineLine?.machineLine?.selected_option?.value || null,
-    machineLocation,
+    area:           view.state.values?.area?.area?.selected_option?.value || null,
+    machine_line:   view.state.values?.machineLine?.machineLine?.selected_option?.value || null,
+    equipment_id:   selectedEquipmentId || null,
+    equipment_name: machineLocation,
     reporter: view.state.values?.reporter?.reporter?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:

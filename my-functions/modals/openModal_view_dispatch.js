@@ -45,7 +45,7 @@ const openModal_view_dispatch  = async (trigger_id) => {
           text: {
             type: "mrkdwn",
             text: `${emoji} *${job.description || "Untitled Job"}*\n📍 ${
-              job.machineLocation || "N/A"
+              job.equipment_name || "N/A"
             }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
               job.dispatchDate || "N/A"
             }\n⚙️ Status: ${job.status || "Pending"}`,

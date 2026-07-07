@@ -63,7 +63,7 @@ function buildUpdateProgressModal(metaOrJobId, showOtherOptions = false, selecte
 
   // Job summary header
   if (jobInfo) {
-    const loc  = jobInfo.machineLocation || "N/A";
+    const loc  = jobInfo.equipment_name || "N/A";
     const desc = jobInfo.description     || "N/A";
     const when = [jobInfo.scheduledDate, jobInfo.scheduledTime].filter(Boolean).join("  ");
     blocks.push(createTextSection(`*Job ID:* ${jobId}  •  📍 ${loc}${when ? `\n🕐 Ordered: ${when}` : ""}\n📋 ${desc}`));
@@ -165,7 +165,7 @@ const openModal_update_progress = async (trigger_id, jobId) => {
       meta = JSON.stringify({
         jobId,
         description:     job.description     || null,
-        machineLocation: job.machineLocation  || null,
+        equipment_name: job.equipment_name  || null,
         scheduledDate:   job.scheduledDate     || null,
         scheduledTime:   job.scheduledTime     || null,
       });
