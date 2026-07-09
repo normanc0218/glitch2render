@@ -113,7 +113,7 @@ async function fetchSqlProject(projectId) {
              p.ordered_by, p.assigned_to,
              p.done_by, p.notify_supervisor, p.message_to_supervisor,
              p.actual_end,
-             p.check_by, p.check_date, p.check_time, p.check_detail,
+             p.check_by, p.check_date, p.check_detail,
              p.issue_picture, p.finish_picture,
              tech.name AS technician_name,
              e.equipment_name
@@ -154,7 +154,7 @@ function buildSqlProjectBlocks(p) {
   if (p.check_by) {
     blocks.push(createTextSection(
       `*Checked By:* ${p.check_by}\n` +
-      `*Check Date:* ${fmtDate(p.check_date) || "N/A"}  •  *Check Time:* ${p.check_time || "N/A"}\n` +
+      `*Check Date/Time:* ${fmtDateTime(p.check_date) || "N/A"}\n` +
       `*Check Detail:* ${p.check_detail || "N/A"}`
     ));
     blocks.push(createDivider());
@@ -180,12 +180,12 @@ function buildRtdbBlocks(job) {
     createTextSection(`*Job ID:* ${job.id}`),
     createTextSection(
       `*Category:* ${job.category || "N/A"}  •  *Ordered By:* ${job.orderedBy || "N/A"}\n` +
-      `*Machine Location:* ${job.equipment_name || "N/A"}  •  *Finder:* ${job.reporter || "N/A"}`
+      `*Machine Location:* ${job.equipmentName || "N/A"}  •  *Finder:* ${job.reporter || "N/A"}`
     ),
     createTextSection(`*Description:* ${job.description || "N/A"}`),
     createTextSection(
       `*Assigned Staff:* ${job.assignedTo || "N/A"}\n` +
-      `*Order Date:* ${job.scheduledDate || "N/A"}  •  *Order Time:* ${job.scheduledTime || "N/A"}\n` +
+      `*Order Date/Time:* ${(job.scheduledStart || job.orderDatetime || job.dispatchDatetime)?.replace('T', ' ') || "N/A"}\n` +
       `*Status:* ${job.status || "N/A"}`
     ),
     createDivider(),
@@ -193,17 +193,17 @@ function buildRtdbBlocks(job) {
 
   if (job.status === "Accepted") {
     blocks.push(createTextSection(
-      `*Accept Date:* ${job.acceptDate || "N/A"}  •  *Accept Time:* ${job.acceptTime || "N/A"}\n` +
+      `*Accepted:* ${job.acceptDatetime?.replace('T', ' ') || "N/A"}\n` +
       `*Remarks:* ${job.remarks || "None"}`
     ), createDivider());
   } else if (job.status === "Rejected") {
     blocks.push(createTextSection(
-      `*Reject Date:* ${job.rejectDate || "N/A"}  •  *Reject Time:* ${job.rejectTime || "N/A"}\n` +
+      `*Rejected:* ${job.rejectDatetime?.replace('T', ' ') || "N/A"}\n` +
       `*Rejected By:* ${job.assignedTo || "N/A"}  •  *Reason:* ${job.rejectReason || "N/A"}`
     ), createDivider());
   } else if (job.status !== "Pending") {
     blocks.push(createTextSection(
-      `*Accept Date:* ${job.acceptDate || "N/A"}  •  *Accept Time:* ${job.acceptTime || "N/A"}\n` +
+      `*Accepted:* ${job.acceptDatetime?.replace('T', ' ') || "N/A"}\n` +
       `*Remarks:* ${job.remarks || "None"}`
     ), createDivider());
     blocks.push(createTextSection(
@@ -213,7 +213,7 @@ function buildRtdbBlocks(job) {
       `*Notify Supervisor:* ${job.notifySupervisor || "N/A"}\n` +
       `*Message to Supervisor:* ${job.messageToSupervisor || "N/A"}\n` +
       `*Other Status:* ${job.statusOther || "None"}\n` +
-      `*End Date:* ${job.actualEndDate || "N/A"}  •  *End Time:* ${job.actualEndTime || "N/A"}`
+      `*End:* ${job.actualEnd?.replace('T', ' ') || "N/A"}`
     ));
     const finishPics = toUrlArray(job.finishPicture);
     if (finishPics.length > 0) {

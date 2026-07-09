@@ -61,11 +61,23 @@ async function handleReview(payload) {
     const checkDatetime = checkDate && checkTime ? `${checkDate}T${checkTime}:00` : null;
     const pool = await getPool();
     const checkBy = await resolveCheckBy(pool, user?.id, user?.username || null);
+
+    // Guard: check_date must not be earlier than actual_end
+    if (checkDatetime) {
+      const res2 = await pool.request()
+        .input("id", sql.UniqueIdentifier, jobId)
+        .query("SELECT actual_end FROM Projects WHERE id = @id");
+      const actualEnd = res2.recordset[0]?.actual_end;
+      if (actualEnd && new Date(checkDatetime) < new Date(actualEnd)) {
+        console.warn(`handleReview: check_date ${checkDatetime} earlier than actual_end ${actualEnd} for project ${jobId} — aborting`);
+        return;
+      }
+    }
+
     await pool.request()
       .input("id",          sql.UniqueIdentifier, jobId)
       .input("checkBy",     sql.NVarChar,         checkBy)
       .input("checkDate",   sql.DateTime2,        checkDatetime)
-      .input("checkTime",   sql.NVarChar(10),     checkTime || null)
       .input("checkDetail", sql.NVarChar(sql.MAX), checkDetail)
       .input("cleanCheck",  sql.NVarChar(100),    cleanCheck)
       .input("toolCheck",   sql.NVarChar(50),     toolCheck)
@@ -75,7 +87,6 @@ async function handleReview(payload) {
           status       = 'Checked by Supervisor',
           check_by     = @checkBy,
           check_date   = @checkDate,
-          check_time   = @checkTime,
           check_detail = @checkDetail,
           clean_check  = @cleanCheck,
           tool_check   = @toolCheck,
@@ -98,8 +109,7 @@ async function handleReview(payload) {
     cleanCheck,
     whoCleanUp:  whoCleanUp  || "N/A",
     checkDetail: checkDetail || "N/A",
-    checkDate:   checkDate   || ts.toISOString().slice(0, 10),
-    checkTime:   checkTime   || ts.toTimeString().slice(0, 5),
+    checkDatetime: `${checkDate || ts.toISOString().slice(0, 10)}T${(checkTime || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     status: "Checked by Supervisor",
   };
 
