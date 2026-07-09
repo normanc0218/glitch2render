@@ -3,21 +3,10 @@ const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 const userConfig = require("../slackUserService");
+const resolveDisplayName = require("../../utils/resolveDisplayName");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-async function resolveDisplayName(slackUserId, fallback) {
-  try {
-    const pool = await getPool();
-    const result = await pool.request()
-      .input("slackId", sql.NVarChar, slackUserId)
-      .query("SELECT name FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
-    return result.recordset[0]?.name || fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 async function sendSupervisorNotification(supervisorName, taskId, taskTitle, doneBy) {
   const slackId = userConfig.Supervisors[supervisorName];
@@ -35,6 +24,7 @@ async function sendSupervisorNotification(supervisorName, taskId, taskTitle, don
           },
           accessory: {
             type: "button",
+
             text: { type: "plain_text", text: "Check and Approve" },
             value: `sql:${taskId}`,
             action_id: "approve_sql_task",
@@ -43,6 +33,8 @@ async function sendSupervisorNotification(supervisorName, taskId, taskTitle, don
         },
       ],
     });
+    // Refresh supervisor's App Home so the pending task appears immediately
+    displayHome(slackId).catch(err => console.error("Failed to refresh supervisor home:", err.message));
   } catch (err) {
     console.error("Failed to notify supervisor:", err.message);
   }
@@ -64,12 +56,18 @@ async function handleSqlTaskUpdate(taskId, vals, user) {
     ? JSON.stringify(picFiles.map(f => f.url_private))
     : null;
 
+  const statusComplete = vals?.complete_job?.complete_job?.selected_option?.value || "completed";
+  const statusOther    = vals?.other_status?.other_status?.selected_option?.value || null;
+  const sqlStatus = (statusComplete === "other_situation" && statusOther === "temporarily_fixed")
+    ? "temporarily fixed"
+    : "completed and waiting for approval";
+
   const doneBy = await resolveDisplayName(user?.id, user?.username || null);
 
   const pool = await getPool();
   await pool.request()
     .input("id",               sql.UniqueIdentifier, taskId)
-    .input("status",           sql.NVarChar,         "completed and waiting for approval")
+    .input("status",           sql.NVarChar,         sqlStatus)
     .input("description",      sql.NVarChar,         description)
     .input("doneBy",           sql.NVarChar,         doneBy)
     .input("notifySupervisor", sql.NVarChar,         notifySupervisor)
@@ -101,9 +99,16 @@ async function handleSqlTaskUpdate(taskId, vals, user) {
 async function handleProjectUpdate(projectId, vals, user) {
   const notifySupervisor = vals?.supervisor_notify?.supervisor_notify?.selected_option?.value || null;
   const message   = vals?.supervisor_message?.supervisor_message?.value || null;
-  const endDate   = vals?.endDate?.datepickeraction?.selected_date || null;
-  const endTime   = vals?.endTime?.timepickeraction?.selected_time || null;
+  const endDate   = vals?.endDate?.datepickeraction?.selected_date   || null;
+  const endTime   = vals?.endTime?.timepickeraction?.selected_time   || null;
   const startDate = vals?.startDate?.datepickeraction?.selected_date || null;
+  const startTime = vals?.startTime?.timepickeraction?.selected_time || null;
+
+  const statusComplete = vals?.project_complete_job?.project_complete_job?.selected_option?.value || "completed";
+  const statusOther    = vals?.project_other_status?.project_other_status?.selected_option?.value || null;
+  const projectStatus  = statusComplete === "completed"
+    ? "Completed and waiting for approval"
+    : "Pending";
 
   const picFiles = vals?.finishPicture?.file_input_action_id_1?.files || [];
   const finishPicture = picFiles.length > 0
@@ -112,24 +117,29 @@ async function handleProjectUpdate(projectId, vals, user) {
 
   const doneBy = await resolveDisplayName(user?.id, user?.username || null);
 
-  const actualEnd = endDate && endTime ? `${endDate}T${endTime}:00` : null;
+  const actualEnd   = endDate && endTime     ? `${endDate}T${endTime}:00`     : null;
+  const actualStart = startDate && startTime ? `${startDate}T${startTime}:00` : (startDate ? `${startDate}T00:00:00` : null);
 
   const pool = await getPool();
   await pool.request()
     .input("id",               sql.UniqueIdentifier, projectId)
-    .input("status",           sql.NVarChar,         "Completed and waiting for approval")
+    .input("status",           sql.NVarChar,         projectStatus)
+    .input("statusComplete",   sql.NVarChar,         statusComplete)
+    .input("statusOther",      sql.NVarChar,         statusOther || null)
     .input("doneBy",           sql.NVarChar,         doneBy)
+    .input("actualStart",      sql.DateTime2,        actualStart)
     .input("actualEnd",        sql.DateTime2,        actualEnd)
-    .input("startDate",        sql.Date,             startDate ? new Date(startDate) : null)
     .input("notifySupervisor", sql.NVarChar,         notifySupervisor)
     .input("message",          sql.NVarChar(sql.MAX), message)
     .input("finishPicture",    sql.NVarChar(sql.MAX), finishPicture)
     .query(`
       UPDATE Projects SET
         status                = @status,
+        status_complete       = @statusComplete,
+        status_other          = @statusOther,
         done_by               = @doneBy,
+        actual_start          = COALESCE(@actualStart, actual_start),
         actual_end            = COALESCE(@actualEnd, actual_end),
-        scheduled_start       = COALESCE(@startDate, scheduled_start),
         notify_supervisor     = COALESCE(@notifySupervisor, notify_supervisor),
         message_to_supervisor = COALESCE(@message, message_to_supervisor),
         finish_picture        = COALESCE(@finishPicture, finish_picture),
@@ -163,6 +173,9 @@ async function handleProjectUpdate(projectId, vals, user) {
             },
           }],
         });
+        // Refresh supervisor's App Home so the pending project appears immediately
+        // (app_home_opened only fires on navigation; the DM alone won't update a stale home tab)
+        displayHome(slackId).catch(err => console.error("Failed to refresh supervisor home:", err.message));
       } catch (err) {
         console.error("Failed to notify supervisor for project:", err.message);
       }
@@ -206,10 +219,8 @@ async function handleUpdateProgress(payload) {
     statusOther:   vals?.other_status?.other_status?.selected_option?.value || null,
     partsNeeded:   vals?.parts_needed?.parts_needed?.value || null,
     finishPicture: vals?.finishPicture?.file_input_action_id_1?.files?.map(f => f.url_private) || [],
-    actualStartDate: vals?.startDate?.datepickeraction?.selected_date,
-    actualStartTime: vals?.startTime?.timepickeraction?.selected_time,
-    actualEndDate:   vals?.endDate?.datepickeraction?.selected_date,
-    actualEndTime:   vals?.endTime?.timepickeraction?.selected_time,
+    actualStart: (() => { const d = vals?.startDate?.datepickeraction?.selected_date; const t = vals?.startTime?.timepickeraction?.selected_time; return d && t ? `${d}T${t.slice(0, 5)}` : null; })(),
+    actualEnd:   (() => { const d = vals?.endDate?.datepickeraction?.selected_date;   const t = vals?.endTime?.timepickeraction?.selected_time;   return d && t ? `${d}T${t.slice(0, 5)}` : null; })(),
     status: "Completed and waiting for approval",
   };
 
