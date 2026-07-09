@@ -50,6 +50,7 @@ const {
 const { threadNotify } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
 const { getPool, sql } = require("../db-sql");
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ✅ 导出为一个标准 Express handler
 module.exports = async (req, res) => {
@@ -67,35 +68,92 @@ module.exports = async (req, res) => {
 
   const { type, user, actions, trigger_id, view } = payload;
 
-  // For review, validate check date/time >= end date/time
-  if (type === "view_submission" && view?.callback_id === "review") {
+  // ── Generic validations for all view_submission ──────────────────────────────
+  if (type === "view_submission") {
+    const vals = view?.state?.values || {};
+
+    // Block 12:00 AM–7:00 AM on every time picker — nobody logs work at those hours
+    const timeErrors = {};
+    for (const [blockId, blockVals] of Object.entries(vals)) {
+      for (const av of Object.values(blockVals)) {
+        if (av.type === "timepicker" && av.selected_time) {
+          const h = parseInt(av.selected_time.split(":")[0], 10);
+          if (h < 7) timeErrors[blockId] = "Time cannot be between 12:00 AM and 7:00 AM.";
+        }
+      }
+    }
+    if (Object.keys(timeErrors).length > 0) {
+      return res.json({ response_action: "errors", errors: timeErrors });
+    }
+
+    // Block future dates on completion / update / review forms
+    const DATE_BLOCK_CALLBACKS = new Set(["review", "sql_task_review", "update_form", "update_daily", "update_project"]);
+    if (DATE_BLOCK_CALLBACKS.has(view?.callback_id)) {
+      const ny = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const todayNY = `${ny.getFullYear()}-${String(ny.getMonth()+1).padStart(2,'0')}-${String(ny.getDate()).padStart(2,'0')}`;
+      const dateErrors = {};
+      for (const [blockId, blockVals] of Object.entries(vals)) {
+        for (const av of Object.values(blockVals)) {
+          if (av.type === "datepicker" && av.selected_date && av.selected_date > todayNY) {
+            dateErrors[blockId] = "Date cannot be in the future.";
+          }
+        }
+      }
+      if (Object.keys(dateErrors).length > 0) {
+        return res.json({ response_action: "errors", errors: dateErrors });
+      }
+    }
+  }
+
+  // ── Validate checkDatetime >= actualEnd for supervisor review ─────────────────
+  if (type === "view_submission" && (view?.callback_id === "review" || view?.callback_id === "sql_task_review")) {
     const vals = view.state?.values || {};
     const checkDate = vals?.checkDate?.datepickeraction?.selected_date;
     const checkTime = vals?.checkTime?.timepickeraction?.selected_time;
-    const jobId = view.private_metadata;
+
+    // private_metadata may be a raw jobId or JSON {jobId, msgTs, channel}
+    let jobId = view.private_metadata;
+    try { jobId = JSON.parse(view.private_metadata).jobId; } catch {}
 
     if (checkDate && checkTime && jobId) {
+      const checkMs = new Date(`${checkDate}T${checkTime}`).getTime();
+      let actualEndMs = null;
       try {
-        const releaseSnap = await db.ref("jobs/Release").once("value");
-        const release = releaseSnap.val() || {};
-        let job = null;
-        for (const branch of ["Regular", "Daily", "Project"]) {
-          if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
-        }
-        if (job?.actualEndDate && job?.actualEndTime) {
-          const endMs   = new Date(`${job.actualEndDate}T${job.actualEndTime}`).getTime();
-          const checkMs = new Date(`${checkDate}T${checkTime}`).getTime();
-          if (checkMs < endMs) {
-            return res.json({
-              response_action: "errors",
-              errors: {
-                checkDate: `Check date/time cannot be earlier than end date/time (${job.actualEndDate} ${job.actualEndTime}).`,
-              },
-            });
+        if (jobId.startsWith("sqltask:")) {
+          const taskId = jobId.slice(8);
+          const pool = await getPool();
+          const r = await pool.request()
+            .input("id", sql.UniqueIdentifier, taskId)
+            .query("SELECT actual_end FROM Tasks WHERE id = @id");
+          const v = r.recordset[0]?.actual_end;
+          if (v) actualEndMs = new Date(v).getTime();
+        } else if (UUID_RE.test(jobId)) {
+          const pool = await getPool();
+          const r = await pool.request()
+            .input("id", sql.UniqueIdentifier, jobId)
+            .query("SELECT actual_end FROM Projects WHERE id = @id");
+          const v = r.recordset[0]?.actual_end;
+          if (v) actualEndMs = new Date(v).getTime();
+        } else {
+          for (const branch of ["Regular", "Daily", "Project"]) {
+            const snap = await db.ref(`jobs/Release/${branch}/${jobId}`).once("value");
+            if (snap.exists()) {
+              const job = snap.val();
+              if (job.actualEnd) actualEndMs = new Date(job.actualEnd).getTime();
+              break;
+            }
           }
         }
       } catch (err) {
         console.error("Check date validation error:", err.message);
+      }
+
+      if (actualEndMs !== null && checkMs < actualEndMs) {
+        const endStr = new Date(actualEndMs).toISOString().replace("T", " ").slice(0, 16);
+        return res.json({
+          response_action: "errors",
+          errors: { checkDate: `Check date/time cannot be earlier than end date/time (${endStr}).` },
+        });
       }
     }
   }
@@ -177,17 +235,13 @@ module.exports = async (req, res) => {
     // start must be later than order date (RTDB jobs only — SQL tasks have no orderDate)
     if (jobId && !jobId.startsWith("sql:") && startDate && startTime && !errors["startDate"]) {
       try {
-        const releaseSnap = await db.ref("jobs/Release").once("value");
-        const release = releaseSnap.val() || {};
-        let job = null;
-        for (const branch of ["Regular", "Daily", "Project"]) {
-          if (release[branch]?.[jobId]) { job = release[branch][jobId]; break; }
-        }
-        if (job?.scheduledDate && job?.scheduledTime) {
-          const orderMs = new Date(`${job.scheduledDate}T${job.scheduledTime}`).getTime();
+        const snap = await db.ref(`jobs/Release/Regular/${jobId}`).once("value");
+        const job = snap.exists() ? snap.val() : null;
+        if (job?.scheduledStart) {
+          const orderMs = new Date(job.scheduledStart).getTime();
           const startMs = new Date(`${startDate}T${startTime}`).getTime();
           if (startMs < orderMs) {
-            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.scheduledDate} ${job.scheduledTime}).`;
+            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.scheduledStart.replace('T', ' ')}).`;
           }
         }
       } catch (err) {
@@ -208,7 +262,10 @@ module.exports = async (req, res) => {
 
     if (!area) {
       errors["area"] = "Please select an area.";
-    } else if (area !== "__other__") {
+    } else if (area === "__other__") {
+      if (!vals?.otherLocation?.otherLocation?.value)  errors["otherLocation"]  = "Please enter the location.";
+      if (!vals?.otherEquipment?.otherEquipment?.value) errors["otherEquipment"] = "Please enter the equipment name.";
+    } else {
       const machineLine = vals?.machineLine?.machineLine?.selected_option?.value;
       const equipmentId = vals?.equipmentId?.equipmentId?.selected_option?.value;
       if (!machineLine) errors["machineLine"] = "Please select a machine line.";
@@ -339,10 +396,9 @@ module.exports = async (req, res) => {
         case "review_progress": {
           const reviewMsgTs = payload.container?.message_ts || null;
           const reviewChan  = payload.container?.channel_id || null;
-          const UUID_RE_ACTION = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           let alreadyDone = false;
           let doneBy = "supervisor";
-          if (UUID_RE_ACTION.test(jobId)) {
+          if (UUID_RE.test(jobId)) {
             // SQL Project — check current status
             try {
               const pool = await getPool();
@@ -430,6 +486,31 @@ module.exports = async (req, res) => {
             view_id: view.id,
             hash: view.hash,
             view: buildUpdateProgressModal(view.private_metadata, true, "other_situation", selected, showOtherReason, currentReason),
+          });
+          break;
+        }
+
+        case "project_complete_job": {
+          const { buildProjectUpdateModal } = require("../modals/openModal_project_update");
+          const selected = action.selected_option?.value;
+          const showOther = selected === "other_situation";
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildProjectUpdateModal(view.private_metadata, showOther, selected, null),
+          });
+          break;
+        }
+
+        case "project_other_status": {
+          const { buildProjectUpdateModal } = require("../modals/openModal_project_update");
+          const selected = action.selected_option?.value;
+          const vals = view.state?.values || {};
+          const currentStatus = vals?.project_complete_job?.project_complete_job?.selected_option?.value || "other_situation";
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildProjectUpdateModal(view.private_metadata, true, currentStatus, selected),
           });
           break;
         }

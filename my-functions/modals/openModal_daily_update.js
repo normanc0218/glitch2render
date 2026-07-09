@@ -108,9 +108,9 @@ const openModal_daily_update = async (trigger_id, jobId) => {
       action_id: "supervisor_notify",
       options: superNameOptions,
     })] : []),
-    createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate),
+    createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate, initialDate),
     createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime),
-    createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate),
+    createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate, initialDate),
     createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime),
   );
 

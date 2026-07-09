@@ -19,30 +19,25 @@ const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
 }));
 
 // 🗓 获取纽约日期
-const nyDate = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-}).format(new Date()); // e.g. "2025-05-28"
-const [month, day, year] = nyDate.split('/');
-const initialDate = `${year}-${month}-${day}`;
-function getNYTimeString() {
-  const d = new Date();
-  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const hh = ny.getHours().toString().padStart(2, '0');
-  const mm = ny.getMinutes().toString().padStart(2, '0');
-  return `${hh}:${mm}`;
-};
+function getNYParts() {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(new Date()).map(p => [p.type, p.value])
+  );
+}
 const machineOptions = [
   "#7 Machine", "#8 Machine", "#9 Machine", "#10 Machine", "#11 Machine",
   "Packaging", "Warehouse", "Loading dock", "Washroom", "Die Washroom",
   "Office", "Boiler room", "Compressor", "Others"
 ];
-const initialTime = getNYTimeString();
-
 // 🕒 打开 Training Modal
 const openModal_submit_training = async (trigger_id) => {
+  const p = getNYParts();
+  const initialDate = `${p.year}-${p.month}-${p.day}`;
+  const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
   const blocks = [];
   blocks.push(createInputBlock_select({
     block_id: "machineLocation",

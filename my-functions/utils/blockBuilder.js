@@ -82,26 +82,20 @@ function createInputBlock_pic(block_id, label, action_id, op=false) {
   };
 }
 
-function createInputBlock_date(block_id, label, action_id,initial_date) {
+function createInputBlock_date(block_id, label, action_id, initial_date, max_date) {
+  const element = {
+    type: "datepicker",
+    initial_date,
+    placeholder: { type: "plain_text", text: "Select a date", emoji: true },
+    action_id,
+  };
+  if (max_date) element.max_date = max_date;
   return {
-			type: "input",
-      block_id,
-			element: {
-				type: "datepicker",
-				initial_date,
-				placeholder: {
-					type: "plain_text",
-					text: "Select a date",
-					emoji: true
-				},
-				action_id,
-			},
-			label: {
-				type: "plain_text",
-				text: label,
-				emoji: true
-			}
-		}
+    type: "input",
+    block_id,
+    element,
+    label: { type: "plain_text", text: label, emoji: true },
+  };
 }
 
 function createInputBlock_time(block_id, label, action_id,initial_time) {

@@ -36,14 +36,11 @@ async function fetchProject(projectId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, projectId)
       .query(`
-        SELECT p.title, p.description, p.status,
-               p.machine_location, p.equipment_id,
-               p.scheduled_start, p.scheduled_end,
-               e.equipment_name,
-               tech.name AS technician_name
+        SELECT p.title, p.status,
+               p.machine_location, p.scheduled_start, p.scheduled_end,
+               e.equipment_name
         FROM Projects p
         LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
-        LEFT JOIN Technicians tech ON tech.id = p.technician_id
         WHERE p.id = @id
       `);
     return result.recordset[0] || null;
@@ -53,26 +50,40 @@ async function fetchProject(projectId) {
   }
 }
 
-const openModal_project_update = async (trigger_id, jobId) => {
-  await userConfig.refreshIfStale();
+const STATUS_OPTIONS = [
+  ["Complete the job", "completed"],
+  ["Other situation",  "other_situation"],
+];
+
+const OTHER_SITUATION_OPTIONS = [
+  ["Waiting for parts", "waiting_for_parts"],
+  ["Temporarily fixed", "temporarily_fixed"],
+  ["Follow up check",   "follow_up_check"],
+];
+
+function buildProjectUpdateModal(metaOrJobId, showOtherOptions = false, selectedStatus = null, selectedOtherStatus = null) {
+  let jobId, projectInfo = null;
+  try {
+    const parsed = JSON.parse(metaOrJobId);
+    jobId = parsed.jobId;
+    projectInfo = parsed;
+  } catch {
+    jobId = metaOrJobId;
+  }
 
   const p = getNYParts();
   const initialDate = `${p.year}-${p.month}-${p.day}`;
   const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
-
   const superOptions = Object.keys(userConfig.Supervisors).map(name => [name, name]);
-
-  const project = await fetchProject(jobId);
 
   const blocks = [];
 
-  if (project) {
-    const location  = project.equipment_name || project.equipment_id || project.machine_location || "N/A";
-    const startStr  = fmtDate(project.scheduled_start)  || "N/A";
-    const dueStr    = fmtDate(project.scheduled_end)    || "N/A";
-    const desc      = project.description || "";
+  if (projectInfo?.title) {
+    const location = projectInfo.equipmentName || projectInfo.machineLocation || "N/A";
+    const startStr = fmtDate(projectInfo.scheduledStart) || "N/A";
+    const dueStr   = fmtDate(projectInfo.scheduledEnd)   || "N/A";
     blocks.push(createTextSection(
-      `*${project.title}*  •  ${project.status}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${dueStr}${desc ? `\n📋 ${desc}` : ""}`
+      `*${projectInfo.title}*  •  ${projectInfo.status || ""}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${dueStr}`
     ));
     blocks.push(createDivider());
   }
@@ -85,23 +96,66 @@ const openModal_project_update = async (trigger_id, jobId) => {
     action_id: "supervisor_notify",
     options: superOptions,
   }));
-  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate, initialDate));
   blocks.push(createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime));
-  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate, initialDate));
   blocks.push(createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime));
+
+  const statusInitial = selectedStatus
+    ? STATUS_OPTIONS.find(([, v]) => v === selectedStatus) || null
+    : null;
+  blocks.push(createInputBlock_radio({
+    block_id: "project_complete_job",
+    label: "Status of Completed Job",
+    action_id: "project_complete_job",
+    dispatch_action: true,
+    options: STATUS_OPTIONS,
+    initial_option: statusInitial,
+  }));
+
+  if (showOtherOptions) {
+    const otherInitial = selectedOtherStatus
+      ? OTHER_SITUATION_OPTIONS.find(([, v]) => v === selectedOtherStatus) || null
+      : null;
+    blocks.push(createInputBlock_radio({
+      block_id: "project_other_status",
+      label: "Other Situation",
+      action_id: "project_other_status",
+      options: OTHER_SITUATION_OPTIONS,
+      initial_option: otherInitial,
+    }));
+  }
+
+  return {
+    type: "modal",
+    callback_id: "update_project",
+    private_metadata: metaOrJobId,
+    title:  { type: "plain_text", text: "Update Your Job" },
+    submit: { type: "plain_text", text: "Submit" },
+    close:  { type: "plain_text", text: "Cancel" },
+    blocks,
+  };
+}
+
+const openModal_project_update = async (trigger_id, jobId) => {
+  await userConfig.refreshIfStale();
+  const project = await fetchProject(jobId);
+
+  const meta = JSON.stringify({
+    jobId,
+    title:          project?.title            || null,
+    status:         project?.status           || null,
+    equipmentName:  project?.equipment_name   || null,
+    machineLocation: project?.machine_location || null,
+    scheduledStart: project?.scheduled_start  || null,
+    scheduledEnd:   project?.scheduled_end    || null,
+  });
 
   await client.views.open({
     trigger_id,
-    view: {
-      type: "modal",
-      callback_id: "update_project",
-      private_metadata: jobId,
-      title:  { type: "plain_text", text: "Update Your Job" },
-      submit: { type: "plain_text", text: "Submit" },
-      close:  { type: "plain_text", text: "Cancel" },
-      blocks,
-    },
+    view: buildProjectUpdateModal(meta),
   });
 };
 
 module.exports = openModal_project_update;
+module.exports.buildProjectUpdateModal = buildProjectUpdateModal;

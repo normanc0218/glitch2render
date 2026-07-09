@@ -174,7 +174,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
 
     if (job) {
       blocks.push(createTextSection(
-        `*Start:*  ${job.actualStartDate || "_N/A_"}  ${job.actualStartTime || ""}    •    *End:*  ${job.actualEndDate || "_N/A_"}  ${job.actualEndTime || ""}`
+        `*Start:*  ${job.actualStart?.replace('T', ' ') || "_N/A_"}    •    *End:*  ${job.actualEnd?.replace('T', ' ') || "_N/A_"}`
       ));
 
       const toArr = v => Array.isArray(v) ? v : (v ? [v] : []);
@@ -206,13 +206,13 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
   }));
   blocks.push(createInputBlock_select({
     block_id: "working_area",
-    label: "Working area needs extra help for cleaning?",
+    label: "Working area is free of extra cleaning?",
     action_id: "working_area",
     options: ["Yes", "No"],
   }));
   blocks.push(createInputBlock("clean_input", "Assign who to help cleaning?", "clean_input", "e.g. Someone", true));
   blocks.push(createInputBlock("detailOfJob", "Other details related to this job", "detailOfJob", "e.g. Notes", true));
-  blocks.push(createInputBlock_date("checkDate", "Check Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_date("checkDate", "Check Date", "datepickeraction", initialDate, initialDate));
   blocks.push(createInputBlock_time("checkTime", "Check Time", "timepickeraction", initialTime));
 
   await client.views.open({

@@ -55,6 +55,7 @@ function buildUpdateProgressModal(metaOrJobId, showOtherOptions = false, selecte
   const REASON_OPTIONS = [
     ["Wear or Tear", "wear_or_tear"],
     ["Operator error", "operator_error"],
+    ["Part replacement", "part_replacement"],
     ["Unknown issue", "unknown_issue"],
     ["Other", "other"],
   ];
@@ -63,9 +64,9 @@ function buildUpdateProgressModal(metaOrJobId, showOtherOptions = false, selecte
 
   // Job summary header
   if (jobInfo) {
-    const loc  = jobInfo.equipment_name || "N/A";
+    const loc  = jobInfo.equipmentName || "N/A";
     const desc = jobInfo.description     || "N/A";
-    const when = [jobInfo.scheduledDate, jobInfo.scheduledTime].filter(Boolean).join("  ");
+    const when = jobInfo.scheduledStart?.replace('T', ' ') || '';
     blocks.push(createTextSection(`*Job ID:* ${jobId}  •  📍 ${loc}${when ? `\n🕐 Ordered: ${when}` : ""}\n📋 ${desc}`));
     blocks.push(createDivider());
   }
@@ -107,9 +108,9 @@ function buildUpdateProgressModal(metaOrJobId, showOtherOptions = false, selecte
     options: superNameOptions,
   }));
   blocks.push(createInputBlock("supervisor_message", "Message to Supervisor", "supervisor_message", "e.g. Please arrange for cleanup after repair"));
-  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate, initialDate));
   blocks.push(createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime));
-  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate));
+  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate, initialDate));
   blocks.push(createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime));
 
   const statusInitial = selectedStatus
@@ -165,9 +166,8 @@ const openModal_update_progress = async (trigger_id, jobId) => {
       meta = JSON.stringify({
         jobId,
         description:     job.description     || null,
-        equipment_name: job.equipment_name  || null,
-        scheduledDate:   job.scheduledDate     || null,
-        scheduledTime:   job.scheduledTime     || null,
+        equipmentName: job.equipmentName  || null,
+        scheduledStart:  job.scheduledStart    || null,
       });
     }
   } catch {
