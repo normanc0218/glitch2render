@@ -3,6 +3,7 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
+const resolveDisplayName = require("../../utils/resolveDisplayName");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -13,19 +14,19 @@ async function handleNewTrainRecord(payload) {
   jobId = `TRAIN${jobId.slice(3)}`;
 
 
+  const trainer = await resolveDisplayName(user?.id, user?.username);
   const data = {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-    trainer: user?.username || "Unknown",
-    machineLocation: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
+    trainer,
+    equipmentName: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
     description: view.state.values?.description?.issue?.value || [],
     traineeName: view.state.values?.traineeName?.trainee?.value || [],
     trainPicture:
       view.state.values?.picture?.file_input_action_id_1?.files?.map(
         (file) => file.url_private
       ) || [],
-    orderDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    orderTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    orderDatetime: `${view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     comment: view.state.values?.comment?.comment?.value || [],
   };
   // 通知频道

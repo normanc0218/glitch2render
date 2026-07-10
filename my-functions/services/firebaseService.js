@@ -126,7 +126,7 @@ async function notifyNewOrder(data, jobId) {
         text: `📋 *New Maintenance Job Submitted and Assigned To ${assignedDisplay}*
   *Job ID:* ${jobId}
   *Ordered by:* ${data.orderedBy}
-  *Location:* ${data.equipment_name}
+  *Location:* ${data.equipmentName}
   *Description:* ${data.description}`,
       },
     },
@@ -153,7 +153,7 @@ async function notifyNewOrder(data, jobId) {
       {
         channel: process.env.SLACK_NOTIFICATION_CHANNEL_ID,
         blocks,
-        text: `New job submitted by ${data.Orderedby}`,
+        text: `New job submitted by ${data.orderedBy}`,
       },
       {
         headers: {

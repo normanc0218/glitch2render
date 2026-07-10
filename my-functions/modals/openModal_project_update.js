@@ -96,9 +96,9 @@ function buildProjectUpdateModal(metaOrJobId, showOtherOptions = false, selected
     action_id: "supervisor_notify",
     options: superOptions,
   }));
-  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate, initialDate));
+  blocks.push(createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate));
   blocks.push(createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime));
-  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate, initialDate));
+  blocks.push(createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate));
   blocks.push(createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime));
 
   const statusInitial = selectedStatus

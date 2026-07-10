@@ -11,8 +11,7 @@ async function handleRejectForm(payload) {
   const data = {
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     rejectReason: view.state.values?.rejectReason?.reason_input?.value || "N/A",
-    rejectDate: view.state.values?.rejectDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    rejectTime: view.state.values?.rejectTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    rejectDatetime: `${view.state.values?.rejectDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.rejectTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     status: "Rejected",
   };
 

@@ -23,6 +23,32 @@ const fmtTime = (d) => {
   return dt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
 };
 
+// ── RTDB in-memory caches (TTL pattern mirrors slackUserService) ─────────────
+
+let _releaseCache    = null;
+let _releaseFetchedAt = 0;
+const RELEASE_TTL_MS  = 30 * 1000; // 30 s — jobs change more often than user config
+
+async function getRelease() {
+  if (_releaseCache && Date.now() - _releaseFetchedAt < RELEASE_TTL_MS) return _releaseCache;
+  const snap = await db.ref("jobs/Release/Regular").once("value");
+  _releaseCache     = snap.val() || {};
+  _releaseFetchedAt = Date.now();
+  return _releaseCache;
+}
+
+let _usersCache    = null;
+let _usersFetchedAt = 0;
+const USERS_TTL_MS  = 60 * 1000; // 60 s — RTDB users node changes rarely
+
+async function getUsers() {
+  if (_usersCache && Date.now() - _usersFetchedAt < USERS_TTL_MS) return _usersCache;
+  const snap = await db.ref("users").once("value");
+  _usersCache    = snap.val() || {};
+  _usersFetchedAt = Date.now();
+  return _usersCache;
+}
+
 function getUserRoles(userId) {
   const roles = [];
   const isIn = (obj) => Object.values(obj || {}).includes(userId);
@@ -54,7 +80,7 @@ async function getProjectsPendingApproval() {
       SELECT p.id, p.title, p.description, p.status,
              p.machine_location, p.equipment_id,
              p.scheduled_start, p.scheduled_end,
-             p.ordered_by, p.assigned_to, p.notify_supervisor,
+             p.ordered_by, p.notify_supervisor,
              p.done_by, p.updated_at
       FROM Projects p
       WHERE p.status = 'Completed and waiting for approval'
@@ -202,12 +228,11 @@ async function displayHome(userId) {
 
     // Parallel fetch: RTDB + Azure SQL
     const dbStart = Date.now();
-    const [releaseSnap, usersSnap, azureProjects, azureTasks, techProjects, upcomingTasks, azureTasksApproval, promotedIds, slackUserRow] = await Promise.all([
-      db.ref("jobs/Release").once("value"),
-      db.ref("users").once("value"),
+    const [release, azureProjects, azureTasks, techProjects, upcomingTasks, azureTasksApproval, promotedIds, slackUserRow] = await Promise.all([
+      getRelease(),
       roles.includes("supervisor") ? getProjectsPendingApproval() : Promise.resolve([]),
-      techNames.length > 0 ? getTasksForTechnician(techNames)       : Promise.resolve([]),
-      techNames.length > 0 ? getProjectsForTechnician(techNames)    : Promise.resolve([]),
+      techNames.length > 0 ? getTasksForTechnician(techNames) : Promise.resolve([]),
+      techNames.length > 0 ? getProjectsForTechnician(techNames) : Promise.resolve([]),
       getUpcomingTasks(),
       roles.includes("supervisor") ? getTasksPendingApproval() : Promise.resolve([]),
       getPromotedRtdbJobIds(),
@@ -223,8 +248,6 @@ async function displayHome(userId) {
     ]);
     console.log(`📊 DB queries: ${Date.now() - dbStart}ms`);
 
-    const release = releaseSnap.val() || {};
-    const users   = usersSnap.val()   || {};
 
     const buildStart = Date.now();
     const divider = { type: "divider" };
@@ -290,7 +313,7 @@ async function displayHome(userId) {
       }
 
       // RTDB Regular jobs pending approval (existing flow — excludes promoted jobs)
-      const rtdbFinished = Object.entries(release.Regular || {})
+      const rtdbFinished = Object.entries(release || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(j => {
           if (promotedIds.has(j.id)) return false;
@@ -304,7 +327,7 @@ async function displayHome(userId) {
         for (const job of rtdbFinished) {
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.equipment_name || "N/A"}  •  ${job.scheduledDate || ""}  •  ${job.status || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "}\n📍 ${job.equipmentName || "N/A"}  •  ${job.scheduledStart?.slice(0, 10) || ""}  •  ${job.status || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "Approve" }, style: "primary", value: job.id, action_id: "review_progress" },
           });
         }
@@ -319,12 +342,12 @@ async function displayHome(userId) {
 
     //#region Maintenance
     if (roles.includes("maintenance")) {
-      blocks.push({ type: "header", text: { type: "plain_text", text: "🧰 Maintenance Technician Dashboard" } });
+      blocks.push({ type: "header", text: { type: "plain_text", text: "🧰 My Assigned Jobs" } });
 
-      // Azure SQL PM Tasks
+      // PM Tasks assigned to this technician (limit 5)
       if (azureTasks.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Your PM Tasks:*" } });
-        for (const task of azureTasks.slice(0, 10)) {
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*PM Tasks:*" } });
+        for (const task of azureTasks.slice(0, 5)) {
           const date      = fmtDate(task.scheduled_start) || "N/A";
           const startTime = fmtTime(task.scheduled_start);
           const endTime   = fmtTime(task.scheduled_end);
@@ -332,57 +355,46 @@ async function displayHome(userId) {
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${task.title}*  •  ${task.status}\n${date}${timeRange}  •  📍 ${task.equipment_ids || "N/A"}${task.description ? `\n${task.description}` : ""}` },
-            accessory: {
-              type: "button",
-              text: { type: "plain_text", text: "Update Task" },
-              style: "primary",
-              value: `sql:${task.id}`,
-              action_id: "update_daily_job",
-            },
+            accessory: { type: "button", text: { type: "plain_text", text: "Update Task" }, style: "primary", value: `sql:${task.id}`, action_id: "update_daily_job" },
           });
         }
         blocks.push(divider);
       }
 
-      // Azure SQL Projects assigned to this technician
+      // Projects assigned to this technician (limit 5)
       if (techProjects.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🏗️ Your Assigned Projects:*" } });
-        for (const p of techProjects.slice(0, 10)) {
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Projects:*" } });
+        for (const p of techProjects.slice(0, 5)) {
           const location = p.equipment_name || p.equipment_id || p.machine_location || "N/A";
-          const startStr = fmtDate(p.scheduled_start)   || "N/A";
-          const endStr   = fmtDate(p.scheduled_end)     || "N/A";
+          const startStr = fmtDate(p.scheduled_start) || "N/A";
+          const endStr   = fmtDate(p.scheduled_end)   || "N/A";
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${p.title}*  •  ${p.status}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${endStr}${p.description ? `\n${p.description}` : ""}` },
-            accessory: {
-              type: "button",
-              text: { type: "plain_text", text: "Update Project" },
-              style: "primary",
-              value: String(p.id),
-              action_id: "update_project",
-            },
+            accessory: { type: "button", text: { type: "plain_text", text: "Update Project" }, style: "primary", value: String(p.id), action_id: "update_project" },
           });
         }
         blocks.push(divider);
       }
 
-      // RTDB Regular jobs — excludes jobs that have been promoted to a SQL Project
-      const regularJobs = Object.entries(release.Regular || {})
+      // RTDB Regular jobs — excludes promoted (limit 5)
+      const regularJobs = Object.entries(release || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(job => {
           if (promotedIds.has(job.id)) return false;
           const s = (job.status || "").toLowerCase();
           return !["complete", "completed", "approved", "rejected", "checked", "promoted"].some(w => s.includes(w));
         })
-        .slice(0, 10);
+        .slice(0, 5);
 
       if (regularJobs.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📋 Regular Jobs:*" } });
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Regular Jobs:*" } });
         for (const job of regularJobs) {
-          const assignedMatch = userConfig.maintenanceStaff[job.assignedTo] === userId;
+          const assignedKey   = Array.isArray(job.assignedTo) ? job.assignedTo[0] : job.assignedTo;
+          const assignedMatch = userConfig.maintenanceStaff[assignedKey] === userId;
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.equipment_name || "N/A"}  •  ${job.scheduledDate || ""}` },
+            text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.equipmentName || "N/A"}  •  ${job.scheduledStart?.slice(0, 10) || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail_home" },
           });
           if (assignedMatch) {
@@ -409,8 +421,25 @@ async function displayHome(userId) {
       }
 
       if (azureTasks.length === 0 && techProjects.length === 0 && regularJobs.length === 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "_You have no assigned jobs._" } });
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "_No assigned jobs currently._" } });
+        blocks.push(divider);
       }
+    }
+    //#endregion
+
+    //#region Job List Buttons (all non-guest roles)
+    if (!roles.includes("guest")) {
+      blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Browse Jobs:*" } });
+      blocks.push({
+        type: "actions",
+        elements: [
+          { type: "button", text: { type: "plain_text", text: "📋 Regular Jobs" }, action_id: "open_job_list_regular" },
+          { type: "button", text: { type: "plain_text", text: "🏗️ Projects" }, action_id: "open_job_list_project" },
+          { type: "button", text: { type: "plain_text", text: "🔧 PM Tasks" }, action_id: "open_job_list_task" },
+        ],
+      });
+      blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: "_Tap a button to browse jobs. Each list shows up to 50, split into Unfinished / Finished tabs._" }] });
+      blocks.push(divider);
     }
     //#endregion
 
@@ -442,13 +471,13 @@ async function displayHome(userId) {
       }
 
       // RTDB Regular jobs
-      Object.entries(release.Regular || {}).forEach(([id, job]) => {
-        const date = job.actualStartDate || job.scheduledDate;
+      Object.entries(release || {}).forEach(([id, job]) => {
+        const date = (job.actualStart || job.scheduledStart)?.slice(0, 10);
         if (date && dayMap[date]) {
           dayMap[date].push({
             description: job.description || "Untitled",
-            assigned: job.assignedTo || "Unassigned",
-            location: job.equipment_name || "N/A",
+            assigned: (Array.isArray(job.assignedTo) ? job.assignedTo.join(', ') : job.assignedTo) || 'Unassigned',
+            location: job.equipmentName || "N/A",
             source: "Regular",
           });
         }
@@ -486,15 +515,6 @@ async function displayHome(userId) {
       blocks.push({ type: "section", text: { type: "mrkdwn", text: "_Unable to load calendar data._" } });
     }
     //#endregion
-
-    blocks.push({
-      type: "actions",
-      elements: [
-        { type: "button", text: { type: "plain_text", text: "🕓 View Unfinished Job" }, style: "primary", action_id: "openModal_unfinished" },
-        { type: "button", text: { type: "plain_text", text: "✅ View Finished Job" }, action_id: "openModal_finished" },
-      ],
-    });
-    blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: "_Click to view recent 30 tasks in a popup._" }] });
 
     console.log(`🏗️ View built: ${Date.now() - buildStart}ms`);
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });

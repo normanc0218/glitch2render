@@ -47,26 +47,20 @@ function fmt(dt) {
   return `${y}-${mo}-${dy} ${h}:${mi}`;
 }
 
-const openModal_sql_task_view = async (trigger_id, taskId) => {
-  const task = await fetchSqlTaskFull(taskId);
+function buildTaskDetailBlocks(task) {
+  if (!task) return [{ type: "section", text: { type: "mrkdwn", text: "_Task not found._" } }];
 
-  const blocks = [];
-
-  if (!task) {
-    blocks.push({ type: "section", text: { type: "mrkdwn", text: "_Task not found._" } });
-  } else {
-    const scheduled = fmtDate(task.scheduled_start);
-
-    blocks.push({
+  const scheduled = fmtDate(task.scheduled_start);
+  const blocks = [
+    {
       type: "section",
       text: {
         type: "mrkdwn",
         text: `*${task.title}*\n📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nAssigned to: ${task.technician_name || "N/A"}`,
       },
-    });
-    blocks.push({ type: "divider" });
-
-    blocks.push({
+    },
+    { type: "divider" },
+    {
       type: "section",
       fields: [
         { type: "mrkdwn", text: `*Status:*\n${task.status}` },
@@ -75,45 +69,44 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
         { type: "mrkdwn", text: `*Actual End:*\n${fmt(task.actual_end)}` },
         { type: "mrkdwn", text: `*Notified Supervisor:*\n${task.notify_supervisor || "N/A"}` },
       ],
-    });
+    },
+  ];
 
-    if (task.description) {
-      blocks.push({ type: "section", text: { type: "mrkdwn", text: `*Notes:*\n${task.description}` } });
-    }
-
-    // Issue pictures
-    if (task.issue_picture) {
-      try {
-        const urls = JSON.parse(task.issue_picture);
-        if (Array.isArray(urls) && urls.length > 0) {
-          blocks.push({ type: "divider" });
-          blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Issue Pictures:*" } });
-          urls.slice(0, 5).forEach((url, i) => {
-            blocks.push({ type: "image", image_url: url, alt_text: `Issue picture ${i + 1}` });
-          });
-        }
-      } catch {
-        // not a JSON array — skip
-      }
-    }
-
-    // Finish pictures
-    if (task.finish_picture) {
-      try {
-        const urls = JSON.parse(task.finish_picture);
-        if (Array.isArray(urls) && urls.length > 0) {
-          blocks.push({ type: "divider" });
-          blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Finish Pictures:*" } });
-          urls.slice(0, 5).forEach((url, i) => {
-            blocks.push({ type: "image", image_url: url, alt_text: `Finish picture ${i + 1}` });
-          });
-        }
-      } catch {
-        // not a JSON array — skip
-      }
-    }
+  if (task.description) {
+    blocks.push({ type: "section", text: { type: "mrkdwn", text: `*Notes:*\n${task.description}` } });
   }
 
+  if (task.issue_picture) {
+    try {
+      const urls = JSON.parse(task.issue_picture);
+      if (Array.isArray(urls) && urls.length > 0) {
+        blocks.push({ type: "divider" });
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Issue Pictures:*" } });
+        urls.slice(0, 5).forEach((url, i) => {
+          blocks.push({ type: "image", image_url: url, alt_text: `Issue picture ${i + 1}` });
+        });
+      }
+    } catch { /* not a JSON array */ }
+  }
+
+  if (task.finish_picture) {
+    try {
+      const urls = JSON.parse(task.finish_picture);
+      if (Array.isArray(urls) && urls.length > 0) {
+        blocks.push({ type: "divider" });
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Finish Pictures:*" } });
+        urls.slice(0, 5).forEach((url, i) => {
+          blocks.push({ type: "image", image_url: url, alt_text: `Finish picture ${i + 1}` });
+        });
+      }
+    } catch { /* not a JSON array */ }
+  }
+
+  return blocks;
+}
+
+const openModal_sql_task_view = async (trigger_id, taskId) => {
+  const task = await fetchSqlTaskFull(taskId);
   await client.views.open({
     trigger_id,
     view: {
@@ -121,9 +114,24 @@ const openModal_sql_task_view = async (trigger_id, taskId) => {
       callback_id: "sql_task_view",
       title: { type: "plain_text", text: "PM Task Details", emoji: true },
       close: { type: "plain_text", text: "Close", emoji: true },
-      blocks,
+      blocks: buildTaskDetailBlocks(task),
+    },
+  });
+};
+
+const pushModal_sql_task_view = async (trigger_id, taskId) => {
+  const task = await fetchSqlTaskFull(taskId);
+  await client.views.push({
+    trigger_id,
+    view: {
+      type: "modal",
+      callback_id: "sql_task_view",
+      title: { type: "plain_text", text: "PM Task Details", emoji: true },
+      close: { type: "plain_text", text: "Close", emoji: true },
+      blocks: buildTaskDetailBlocks(task),
     },
   });
 };
 
 module.exports = openModal_sql_task_view;
+module.exports.pushModal_sql_task_view = pushModal_sql_task_view;

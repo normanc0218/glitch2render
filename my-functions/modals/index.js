@@ -17,6 +17,10 @@ const openModal_submit_training = require('./openModal_submit_training');
 const { openModal_unfinished, updateUnfinishedPage } = require('./openModal_unfinished');
 const { openModal_finished, updateFinishedPage } = require('./openModal_finished');
 const openModal_sql_task_view = require('./openModal_sql_task_view');
+const { pushModal_sql_task_view } = require('./openModal_sql_task_view');
+const openModal_sql_project_view = require('./openModal_sql_project_view');
+const { pushModal_sql_project_view } = require('./openModal_sql_project_view');
+const { openJobList, updateJobList } = require('./openModal_jobList');
 
 module.exports = {
   openModal_accept,
@@ -39,4 +43,9 @@ module.exports = {
   openModal_finished,
   updateFinishedPage,
   openModal_sql_task_view,
+  pushModal_sql_task_view,
+  openModal_sql_project_view,
+  pushModal_sql_project_view,
+  openJobList,
+  updateJobList,
 };

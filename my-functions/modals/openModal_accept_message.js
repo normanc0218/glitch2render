@@ -53,8 +53,7 @@ const openModal_accept_message = async (trigger_id, userId, jobId) => {
     const jobRef = db.ref(`jobs/Release/${found.category}/${jobId}`);
     await jobRef.update({
       status: "Accepted",
-      acceptDate: new Date().toISOString().slice(0, 10),
-      acceptTime: new Date().toISOString().slice(11, 19),
+      acceptDatetime: new Date().toISOString().slice(0, 16),
     });
   const blocks=[]
   blocks.push(createTextSection(`✅ Job *${jobId}* has been accepted.`));

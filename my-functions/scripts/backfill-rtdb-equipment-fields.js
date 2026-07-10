@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 // backfill-rtdb-equipment-fields.js
-// Renames RTDB fields on Regular jobs to match Equipment table column names:
-//   machineLine     → machine_line
-//   machineLocation → equipment_name
+// Renames RTDB equipment fields to camelCase across all job paths:
 //
-// equipment_id must be added manually in Firebase console for existing records.
+// jobs/Release/Regular:
+//   machineLocation → equipmentName
+//   equipment_name  → equipmentName  (older records)
+//   machine_line    → machineLine
+//   equipment_id    → equipmentId
+//
+// jobs/Dispatch:
+//   machineLocation → equipmentName
+//
+// jobs/Train:
+//   machineLocation → equipmentName
 //
 // Usage:
 //   SERVICE_ACCOUNT_KEY_PATH=/path/to/serviceAccount.json node scripts/backfill-rtdb-equipment-fields.js
@@ -27,34 +35,61 @@ admin.initializeApp({
 
 const db = admin.database();
 
-async function backfill() {
-  const snap = await db.ref('jobs/Release/Regular').once('value');
+async function backfillPath(rtdbPath, updates) {
+  const snap = await db.ref(rtdbPath).once('value');
   const jobs  = snap.val();
+  if (!jobs) { console.log(`  ${rtdbPath}: no records, skipping.`); return 0; }
 
-  if (!jobs) { console.log('No Regular jobs found.'); process.exit(0); }
-
-  const updates = {};
   let count = 0;
 
   for (const [jobId, job] of Object.entries(jobs)) {
-    const base = `jobs/Release/Regular/${jobId}`;
+    const base = `${rtdbPath}/${jobId}`;
 
-    if ('machineLine' in job) {
-      updates[`${base}/machine_line`]  = job.machineLine ?? null;
-      updates[`${base}/machineLine`]   = null;
+    // machineLocation → equipmentName
+    if ('machineLocation' in job) {
+      updates[`${base}/equipmentName`]   = job.machineLocation ?? null;
+      updates[`${base}/machineLocation`] = null;
       count++;
     }
 
-    if ('machineLocation' in job) {
-      updates[`${base}/equipment_name`]  = job.machineLocation ?? null;
-      updates[`${base}/machineLocation`] = null;
+    // equipment_name → equipmentName  (older Regular records only)
+    if ('equipment_name' in job && !('machineLocation' in job)) {
+      updates[`${base}/equipmentName`]  = job.equipment_name ?? null;
+      updates[`${base}/equipment_name`] = null;
+      count++;
+    }
+
+    // machine_line → machineLine
+    if ('machine_line' in job) {
+      updates[`${base}/machineLine`]  = job.machine_line ?? null;
+      updates[`${base}/machine_line`] = null;
+      count++;
+    }
+
+    // equipment_id → equipmentId
+    if ('equipment_id' in job) {
+      updates[`${base}/equipmentId`]  = job.equipment_id ?? null;
+      updates[`${base}/equipment_id`] = null;
       count++;
     }
   }
 
-  console.log(`${Object.keys(jobs).length} records scanned, ${count} field(s) to rename.`);
+  console.log(`  ${rtdbPath}: ${Object.keys(jobs).length} records scanned, ${count} field(s) to rename.`);
+  return count;
+}
 
-  if (count === 0) { console.log('Nothing to do.'); process.exit(0); }
+async function backfill() {
+  const updates = {};
+
+  const total = (await Promise.all([
+    backfillPath('jobs/Release/Regular', updates),
+    backfillPath('jobs/Dispatch',        updates),
+    backfillPath('jobs/Train',           updates),
+  ])).reduce((a, b) => a + b, 0);
+
+  console.log(`\nTotal: ${total} field operation(s).`);
+
+  if (total === 0) { console.log('Nothing to do.'); process.exit(0); }
 
   if (DRY_RUN) {
     console.log('\n[DRY RUN] Would write:');
@@ -64,7 +99,7 @@ async function backfill() {
     console.log('\nRe-run without DRY_RUN=1 to apply.');
   } else {
     await db.ref().update(updates);
-    console.log(`✅  ${count} fields renamed.`);
+    console.log(`✅  ${total} fields renamed.`);
   }
 
   process.exit(0);

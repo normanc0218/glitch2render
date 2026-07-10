@@ -120,32 +120,47 @@ async function handleProjectUpdate(projectId, vals, user) {
   const actualEnd   = endDate && endTime     ? `${endDate}T${endTime}:00`     : null;
   const actualStart = startDate && startTime ? `${startDate}T${startTime}:00` : (startDate ? `${startDate}T00:00:00` : null);
 
+  console.log("[handleProjectUpdate] id=%s status=%s statusComplete=%s doneBy=%s", projectId, projectStatus, statusComplete, doneBy);
+
   const pool = await getPool();
-  await pool.request()
-    .input("id",               sql.UniqueIdentifier, projectId)
-    .input("status",           sql.NVarChar,         projectStatus)
-    .input("statusComplete",   sql.NVarChar,         statusComplete)
-    .input("statusOther",      sql.NVarChar,         statusOther || null)
-    .input("doneBy",           sql.NVarChar,         doneBy)
-    .input("actualStart",      sql.DateTime2,        actualStart)
-    .input("actualEnd",        sql.DateTime2,        actualEnd)
-    .input("notifySupervisor", sql.NVarChar,         notifySupervisor)
-    .input("message",          sql.NVarChar(sql.MAX), message)
-    .input("finishPicture",    sql.NVarChar(sql.MAX), finishPicture)
-    .query(`
-      UPDATE Projects SET
-        status                = @status,
-        status_complete       = @statusComplete,
-        status_other          = @statusOther,
-        done_by               = @doneBy,
-        actual_start          = COALESCE(@actualStart, actual_start),
-        actual_end            = COALESCE(@actualEnd, actual_end),
-        notify_supervisor     = COALESCE(@notifySupervisor, notify_supervisor),
-        message_to_supervisor = COALESCE(@message, message_to_supervisor),
-        finish_picture        = COALESCE(@finishPicture, finish_picture),
-        updated_at            = GETDATE()
-      WHERE id = @id
-    `);
+  let result;
+  try {
+    result = await pool.request()
+      .input("id",               sql.UniqueIdentifier, projectId)
+      .input("status",           sql.NVarChar(100),    projectStatus)
+      .input("statusComplete",   sql.NVarChar(50),     statusComplete)
+      .input("statusOther",      sql.NVarChar(50),     statusOther || null)
+      .input("doneBy",           sql.NVarChar(255),    doneBy)
+      .input("actualStart",      sql.DateTime2,        actualStart)
+      .input("actualEnd",        sql.DateTime2,        actualEnd)
+      .input("notifySupervisor", sql.NVarChar(255),    notifySupervisor)
+      .input("message",          sql.NVarChar(sql.MAX), message)
+      .input("finishPicture",    sql.NVarChar(sql.MAX), finishPicture)
+      .query(`
+        UPDATE Projects SET
+          status                = @status,
+          status_complete       = @statusComplete,
+          status_other          = @statusOther,
+          done_by               = @doneBy,
+          actual_start          = COALESCE(@actualStart, actual_start),
+          actual_end            = COALESCE(@actualEnd, actual_end),
+          notify_supervisor     = COALESCE(@notifySupervisor, notify_supervisor),
+          message_to_supervisor = COALESCE(@message, message_to_supervisor),
+          finish_picture        = COALESCE(@finishPicture, finish_picture),
+          updated_at            = GETDATE()
+        WHERE id = @id
+      `);
+  } catch (err) {
+    console.error("[handleProjectUpdate] SQL error for id=%s: %s", projectId, err.message);
+    throw err;
+  }
+
+  const affected = result?.rowsAffected?.[0] ?? -1;
+  if (affected === 0) {
+    console.warn("[handleProjectUpdate] UPDATE matched 0 rows for id=%s — project may not exist", projectId);
+    return;
+  }
+  console.log("[handleProjectUpdate] updated %d row(s) for id=%s", affected, projectId);
 
   if (notifySupervisor) {
     const slackId = userConfig.Supervisors[notifySupervisor];

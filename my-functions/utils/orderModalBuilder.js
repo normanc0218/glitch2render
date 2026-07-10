@@ -89,16 +89,28 @@ function buildCascadeBlocks({ area = null, areaLabel = null, machineLine = null,
   });
 
   if (area === "__other__") {
-    blocks.push({
-      type: "input",
-      block_id: "otherEquipment",
-      label: { type: "plain_text", text: "Equipment / Location" },
-      element: {
-        type: "plain_text_input",
-        action_id: "otherEquipment",
-        placeholder: { type: "plain_text", text: "Describe the equipment or location" },
+    blocks.push(
+      {
+        type: "input",
+        block_id: "otherLocation",
+        label: { type: "plain_text", text: "Location" },
+        element: {
+          type: "plain_text_input",
+          action_id: "otherLocation",
+          placeholder: { type: "plain_text", text: "e.g. Production floor, Warehouse" },
+        },
       },
-    });
+      {
+        type: "input",
+        block_id: "otherEquipment",
+        label: { type: "plain_text", text: "Equipment" },
+        element: {
+          type: "plain_text_input",
+          action_id: "otherEquipment",
+          placeholder: { type: "plain_text", text: "e.g. Hyster #3" },
+        },
+      }
+    );
   } else {
     if (!area) {
       blocks.push({

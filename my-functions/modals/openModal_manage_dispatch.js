@@ -15,7 +15,7 @@ const openModal_manage_dispatch = async (trigger_id) => {
 
     // 2️⃣ 转换为数组并排序（按日期从新到旧）
     const jobList = Object.entries(dispatchJobs)
-      .sort((a, b) => new Date(b[1].orderdate) - new Date(a[1].orderdate))
+      .sort((a, b) => new Date(b[1].dispatchDatetime || 0) - new Date(a[1].dispatchDatetime || 0))
       .slice(0, 20); // 只取前20条
 
     // 3️⃣ 生成 Slack blocks
@@ -45,9 +45,9 @@ const openModal_manage_dispatch = async (trigger_id) => {
           text: {
             type: "mrkdwn",
             text: `${emoji} *${job.description || "Untitled Job"}*\n📍 ${
-              job.equipment_name || "N/A"
+              job.equipmentName || "N/A"
             }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
-              job.dispatchDate || "N/A"
+              job.dispatchDatetime?.slice(0, 10) || "N/A"
             }\n⚙️ Status: ${job.status || "Pending"}`,
           },
           accessory: {

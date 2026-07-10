@@ -59,6 +59,7 @@ const openModal_daily_update = async (trigger_id, jobId) => {
   const superNameOptions = Object.keys(userConfig.Supervisors).map(name => [name, name]);
 
   const blocks = [];
+  let scheduledStart = null;
 
   if (isSqlTask) {
     const task = await fetchSqlTask(taskId);
@@ -68,6 +69,7 @@ const openModal_daily_update = async (trigger_id, jobId) => {
       const fmtLocalTime = (d) => d ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : null;
 
       const startDt  = toDate(task.scheduled_start);
+      scheduledStart = fmtLocalDate(startDt);
       const endDt    = toDate(task.scheduled_end);
       const dateStr  = fmtLocalDate(startDt) || "N/A";
       const isAllDay = task.is_all_day;
@@ -108,9 +110,9 @@ const openModal_daily_update = async (trigger_id, jobId) => {
       action_id: "supervisor_notify",
       options: superNameOptions,
     })] : []),
-    createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate, initialDate),
+    createInputBlock_date("startDate", "Actual Start Date", "datepickeraction", initialDate),
     createInputBlock_time("startTime", "Actual Start Time", "timepickeraction", initialTime),
-    createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate, initialDate),
+    createInputBlock_date("endDate", "Actual End Date", "datepickeraction", initialDate),
     createInputBlock_time("endTime", "Actual End Time", "timepickeraction", initialTime),
   );
 
@@ -119,7 +121,7 @@ const openModal_daily_update = async (trigger_id, jobId) => {
     view: {
       type: "modal",
       callback_id: "update_daily",
-      private_metadata: jobId,
+      private_metadata: JSON.stringify({ jobId, scheduledStart }),
       title: { type: "plain_text", text: isSqlTask ? "Update PM Task" : "Update Your Job", emoji: true },
       submit: { type: "plain_text", text: "Submit", emoji: true },
       close: { type: "plain_text", text: "Cancel", emoji: true },

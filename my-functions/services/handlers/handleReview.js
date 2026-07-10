@@ -47,6 +47,7 @@ async function handleReview(payload) {
   } catch {
     jobId = rawMeta;
   }
+  console.log("[handleReview] jobId=%s user=%s isUUID=%s", jobId, user?.id, UUID_RE.test(jobId));
   const vals  = view.state.values;
 
   const toolCheck   = vals?.tool_check?.tool_check?.selected_option?.value   || "N/A";
@@ -62,18 +63,7 @@ async function handleReview(payload) {
     const pool = await getPool();
     const checkBy = await resolveCheckBy(pool, user?.id, user?.username || null);
 
-    // Guard: check_date must not be earlier than actual_end
-    if (checkDatetime) {
-      const res2 = await pool.request()
-        .input("id", sql.UniqueIdentifier, jobId)
-        .query("SELECT actual_end FROM Projects WHERE id = @id");
-      const actualEnd = res2.recordset[0]?.actual_end;
-      if (actualEnd && new Date(checkDatetime) < new Date(actualEnd)) {
-        console.warn(`handleReview: check_date ${checkDatetime} earlier than actual_end ${actualEnd} for project ${jobId} — aborting`);
-        return;
-      }
-    }
-
+    console.log("[handleReview] running SQL UPDATE for project %s checkBy=%s", jobId, checkBy);
     await pool.request()
       .input("id",          sql.UniqueIdentifier, jobId)
       .input("checkBy",     sql.NVarChar,         checkBy)
@@ -113,6 +103,7 @@ async function handleReview(payload) {
     status: "Checked by Supervisor",
   };
 
+  console.log("[handleReview] running saveJobSmart for RTDB jobId=%s checkBy=%s", jobId, checkBy);
   const msg = `✅ Job *${jobId}* was *Reviewed* by <@${user.id}>`;
   await saveJobSmart(jobId, data, true, msg);
   await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);

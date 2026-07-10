@@ -7,21 +7,26 @@ const {
   createInputBlock_date,
   createInputBlock_time,
 } = require('../utils/blockBuilder');
-function getNYParts() {
-  return Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", hour12: false,
-    }).formatToParts(new Date()).map(p => [p.type, p.value])
-  );
+const nyDate = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(new Date()); // e.g. "2025-05-28"
+const [month, day, year] = nyDate.split('/');
+const initialDate = `${year}-${month}-${day}`;
+
+function getNYTimeString() {
+  const d = new Date();
+  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const hh = ny.getHours().toString().padStart(2, '0');
+  const mm = ny.getMinutes().toString().padStart(2, '0');
+  return `${hh}:${mm}`;
 }
+const initialTime = getNYTimeString();
 
 const mStaffName = Object.keys(maintenanceStaff);
 const openModal_reject = async (trigger_id, jobId) => {
-  const p = getNYParts();
-  const initialDate = `${p.year}-${p.month}-${p.day}`;
-  const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
   const blocks=[]
   blocks.push(createInputBlock("rejectReason", "Specify Your Reason To Reject", "reason_input", "Enter your reason here"));
   blocks.push(createInputBlock("whoReject", "Reject the Job and Sign", "remarks_input", "Enter your signature here"));

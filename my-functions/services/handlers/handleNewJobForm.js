@@ -4,6 +4,7 @@ const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
+const resolveDisplayName = require("../../utils/resolveDisplayName");
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -26,20 +27,28 @@ async function handleNewJobForm(payload) {
   const ts = new Date();
   const jobId = await generateUniqueJobId();
 
-  const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value  || null;
-  const otherEquipment      = view.state.values?.otherEquipment?.otherEquipment?.value             || null;
-  const machineLocation = selectedEquipmentId
+  const orderedBy = await resolveDisplayName(user?.id, user?.username);
+  const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value || null;
+  const selectedArea        = view.state.values?.area?.area?.selected_option?.value || null;
+  const isOther             = selectedArea === "__other__";
+  const otherLocation       = view.state.values?.otherLocation?.otherLocation?.value || null;
+  const otherEquipment      = view.state.values?.otherEquipment?.otherEquipment?.value || null;
+
+  const resolvedEquipmentId   = selectedEquipmentId || (isOther ? "other" : null);
+  const resolvedEquipmentName = selectedEquipmentId
     ? await resolveEquipmentName(selectedEquipmentId)
     : (otherEquipment || "N/A");
+  const resolvedArea          = isOther ? (otherLocation || null) : selectedArea;
+  const resolvedMachineLine   = isOther ? null : (view.state.values?.machineLine?.machineLine?.selected_option?.value || null);
 
   const data = {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-    orderedBy: user?.username || "Unknown",
-    area:         view.state.values?.area?.area?.selected_option?.value || null,
-    machine_line: view.state.values?.machineLine?.machineLine?.selected_option?.value || null,
-    equipment_id: selectedEquipmentId || null,
-    equipment_name: machineLocation,
+    orderedBy,
+    area:          resolvedArea,
+    machineLine:   resolvedMachineLine,
+    equipmentId:   resolvedEquipmentId,
+    equipmentName: resolvedEquipmentName,
     reporter: view.state.values?.reporter?.reporter?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:
@@ -50,8 +59,7 @@ async function handleNewJobForm(payload) {
       view.state.values?.issuePicture?.file_input_action_id_1?.files?.map(
         (file) => file.url_private
       ) || [],
-    scheduledDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    scheduledTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    scheduledStart: `${view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     status: "Pending",
     priority: view.state.values?.priority?.priority?.selected_option?.value || "medium",
   };

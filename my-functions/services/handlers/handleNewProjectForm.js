@@ -3,6 +3,7 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
+const resolveDisplayName = require("../../utils/resolveDisplayName");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -15,10 +16,11 @@ async function handleNewProjectForm(payload) {
   console.log("Slack view.state:", JSON.stringify(view.state, null, 2));
   console.log(jobId);
 
+  const orderedBy = await resolveDisplayName(user?.id, user?.username);
   const data = {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-    orderedBy: user?.username || "Unknown",
+    orderedBy,
     machineLocation: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:

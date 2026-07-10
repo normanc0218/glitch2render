@@ -34,6 +34,10 @@ const {
   updateFinishedPage,
   openModal_view_dispatch,
   openModal_sql_task_view,
+  openJobList,
+  updateJobList,
+  pushModal_sql_task_view,
+  pushModal_sql_project_view,
 } = require("../modals");
 
 const { generateUniqueJobId } = require("../utils/generateUniqueJobId");
@@ -50,7 +54,6 @@ const {
 const { threadNotify } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
 const { getPool, sql } = require("../db-sql");
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ✅ 导出为一个标准 Express handler
 module.exports = async (req, res) => {
@@ -68,129 +71,66 @@ module.exports = async (req, res) => {
 
   const { type, user, actions, trigger_id, view } = payload;
 
-  // ── Generic validations for all view_submission ──────────────────────────────
-  if (type === "view_submission") {
-    const vals = view?.state?.values || {};
-
-    // Block 12:00 AM–7:00 AM on every time picker — nobody logs work at those hours
-    const timeErrors = {};
-    for (const [blockId, blockVals] of Object.entries(vals)) {
-      for (const av of Object.values(blockVals)) {
-        if (av.type === "timepicker" && av.selected_time) {
-          const h = parseInt(av.selected_time.split(":")[0], 10);
-          if (h < 7) timeErrors[blockId] = "Time cannot be between 12:00 AM and 7:00 AM.";
-        }
-      }
-    }
-    if (Object.keys(timeErrors).length > 0) {
-      return res.json({ response_action: "errors", errors: timeErrors });
-    }
-
-    // Block future dates on completion / update / review forms
-    const DATE_BLOCK_CALLBACKS = new Set(["review", "sql_task_review", "update_form", "update_daily", "update_project"]);
-    if (DATE_BLOCK_CALLBACKS.has(view?.callback_id)) {
-      const ny = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-      const todayNY = `${ny.getFullYear()}-${String(ny.getMonth()+1).padStart(2,'0')}-${String(ny.getDate()).padStart(2,'0')}`;
-      const dateErrors = {};
-      for (const [blockId, blockVals] of Object.entries(vals)) {
-        for (const av of Object.values(blockVals)) {
-          if (av.type === "datepicker" && av.selected_date && av.selected_date > todayNY) {
-            dateErrors[blockId] = "Date cannot be in the future.";
-          }
-        }
-      }
-      if (Object.keys(dateErrors).length > 0) {
-        return res.json({ response_action: "errors", errors: dateErrors });
-      }
-    }
+  // Parse view private_metadata once — may be a plain string (RTDB jobId) or a JSON object
+  let viewMeta = null;
+  if (view?.private_metadata) {
+    try { viewMeta = JSON.parse(view.private_metadata); } catch { /* plain string */ }
   }
+  const viewJobId = viewMeta?.jobId ?? view?.private_metadata ?? null;
 
-  // ── Validate checkDatetime >= actualEnd for supervisor review ─────────────────
-  if (type === "view_submission" && (view?.callback_id === "review" || view?.callback_id === "sql_task_review")) {
+  // For review, validate check date/time >= actual end date/time (SQL projects and RTDB jobs).
+  // actualEnd is embedded in private_metadata at modal-open time (openModal_supervisor_approval.js)
+  // — this is now a pure in-memory comparison, no SQL/RTDB round trip.
+  if (type === "view_submission" && view?.callback_id === "review") {
     const vals = view.state?.values || {};
     const checkDate = vals?.checkDate?.datepickeraction?.selected_date;
     const checkTime = vals?.checkTime?.timepickeraction?.selected_time;
+    // Still used (cheap, in-memory regex — not a network branch anymore) to pick which of
+    // the two pre-existing error-message formats to render.
+    const UUID_RE_REVIEW = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // private_metadata may be a raw jobId or JSON {jobId, msgTs, channel}
-    let jobId = view.private_metadata;
-    try { jobId = JSON.parse(view.private_metadata).jobId; } catch {}
-
-    if (checkDate && checkTime && jobId) {
+    if (checkDate && checkTime && viewMeta?.actualEnd) {
       const checkMs = new Date(`${checkDate}T${checkTime}`).getTime();
-      let actualEndMs = null;
-      try {
-        if (jobId.startsWith("sqltask:")) {
-          const taskId = jobId.slice(8);
-          const pool = await getPool();
-          const r = await pool.request()
-            .input("id", sql.UniqueIdentifier, taskId)
-            .query("SELECT actual_end FROM Tasks WHERE id = @id");
-          const v = r.recordset[0]?.actual_end;
-          if (v) actualEndMs = new Date(v).getTime();
-        } else if (UUID_RE.test(jobId)) {
-          const pool = await getPool();
-          const r = await pool.request()
-            .input("id", sql.UniqueIdentifier, jobId)
-            .query("SELECT actual_end FROM Projects WHERE id = @id");
-          const v = r.recordset[0]?.actual_end;
-          if (v) actualEndMs = new Date(v).getTime();
-        } else {
-          for (const branch of ["Regular", "Daily", "Project"]) {
-            const snap = await db.ref(`jobs/Release/${branch}/${jobId}`).once("value");
-            if (snap.exists()) {
-              const job = snap.val();
-              if (job.actualEnd) actualEndMs = new Date(job.actualEnd).getTime();
-              break;
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Check date validation error:", err.message);
-      }
+      const actualEndMs = new Date(viewMeta.actualEnd).getTime();
 
-      if (actualEndMs !== null && checkMs < actualEndMs) {
-        const endStr = new Date(actualEndMs).toISOString().replace("T", " ").slice(0, 16);
-        return res.json({
-          response_action: "errors",
-          errors: { checkDate: `Check date/time cannot be earlier than end date/time (${endStr}).` },
-        });
+      if (!isNaN(actualEndMs) && checkMs < actualEndMs) {
+        if (UUID_RE_REVIEW.test(viewJobId)) {
+          // SQL Project — actualEnd round-tripped through JSON as an ISO string (from the
+          // mssql Date object). Format using local getters, matching useUTC:false convention.
+          const d = new Date(viewMeta.actualEnd);
+          const endStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+          return res.json({
+            response_action: "errors",
+            errors: { checkDate: `Check date/time cannot be earlier than the job's actual end time (${endStr}).` },
+          });
+        } else {
+          // RTDB job — actualEnd is already the plain "YYYY-MM-DDTHH:MM" string, unchanged.
+          return res.json({
+            response_action: "errors",
+            errors: { checkDate: `Check date/time cannot be earlier than end date/time (${viewMeta.actualEnd.replace('T', ' ')}).` },
+          });
+        }
       }
     }
   }
 
   // For update_daily SQL tasks: validate actual start date >= scheduled date
-  if (type === "view_submission" && view?.callback_id === "update_daily" && view?.private_metadata?.startsWith("sql:")) {
+  // scheduledStart is embedded in private_metadata at modal-open time — no SQL round trip needed here
+  if (type === "view_submission" && view?.callback_id === "update_daily" && viewJobId?.startsWith("sql:") && viewMeta?.scheduledStart) {
     const vals = view.state?.values || {};
     const startDate = vals?.startDate?.datepickeraction?.selected_date;
-    const taskId = view.private_metadata.slice(4);
-
-    if (startDate && taskId) {
-      try {
-        const pool = await getPool();
-        const result = await pool.request()
-          .input("id", sql.UniqueIdentifier, taskId)
-          .query("SELECT scheduled_start FROM Tasks WHERE id = @id");
-        const row = result.recordset[0];
-        if (row?.scheduled_start) {
-          const sd = row.scheduled_start;
-          const scheduledDateStr = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
-          if (startDate < scheduledDateStr) {
-            return res.json({
-              response_action: "errors",
-              errors: {
-                startDate: `Actual start date cannot be earlier than the scheduled date (${scheduledDateStr}).`,
-              },
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Start date validation error:", err.message);
-      }
+    if (startDate && startDate < viewMeta.scheduledStart) {
+      return res.json({
+        response_action: "errors",
+        errors: {
+          startDate: `Actual start date cannot be earlier than the scheduled date (${viewMeta.scheduledStart}).`,
+        },
+      });
     }
   }
 
   // For update_daily SQL tasks: validate end date/time > start date/time
-  if (type === "view_submission" && view?.callback_id === "update_daily" && view?.private_metadata?.startsWith("sql:")) {
+  if (type === "view_submission" && view?.callback_id === "update_daily" && viewJobId?.startsWith("sql:")) {
     const vals = view.state?.values || {};
     const startDate = vals?.startDate?.datepickeraction?.selected_date;
     const startTime = vals?.startTime?.timepickeraction?.selected_time;
@@ -233,19 +173,12 @@ module.exports = async (req, res) => {
     }
 
     // start must be later than order date (RTDB jobs only — SQL tasks have no orderDate)
-    if (jobId && !jobId.startsWith("sql:") && startDate && startTime && !errors["startDate"]) {
-      try {
-        const snap = await db.ref(`jobs/Release/Regular/${jobId}`).once("value");
-        const job = snap.exists() ? snap.val() : null;
-        if (job?.scheduledStart) {
-          const orderMs = new Date(job.scheduledStart).getTime();
-          const startMs = new Date(`${startDate}T${startTime}`).getTime();
-          if (startMs < orderMs) {
-            errors["startDate"] = `Start date/time cannot be earlier than the order date (${job.scheduledStart.replace('T', ' ')}).`;
-          }
-        }
-      } catch (err) {
-        console.error("Date validation error:", err.message);
+    // scheduledStart was embedded in private_metadata when the modal was opened — no RTDB read needed
+    if (viewJobId && !viewJobId.startsWith("sql:") && startDate && startTime && !errors["startDate"] && viewMeta?.scheduledStart) {
+      const orderMs = new Date(viewMeta.scheduledStart).getTime();
+      const startMs = new Date(`${startDate}T${startTime}`).getTime();
+      if (startMs < orderMs) {
+        errors["startDate"] = `Start date/time cannot be earlier than the order date (${viewMeta.scheduledStart.replace('T', ' ')}).`;
       }
     }
 
@@ -292,6 +225,7 @@ module.exports = async (req, res) => {
       const action = actions[0];
       const jobId = action?.value;
       const viewId = view?.id||[];
+      console.log("[block_actions] action_id=%s jobId=%s user=%s", action.action_id, jobId, user?.id);
 
       switch (action.action_id) {
         //Submit Order
@@ -360,6 +294,24 @@ module.exports = async (req, res) => {
         case "finished_next_page":
           await updateFinishedPage(viewId, parseInt(action.value));
           break;
+        // Job list modal — 3 type buttons
+        case "open_job_list_regular":
+          await openJobList(trigger_id, 'Regular');
+          break;
+        case "open_job_list_project":
+          await openJobList(trigger_id, 'Project');
+          break;
+        case "open_job_list_task":
+          await openJobList(trigger_id, 'Task');
+          break;
+        // Job list modal — tab switching and pagination
+        case "job_list_tab_unfinished":
+        case "job_list_tab_finished":
+        case "job_list_page": {
+          const jlMeta = JSON.parse(action.value);
+          await updateJobList(viewId, jlMeta.type, jlMeta.tab, jlMeta.page);
+          break;
+        }
         // 打开详情
         case "openModal_viewDetail_home":
           await openModal_view_detail_home(trigger_id, jobId);
@@ -396,51 +348,9 @@ module.exports = async (req, res) => {
         case "review_progress": {
           const reviewMsgTs = payload.container?.message_ts || null;
           const reviewChan  = payload.container?.channel_id || null;
-          let alreadyDone = false;
-          let doneBy = "supervisor";
-          if (UUID_RE.test(jobId)) {
-            // SQL Project — check current status
-            try {
-              const pool = await getPool();
-              const r = await pool.request()
-                .input("id", sql.UniqueIdentifier, jobId)
-                .query("SELECT status, check_by FROM Projects WHERE id = @id");
-              const proj = r.recordset[0];
-              if (proj && (proj.status === "Checked by Supervisor" || proj.status === "Completed")) {
-                alreadyDone = true;
-                doneBy = proj.check_by || "supervisor";
-              }
-            } catch (err) { console.error("review_progress pre-check error:", err.message); }
-          } else {
-            // RTDB job — check status across branches
-            try {
-              const snap = await db.ref("jobs/Release").once("value");
-              const release = snap.val() || {};
-              for (const branch of ["Regular", "Daily", "Project"]) {
-                const job = release[branch]?.[jobId];
-                if (job) {
-                  if (job.status === "Checked by Supervisor") { alreadyDone = true; doneBy = job.checkBy || "supervisor"; }
-                  break;
-                }
-              }
-            } catch (err) { console.error("review_progress RTDB pre-check error:", err.message); }
-          }
-          if (alreadyDone) {
-            if (reviewChan && reviewMsgTs) {
-              await slackClient.chat.update({
-                channel: reviewChan, ts: reviewMsgTs,
-                text: `✅ Already approved by *${doneBy}*`,
-                blocks: [{ type: "section", text: { type: "mrkdwn", text: `✅ Already approved by *${doneBy}*` } }],
-              }).catch(() => {});
-            }
-            await slackClient.chat.postEphemeral({
-              channel: reviewChan || payload.user.id,
-              user: payload.user.id,
-              text: "This job has already been approved via the web app.",
-            }).catch(() => {});
-            break;
-          }
+          console.log("[review_progress] jobId=%s user=%s", jobId, user?.id);
           await openModal_supervisor_approval(trigger_id, jobId, reviewMsgTs, reviewChan);
+          console.log("[review_progress] views.open succeeded for jobId=%s", jobId);
           break;
         }
 
@@ -524,34 +434,24 @@ module.exports = async (req, res) => {
           await openModal_sql_task_view(trigger_id, taskId);
           break;
         }
+        // View detail from job list modal (uses push to stack on top of the list)
+        case "view_sql_task_detail": {
+          const tId = action.value;
+          await pushModal_sql_task_view(trigger_id, tId);
+          break;
+        }
+        case "view_sql_project_detail": {
+          const pId = action.value;
+          await pushModal_sql_project_view(trigger_id, pId);
+          break;
+        }
 
         case "approve_sql_task": {
           const taskId  = jobId.startsWith("sql:") ? jobId.slice(4) : jobId;
           const msgTs   = payload.container?.message_ts  || null;
           const channel = payload.container?.channel_id  || null;
-          // Check if already approved via web app before opening the modal
-          try {
-            const pool = await getPool();
-            const r = await pool.request()
-              .input("id", sql.UniqueIdentifier, taskId)
-              .query("SELECT status, check_by FROM Tasks WHERE id = @id");
-            const task = r.recordset[0];
-            if (task?.status === "checked by supervisor") {
-              if (channel && msgTs) {
-                await slackClient.chat.update({
-                  channel, ts: msgTs,
-                  text: `✅ Already approved by *${task.check_by || "supervisor"}*`,
-                  blocks: [{ type: "section", text: { type: "mrkdwn", text: `✅ Already approved by *${task.check_by || "supervisor"}*` } }],
-                }).catch(() => {});
-              }
-              await slackClient.chat.postEphemeral({
-                channel: channel || payload.user.id,
-                user: payload.user.id,
-                text: "This task has already been approved via the web app.",
-              }).catch(() => {});
-              break;
-            }
-          } catch (err) { console.error("approve_sql_task pre-check error:", err.message); }
+          // Open the modal immediately — skip the pre-check SQL round trip to avoid
+          // burning the 3-second trigger_id window. Double-approval is idempotent.
           await openModal_supervisor_approval(trigger_id, `sqltask:${taskId}`, msgTs, channel);
           break;
         }
@@ -576,6 +476,7 @@ module.exports = async (req, res) => {
     // === 2️⃣ view_submission (Modal 提交) ===
     if (type === "view_submission") {
       const { callback_id } = view;
+      console.log("[view_submission] callback_id=%s user=%s", callback_id, user?.id);
 
       // 把你的每种 view.callback_id 对应逻辑放在独立函数或 switch 内
       switch (callback_id) {

@@ -47,7 +47,7 @@ function buildUnfinishedView(jobList, page) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${job.id}*\n${emoji} *${job.description || "Untitled"}*\n📍 ${job.equipment_name || "N/A"}\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${job.scheduledDate || "N/A"}\n⚙️ ${job.status || "Pending"}`,
+          text: `*${job.id}*\n${emoji} *${job.description || "Untitled"}*\n📍 ${job.equipmentName || "N/A"}\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${job.scheduledStart?.slice(0, 10) || "N/A"}\n⚙️ ${job.status || "Pending"}`,
         },
         accessory: {
           type: "button",

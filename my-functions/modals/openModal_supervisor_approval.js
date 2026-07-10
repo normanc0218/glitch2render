@@ -94,6 +94,11 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
   const initialDate = `${p.year}-${p.month}-${p.day}`;
   const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
 
+  // Captured below (isAzureProject / RTDB branches) and embedded into private_metadata so
+  // the view_submission handler can validate checkDate/checkTime purely in-memory, with
+  // zero network round trips at submission time.
+  let actualEndForMeta = null;
+
   const blocks = [];
 
   if (isSqlTask) {
@@ -133,6 +138,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
     // ── Azure SQL project summary ──
     const project = await fetchAzureSqlProject(jobId);
     if (project) {
+      actualEndForMeta = project.actual_end || null; // Date object — JSON.stringify serializes via toISOString()
       const location   = project.equipment_id || project.machine_location || "N/A";
       const startDate  = fmtDate(project.scheduled_start) || "N/A";
       const finishDate = fmtDate(project.actual_end)      || "N/A";
@@ -173,6 +179,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
     }
 
     if (job) {
+      actualEndForMeta = job.actualEnd || null; // already a plain "YYYY-MM-DDTHH:MM" string, no Date involved
       blocks.push(createTextSection(
         `*Start:*  ${job.actualStart?.replace('T', ' ') || "_N/A_"}    •    *End:*  ${job.actualEnd?.replace('T', ' ') || "_N/A_"}`
       ));
@@ -212,7 +219,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
   }));
   blocks.push(createInputBlock("clean_input", "Assign who to help cleaning?", "clean_input", "e.g. Someone", true));
   blocks.push(createInputBlock("detailOfJob", "Other details related to this job", "detailOfJob", "e.g. Notes", true));
-  blocks.push(createInputBlock_date("checkDate", "Check Date", "datepickeraction", initialDate, initialDate));
+  blocks.push(createInputBlock_date("checkDate", "Check Date", "datepickeraction", initialDate));
   blocks.push(createInputBlock_time("checkTime", "Check Time", "timepickeraction", initialTime));
 
   await client.views.open({
@@ -220,7 +227,10 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
     view: {
       type: "modal",
       callback_id: isSqlTask ? "sql_task_review" : "review",
-      private_metadata: msgTs ? JSON.stringify({ jobId, msgTs, channel }) : jobId,
+      // Always a JSON object now (dropped the bare-jobId fallback) — both existing
+      // consumers (handleReview.js, the sql_task_review case) already JSON.parse this
+      // and default msgTs/channel to null, so this is backward compatible.
+      private_metadata: JSON.stringify({ jobId, msgTs, channel, actualEnd: actualEndForMeta }),
       title: { type: "plain_text", text: "Review & Approve" },
       submit: { type: "plain_text", text: "Approve" },
       close: { type: "plain_text", text: "Cancel" },

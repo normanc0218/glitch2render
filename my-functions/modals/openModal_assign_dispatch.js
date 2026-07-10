@@ -12,15 +12,22 @@ const {createMultiInputBlock,
        createInputBlock_select,        //block_id, label, action_id, options 
        } = require("../utils/blockBuilder");
 
-function getNYParts() {
-  return Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", hour12: false,
-    }).formatToParts(new Date()).map(p => [p.type, p.value])
-  );
+const nyDate = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(new Date()); // e.g. "2025-05-28"
+const [month, day, year] = nyDate.split('/');
+const initialDate = `${year}-${month}-${day}`;
+function getNYTimeString() {
+  const d = new Date();
+  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const hh = ny.getHours().toString().padStart(2, '0');
+  const mm = ny.getMinutes().toString().padStart(2, '0');
+  return `${hh}:${mm}`;
 }
+const initialTime = getNYTimeString();
 const { maintenanceStaff, managerUsers } = require('../userConfig');
 //Options
 const staffOptions = Object.entries(maintenanceStaff).map(([name, value]) => ({
@@ -49,9 +56,6 @@ function addDaysToDate(dateStr, daysToAdd = 1) {
 };
 
 const openModal_assign_dispatch = async(viewId,jobId) => {
-  const p = getNYParts();
-  const initialDate = `${p.year}-${p.month}-${p.day}`;
-  const initialTime = `${p.hour.padStart(2, "0")}:${p.minute}`;
   const snapshot = await db.ref(`jobs/Dispatch/${jobId}`).once("value");
   const job = snapshot.val();
   if (!job) throw new Error("Job not found");

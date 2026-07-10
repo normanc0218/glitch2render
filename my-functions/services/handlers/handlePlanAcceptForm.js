@@ -11,8 +11,7 @@ async function handlePlanAcceptForm(payload) {
   const data = {
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     remarks: view.state.values?.remarks?.remarks_input?.value || "N/A",
-    acceptDate: view.state.values?.acceptDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    acceptTime: view.state.values?.acceptTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
+    acceptDatetime: `${view.state.values?.acceptDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.acceptTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     status: "Accepted",
   };
 

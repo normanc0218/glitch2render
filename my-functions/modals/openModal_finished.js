@@ -22,7 +22,7 @@ async function fetchFinishedJobs() {
     });
   });
 
-  jobList.sort((a, b) => new Date(b.scheduledDate || 0) - new Date(a.scheduledDate || 0));
+  jobList.sort((a, b) => new Date(b.scheduledStart || 0) - new Date(a.scheduledStart || 0));
   return jobList;
 }
 
@@ -46,7 +46,7 @@ function buildFinishedView(jobList, page) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${job.id}*\n*${job.description || "Untitled"}*\n📍 ${job.equipment_name || "N/A"}\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${job.scheduledDate || "N/A"}\n⚙️ ${job.status || "N/A"}`,
+          text: `*${job.id}*\n*${job.description || "Untitled"}*\n📍 ${job.equipmentName || "N/A"}\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${job.scheduledStart?.slice(0, 10) || "N/A"}\n⚙️ ${job.status || "N/A"}`,
         },
         accessory: {
           type: "button",

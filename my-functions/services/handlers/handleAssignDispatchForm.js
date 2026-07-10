@@ -3,6 +3,7 @@ const { notifyNewOrder } = require("../../utils/notifyChannel");
 const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const db = require("../../db");
 const { displayHome } = require("../modalService");
+const resolveDisplayName = require("../../utils/resolveDisplayName");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -17,21 +18,20 @@ async function handleAssignDispatchForm(payload) {
   //generate new Id
   const jobId = await generateUniqueJobId();
   
+  const orderedBy = await resolveDisplayName(user?.id, user?.username);
   const data = {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
-    orderedBy: user?.username || "Unknown",
-    machineLocation: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
+    orderedBy,
+    equipmentName: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:
       view.state.values?.assignedTo?.pickedGuy?.selected_options?.map(
         (opt) => opt.text.text 
       ) || [],
     issuePicture: metadata.issuePicture,
-    scheduledDate: view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10),
-    scheduledTime: view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5),
-    dispatchDate: metadata?.dispatchDate|| "",
-    dispatchTime: metadata?.dispatchTime|| "",
+    scheduledStart: `${view.state.values?.orderDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.orderTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
+    dispatchDatetime: metadata?.dispatchDatetime || null,
     status: "Pending",
     priority: "medium",
   };

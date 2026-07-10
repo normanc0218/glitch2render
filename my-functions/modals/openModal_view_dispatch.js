@@ -2,6 +2,17 @@
 const axios = require("axios");
 const qs = require("qs");
 const db = require("../db");
+const { getPool } = require("../db-sql");
+
+async function getPromotedDispatchIds() {
+  try {
+    const pool = await getPool();
+    const r = await pool.request().query(
+      `SELECT source_rtdb_job_id FROM Projects WHERE source_rtdb_job_id IS NOT NULL`
+    );
+    return new Set(r.recordset.map(row => row.source_rtdb_job_id));
+  } catch { return new Set(); }
+}
 
 /**
  * 📦 打开 Manage Dispatch Modal
@@ -9,13 +20,17 @@ const db = require("../db");
  */
 const openModal_view_dispatch  = async (trigger_id) => {
   try {
-    // 1️⃣ 从 Firebase 获取派工任务
-    const snapshot = await db.ref("jobs/Dispatch").once("value");
+    // 1️⃣ 从 Firebase 获取派工任务 + 已提升到项目的ID
+    const [snapshot, promotedIds] = await Promise.all([
+      db.ref("jobs/Dispatch").once("value"),
+      getPromotedDispatchIds(),
+    ]);
     const dispatchJobs = snapshot.val() || {};
 
-    // 2️⃣ 转换为数组并排序（按日期从新到旧）
+    // 2️⃣ 排除已在 Web 端 Job Review Panel 中提升为项目的派工，按日期排序
     const jobList = Object.entries(dispatchJobs)
-      .sort((a, b) => new Date(b[1].orderdate) - new Date(a[1].orderdate))
+      .filter(([jobId]) => !promotedIds.has(jobId))
+      .sort((a, b) => new Date(b[1].dispatchDatetime || 0) - new Date(a[1].dispatchDatetime || 0))
       .slice(0, 20); // 只取前20条
 
     // 3️⃣ 生成 Slack blocks
@@ -45,9 +60,9 @@ const openModal_view_dispatch  = async (trigger_id) => {
           text: {
             type: "mrkdwn",
             text: `${emoji} *${job.description || "Untitled Job"}*\n📍 ${
-              job.equipment_name || "N/A"
+              job.equipmentName || "N/A"
             }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
-              job.dispatchDate || "N/A"
+              job.dispatchDatetime?.slice(0, 10) || "N/A"
             }\n⚙️ Status: ${job.status || "Pending"}`,
           },
           accessory: {
