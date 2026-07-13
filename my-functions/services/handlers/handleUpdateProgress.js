@@ -4,6 +4,8 @@ const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 const userConfig = require("../slackUserService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { TaskCompletionSchema } = require("../../schemas/sqlTask");
+const { ProjectCompletionSchema } = require("../../schemas/sqlProject");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -64,6 +66,21 @@ async function handleSqlTaskUpdate(taskId, vals, user) {
 
   const doneBy = await resolveDisplayName(user?.id, user?.username || null);
 
+  try {
+    TaskCompletionSchema.parse({
+      status:            sqlStatus,
+      done_by:           doneBy,
+      actual_start:      actualStart,
+      actual_end:        actualEnd,
+      finish_picture:    finishPicture,
+      description,
+      notify_supervisor: notifySupervisor,
+    });
+  } catch (err) {
+    console.error("[handleSqlTaskUpdate] schema validation failed:", err.issues ?? err.message);
+    throw err;
+  }
+
   const pool = await getPool();
   await pool.request()
     .input("id",               sql.UniqueIdentifier, taskId)
@@ -119,6 +136,23 @@ async function handleProjectUpdate(projectId, vals, user) {
 
   const actualEnd   = endDate && endTime     ? `${endDate}T${endTime}:00`     : null;
   const actualStart = startDate && startTime ? `${startDate}T${startTime}:00` : (startDate ? `${startDate}T00:00:00` : null);
+
+  try {
+    ProjectCompletionSchema.parse({
+      status:                projectStatus,
+      done_by:               doneBy,
+      actual_start:          actualStart,
+      actual_end:            actualEnd,
+      finish_picture:        finishPicture,
+      status_complete:       statusComplete,
+      status_other:          statusOther,
+      notify_supervisor:     notifySupervisor,
+      message_to_supervisor: message,
+    });
+  } catch (err) {
+    console.error("[handleProjectUpdate] schema validation failed:", err.issues ?? err.message);
+    throw err;
+  }
 
   console.log("[handleProjectUpdate] id=%s status=%s statusComplete=%s doneBy=%s", projectId, projectStatus, statusComplete, doneBy);
 
@@ -242,6 +276,14 @@ async function handleUpdateProgress(payload) {
   const msg = `✅ Job *${jobId}* was *Updated* by <@${user.id}> `;
   await saveJobSmart(jobId, data, true, msg);
   await displayHome(user.id);
+
+  // Refresh the notified supervisor's App Home so the pending job appears immediately
+  const supervisorSlackId = userConfig.Supervisors[data.notifySupervisor];
+  if (supervisorSlackId) {
+    displayHome(supervisorSlackId).catch(err =>
+      console.error("Failed to refresh supervisor home after RTDB update:", err.message)
+    );
+  }
 }
 
 module.exports = handleUpdateProgress ;

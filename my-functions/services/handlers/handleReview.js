@@ -2,6 +2,9 @@ const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
+const userConfig = require("../slackUserService");
+const db = require("../../db");
+const { ProjectReviewSchema } = require("../../schemas/sqlProject");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -63,6 +66,21 @@ async function handleReview(payload) {
     const pool = await getPool();
     const checkBy = await resolveCheckBy(pool, user?.id, user?.username || null);
 
+    try {
+      ProjectReviewSchema.parse({
+        status:       'Checked by Supervisor',
+        check_by:     checkBy,
+        check_date:   checkDatetime,
+        check_detail: checkDetail,
+        clean_check:  cleanCheck,
+        tool_check:   toolCheck,
+        who_clean_up: whoCleanUp,
+      });
+    } catch (err) {
+      console.error("[handleReview] schema validation failed:", err.issues ?? err.message);
+      throw err;
+    }
+
     console.log("[handleReview] running SQL UPDATE for project %s checkBy=%s", jobId, checkBy);
     await pool.request()
       .input("id",          sql.UniqueIdentifier, jobId)
@@ -86,6 +104,18 @@ async function handleReview(payload) {
       `);
     await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
     await displayHome(user.id);
+
+    // Refresh the technician's App Home so they see the approved status immediately
+    const techRes = await pool.request()
+      .input("id", sql.UniqueIdentifier, jobId)
+      .query("SELECT done_by FROM Projects WHERE id = @id");
+    const doneby = techRes.recordset[0]?.done_by;
+    const techSlackId = doneby ? userConfig.maintenanceStaff[doneby] : null;
+    if (techSlackId) {
+      displayHome(techSlackId).catch(err =>
+        console.error("Failed to refresh technician home after project approval:", err.message)
+      );
+    }
     return;
   }
 
@@ -103,11 +133,23 @@ async function handleReview(payload) {
     status: "Checked by Supervisor",
   };
 
+  // Read doneBy before saving (to find the technician to notify)
+  const jobSnap = await db.ref(`jobs/Release/Regular/${jobId}`).once("value");
+  const doneby = jobSnap.val()?.doneBy || null;
+
   console.log("[handleReview] running saveJobSmart for RTDB jobId=%s checkBy=%s", jobId, checkBy);
   const msg = `✅ Job *${jobId}* was *Reviewed* by <@${user.id}>`;
   await saveJobSmart(jobId, data, true, msg);
   await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
   await displayHome(user.id);
+
+  // Refresh the technician's App Home so they see the approved status immediately
+  const techSlackId = doneby ? userConfig.maintenanceStaff[doneby] : null;
+  if (techSlackId) {
+    displayHome(techSlackId).catch(err =>
+      console.error("Failed to refresh technician home after RTDB job approval:", err.message)
+    );
+  }
 }
 
 module.exports = handleReview;

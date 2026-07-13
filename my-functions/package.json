@@ -6,7 +6,7 @@
   "scripts": {
     "start": "functions-framework --target=slackHandler",
     "dev": "nodemon --watch . --ext js,json --exec \"functions-framework --target=slackHandler\"",
-    "test": "echo 'No tests yet' && exit 0"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -21,10 +21,14 @@
     "firebase-functions": "^7.0.1",
     "googleapis": "^164.1.0",
     "luxon": "^3.7.2",
-    "qs": "^6.14.0"
+    "mssql": "^12.7.0",
+    "qs": "^6.14.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@google-cloud/functions-framework": "^5.0.5",
+    "nodemon": "^3.1.10",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": "20"

@@ -5,6 +5,7 @@ const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { RegularJobCreateSchema } = require("../../schemas/regularJob");
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -66,6 +67,15 @@ async function handleNewJobForm(payload) {
   // 通知频道
   const messageTs = await notifyNewOrder(data, jobId);
   data.messageTs = messageTs;
+
+  // Validate shape before writing — catches field-name drift between bot and schema
+  try {
+    RegularJobCreateSchema.parse(data);
+  } catch (err) {
+    console.error("[handleNewJobForm] schema validation failed — job NOT saved:", err.issues ?? err.message);
+    return;
+  }
+
   // 保存任务
   await saveJob(`jobs/Release/Regular`,data);
   await displayHome(user.id)

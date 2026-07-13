@@ -54,6 +54,7 @@ const {
 const { threadNotify } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
 const { getPool, sql } = require("../db-sql");
+const { TaskReviewSchema } = require("../schemas/sqlTask");
 
 // ✅ 导出为一个标准 Express handler
 module.exports = async (req, res) => {
@@ -539,6 +540,21 @@ module.exports = async (req, res) => {
             .input("id", sql.UniqueIdentifier, taskId)
             .query("SELECT title FROM Tasks WHERE id = @id");
           const taskTitle = titleRes.recordset[0]?.title || "PM Task";
+
+          try {
+            TaskReviewSchema.parse({
+              status:       'checked by supervisor',
+              check_by:     checkBy,
+              check_date:   checkDatetime,
+              tool_check:   toolCheck,
+              clean_check:  cleanCheck,
+              who_clean_up: whoCleanUp,
+              check_detail: checkDetail,
+            });
+          } catch (err) {
+            console.error("[slackActions sql_task_update] schema validation failed:", err.issues ?? err.message);
+            throw err;
+          }
 
           await pool.request()
             .input("id",          sql.UniqueIdentifier, taskId)
