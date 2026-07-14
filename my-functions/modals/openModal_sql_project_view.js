@@ -12,15 +12,18 @@ async function fetchProject(projectId) {
         SELECT p.id, p.title, p.status, p.priority,
                p.scheduled_start, p.scheduled_end,
                p.actual_start, p.actual_end,
-               p.equipment_id, e.equipment_name,
                p.machine_location,
                p.source_rtdb_job_id,
                p.description, p.done_by, p.check_date,
                p.notify_supervisor, p.message_to_supervisor,
                p.issue_picture, p.finish_picture,
-               tech.name AS technician_name
+               tech.name AS technician_name,
+               (SELECT TOP 1 pe.equipment_id   FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+               (SELECT TOP 1 e.area            FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_area,
+               (SELECT TOP 1 e.machine_line    FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_machine_line,
+               (SELECT TOP 1 e.equipment_name  FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_name,
+               (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
         FROM Projects p
-        LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
         LEFT JOIN Technicians tech ON p.technician_id = tech.id
         WHERE p.id = @id
       `);
@@ -46,13 +49,15 @@ function fmt(d) {
 function buildProjectDetailBlocks(project) {
   if (!project) return [{ type: "section", text: { type: "mrkdwn", text: "_Project not found._" } }];
 
-  const location = project.equipment_name || project.equipment_id || project.machine_location || "N/A";
+  const equipPath = project.equipment_area
+    ? [project.equipment_area, project.equipment_machine_line, project.equipment_id].filter(Boolean).join(' > ')
+    : (project.equipment_other || project.machine_location || 'N/A');
   const blocks = [
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${project.title}*\n📍 ${location}  •  Priority: ${project.priority || "N/A"}\nAssigned: ${project.technician_name || "N/A"}`,
+        text: `*${project.title}*\n📍 ${equipPath}  •  Priority: ${project.priority || "N/A"}\nAssigned: ${project.technician_name || "N/A"}`,
       },
     },
     {

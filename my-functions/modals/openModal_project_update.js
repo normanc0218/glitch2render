@@ -36,11 +36,14 @@ async function fetchProject(projectId) {
     const result = await pool.request()
       .input("id", sql.UniqueIdentifier, projectId)
       .query(`
-        SELECT p.title, p.status,
+        SELECT p.title, p.status, p.description, p.issue_picture,
                p.machine_location, p.scheduled_start, p.scheduled_end,
-               e.equipment_name
+               (SELECT TOP 1 pe.equipment_id  FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+               (SELECT TOP 1 e.area           FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_area,
+               (SELECT TOP 1 e.machine_line   FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_machine_line,
+               (SELECT TOP 1 e.equipment_name FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_name,
+               (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
         FROM Projects p
-        LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
         WHERE p.id = @id
       `);
     return result.recordset[0] || null;
@@ -79,12 +82,27 @@ function buildProjectUpdateModal(metaOrJobId, showOtherOptions = false, selected
   const blocks = [];
 
   if (projectInfo?.title) {
-    const location = projectInfo.equipmentName || projectInfo.machineLocation || "N/A";
+    const equipPath = projectInfo.equipmentArea
+      ? [projectInfo.equipmentArea, projectInfo.equipmentLine, projectInfo.equipmentId].filter(Boolean).join(' > ')
+      : (projectInfo.equipmentOther || projectInfo.machineLocation || 'N/A');
     const startStr = fmtDate(projectInfo.scheduledStart) || "N/A";
     const dueStr   = fmtDate(projectInfo.scheduledEnd)   || "N/A";
-    blocks.push(createTextSection(
-      `*${projectInfo.title}*  •  ${projectInfo.status || ""}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${dueStr}`
-    ));
+    let headerText = `*${projectInfo.title}*  •  ${projectInfo.status || ""}\n📍 ${equipPath}  •  Start: ${startStr}  •  Due: ${dueStr}`;
+    if (projectInfo.description) headerText += `\n${projectInfo.description}`;
+    blocks.push(createTextSection(headerText));
+
+    // Show up to 3 issue pictures so the technician knows what to work on
+    if (projectInfo.issuePicture) {
+      try {
+        const urls = JSON.parse(projectInfo.issuePicture);
+        if (Array.isArray(urls) && urls.length > 0) {
+          urls.slice(0, 3).forEach((url, i) => {
+            blocks.push({ type: "image", image_url: url, alt_text: `Issue photo ${i + 1}` });
+          });
+        }
+      } catch { /* not a JSON array — skip */ }
+    }
+
     blocks.push(createDivider());
   }
 
@@ -143,12 +161,18 @@ const openModal_project_update = async (trigger_id, jobId) => {
 
   const meta = JSON.stringify({
     jobId,
-    title:          project?.title            || null,
-    status:         project?.status           || null,
-    equipmentName:  project?.equipment_name   || null,
-    machineLocation: project?.machine_location || null,
-    scheduledStart: project?.scheduled_start  || null,
-    scheduledEnd:   project?.scheduled_end    || null,
+    title:           project?.title                  || null,
+    status:          project?.status                 || null,
+    description:     project?.description            || null,
+    equipmentId:     project?.equipment_id           || null,
+    equipmentArea:   project?.equipment_area         || null,
+    equipmentLine:   project?.equipment_machine_line || null,
+    equipmentName:   project?.equipment_name         || null,
+    equipmentOther:  project?.equipment_other        || null,
+    machineLocation: project?.machine_location       || null,
+    issuePicture:    project?.issue_picture          || null,
+    scheduledStart:  project?.scheduled_start        || null,
+    scheduledEnd:    project?.scheduled_end          || null,
   });
 
   await client.views.open({

@@ -170,7 +170,11 @@ async function getProjectsForTechnician(techNames) {
              p.machine_location,
              p.scheduled_start, p.scheduled_end,
              tech.name AS technician_name,
-             (SELECT TOP 1 e2.equipment_name FROM ProjectEquipment pe2 JOIN Equipment e2 ON e2.equipment_id = pe2.equipment_id WHERE pe2.project_id = p.id) AS equipment_name
+             (SELECT TOP 1 pe2.equipment_id   FROM ProjectEquipment pe2 WHERE pe2.project_id = p.id AND pe2.equipment_id IS NOT NULL) AS equipment_id,
+             (SELECT TOP 1 e2.area            FROM ProjectEquipment pe2 JOIN Equipment e2 ON e2.equipment_id = pe2.equipment_id WHERE pe2.project_id = p.id AND pe2.equipment_id IS NOT NULL) AS equipment_area,
+             (SELECT TOP 1 e2.machine_line    FROM ProjectEquipment pe2 JOIN Equipment e2 ON e2.equipment_id = pe2.equipment_id WHERE pe2.project_id = p.id AND pe2.equipment_id IS NOT NULL) AS equipment_machine_line,
+             (SELECT TOP 1 e2.equipment_name  FROM ProjectEquipment pe2 JOIN Equipment e2 ON e2.equipment_id = pe2.equipment_id WHERE pe2.project_id = p.id AND pe2.equipment_id IS NOT NULL) AS equipment_name,
+             (SELECT TOP 1 pe2.equipment_other FROM ProjectEquipment pe2 WHERE pe2.project_id = p.id AND pe2.equipment_other IS NOT NULL) AS equipment_other
       FROM Projects p
       JOIN Technicians tech ON p.technician_id = tech.id
       WHERE tech.name IN (${placeholders})
@@ -360,12 +364,14 @@ async function displayHome(userId) {
       if (techProjects.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Projects:*" } });
         for (const p of techProjects.slice(0, 5)) {
-          const location = p.equipment_name || p.machine_location || "N/A";
+          const equipPath = p.equipment_area
+            ? [p.equipment_area, p.equipment_machine_line, p.equipment_id].filter(Boolean).join(' > ')
+            : (p.equipment_other || p.machine_location || 'N/A');
           const startStr = fmtDate(p.scheduled_start) || "N/A";
           const endStr   = fmtDate(p.scheduled_end)   || "N/A";
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${p.title}*  •  ${p.status}\n📍 ${location}  •  Start: ${startStr}  •  Due: ${endStr}${p.description ? `\n${p.description}` : ""}` },
+            text: { type: "mrkdwn", text: `*${p.title}*  •  ${p.status}\n📍 ${equipPath}  •  Start: ${startStr}  •  Due: ${endStr}${p.description ? `\n${p.description}` : ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "Update Project" }, style: "primary", value: String(p.id), action_id: "update_project" },
           });
         }
