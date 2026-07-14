@@ -23,7 +23,7 @@ const ProjectStatusSchema = z.enum(PROJECT_STATUSES)
 
 // Fields written by handleUpdateProgress → handleProjectUpdate on completion
 const ProjectCompletionSchema = z.object({
-  status:                z.enum(['Completed and waiting for approval', 'Pending']),
+  status:                z.literal('Completed and waiting for approval'),
   done_by:               z.string(),
   actual_start:          z.string().nullable(),
   actual_end:            z.string().nullable(),

@@ -123,9 +123,7 @@ async function handleProjectUpdate(projectId, vals, user) {
 
   const statusComplete = vals?.project_complete_job?.project_complete_job?.selected_option?.value || "completed";
   const statusOther    = vals?.project_other_status?.project_other_status?.selected_option?.value || null;
-  const projectStatus  = statusComplete === "completed"
-    ? "Completed and waiting for approval"
-    : "Pending";
+  const projectStatus = "Completed and waiting for approval";
 
   const picFiles = vals?.finishPicture?.file_input_action_id_1?.files || [];
   const finishPicture = picFiles.length > 0
