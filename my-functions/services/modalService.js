@@ -78,7 +78,7 @@ async function getProjectsPendingApproval() {
     const pool = await getPool();
     const result = await pool.request().query(`
       SELECT p.id, p.title, p.description, p.status,
-             p.machine_location, p.equipment_id,
+             p.machine_location,
              p.scheduled_start, p.scheduled_end,
              p.ordered_by, p.notify_supervisor,
              p.done_by, p.updated_at
@@ -167,13 +167,12 @@ async function getProjectsForTechnician(techNames) {
     }).join(", ");
     const result = await req.query(`
       SELECT p.id, p.title, p.description, p.status,
-             p.machine_location, p.equipment_id,
+             p.machine_location,
              p.scheduled_start, p.scheduled_end,
              tech.name AS technician_name,
-             e.equipment_name
+             (SELECT TOP 1 e2.equipment_name FROM ProjectEquipment pe2 JOIN Equipment e2 ON e2.equipment_id = pe2.equipment_id WHERE pe2.project_id = p.id) AS equipment_name
       FROM Projects p
       JOIN Technicians tech ON p.technician_id = tech.id
-      LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
       WHERE tech.name IN (${placeholders})
         AND p.status NOT IN ('Completed and waiting for approval','Checked by Supervisor','Cancelled','Completed')
       ORDER BY p.scheduled_start ASC
@@ -299,7 +298,7 @@ async function displayHome(userId) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📋 Projects pending approval:*" } });
         for (const p of myProjects) {
           const date = fmtDate(p.scheduled_start) || "N/A";
-          const location = p.equipment_id || p.machine_location || "N/A";
+          const location = p.machine_location || "N/A";
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${p.title}*\n📍 ${location}  •  Start: ${date}  •  Done by: ${p.done_by || "N/A"}` },
@@ -309,11 +308,10 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      // RTDB Regular jobs pending approval (existing flow — excludes promoted jobs)
+      // RTDB Regular jobs pending approval (promoted jobs are still shown so supervisor can review them)
       const rtdbFinished = Object.entries(release || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(j => {
-          if (promotedIds.has(j.id)) return false;
           const s = (j.status || "").toLowerCase();
           return (s.includes("waiting") || s.includes("completed")) && userConfig.Supervisors[j.notifySupervisor] === userId;
         })
@@ -362,7 +360,7 @@ async function displayHome(userId) {
       if (techProjects.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Projects:*" } });
         for (const p of techProjects.slice(0, 5)) {
-          const location = p.equipment_name || p.equipment_id || p.machine_location || "N/A";
+          const location = p.equipment_name || p.machine_location || "N/A";
           const startStr = fmtDate(p.scheduled_start) || "N/A";
           const endStr   = fmtDate(p.scheduled_end)   || "N/A";
           blocks.push({
