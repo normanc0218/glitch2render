@@ -89,10 +89,10 @@ function buildJobBlock(type, job) {
   if (type === 'Regular') {
     const s = (job.status || "").toLowerCase();
     const emoji = s.includes("checked") ? "✅" : s.includes("complete") ? "🕓" : "⚙️";
-    const isWaiting = s.includes("waiting") || (s.includes("complete") && !s.includes("checked"));
-    const actionBtn = isWaiting
-      ? { type: "button", text: { type: "plain_text", text: "Approve" }, style: "primary", value: job.id, action_id: "review_progress" }
-      : { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail" };
+    // This is a browse/history list open to every user regardless of role —
+    // never show an action button here, only View. Approving happens from
+    // the Home tab, scoped to the notified supervisor.
+    const actionBtn = { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail" };
     const assigned = Array.isArray(job.assignedTo) ? job.assignedTo.join(', ') : (job.assignedTo || "Unassigned");
     const date = (job.scheduledStart || job.actualStart || "").slice(0, 10) || "N/A";
     return {

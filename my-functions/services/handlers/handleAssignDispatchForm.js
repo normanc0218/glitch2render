@@ -4,6 +4,7 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const db = require("../../db");
 const { displayHome } = require("../modalService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const userConfig = require("../slackUserService");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -16,7 +17,7 @@ async function handleAssignDispatchForm(payload) {
   const scheduleRef = db.ref(`jobs/Dispatch/${oldId}`);
   await scheduleRef.remove();
   //generate new Id
-  const jobId = await generateUniqueJobId();
+  const jobId = await generateUniqueJobId(user?.id === "U_E2E" || process.env.FORCE_TEST_JOB_IDS === "true");
   
   const orderedBy = await resolveDisplayName(user?.id, user?.username);
   const data = {
@@ -41,6 +42,16 @@ async function handleAssignDispatchForm(payload) {
   // 保存任务
   await saveJob(`jobs/Release/Regular`,data);
   await displayHome(user.id);
+
+  // Refresh the assigned technician(s)' Home tab so the job shows up immediately.
+  for (const name of data.assignedTo || []) {
+    const techSlackId = userConfig.maintenanceStaff[name];
+    if (techSlackId && techSlackId !== user.id) {
+      displayHome(techSlackId).catch(err =>
+        console.error("Failed to refresh assigned technician's home:", err.message)
+      );
+    }
+  }
 }
 
 module.exports = handleAssignDispatchForm ;

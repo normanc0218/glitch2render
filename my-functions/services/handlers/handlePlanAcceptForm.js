@@ -7,11 +7,13 @@ const { displayHome } = require("../modalService");
 async function handlePlanAcceptForm(payload) {
   const { user, view } = payload;
   const ts = new Date();
-  const jobId = view.private_metadata;  
+  const rawMeta = view.private_metadata;
+  let jobId;
+  try { jobId = JSON.parse(rawMeta).jobId; } catch { jobId = rawMeta; }
   const data = {
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     remarks: view.state.values?.remarks?.remarks_input?.value || "N/A",
-    acceptDatetime: `${view.state.values?.acceptDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.acceptTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
+    scheduledStart: `${view.state.values?.acceptDate?.datepickeraction?.selected_date || ts.toISOString().slice(0, 10)}T${(view.state.values?.acceptTime?.timepickeraction?.selected_time || ts.toTimeString().slice(0, 5)).slice(0, 5)}`,
     status: "Accepted",
   };
 

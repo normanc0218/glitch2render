@@ -6,6 +6,7 @@ const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const { RegularJobCreateSchema } = require("../../schemas/regularJob");
+const userConfig = require("../slackUserService");
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -26,7 +27,7 @@ async function resolveEquipmentName(equipmentId) {
 async function handleNewJobForm(payload) {
   const { user, view } = payload;
   const ts = new Date();
-  const jobId = await generateUniqueJobId();
+  const jobId = await generateUniqueJobId(user?.id === "U_E2E" || process.env.FORCE_TEST_JOB_IDS === "true");
 
   const orderedBy = await resolveDisplayName(user?.id, user?.username);
   const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value || null;
@@ -80,6 +81,16 @@ async function handleNewJobForm(payload) {
   await saveJob(`jobs/Release/Regular`,data);
   await displayHome(user.id)
 
+  // Refresh the assigned technician(s)' Home tab so the new job shows up
+  // immediately, instead of waiting for them to navigate away and back.
+  for (const name of data.assignedTo || []) {
+    const techSlackId = userConfig.maintenanceStaff[name];
+    if (techSlackId && techSlackId !== user.id) {
+      displayHome(techSlackId).catch(err =>
+        console.error("Failed to refresh assigned technician's home:", err.message)
+      );
+    }
+  }
 }
 
 module.exports = handleNewJobForm ;

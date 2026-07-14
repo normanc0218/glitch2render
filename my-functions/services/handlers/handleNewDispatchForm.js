@@ -23,7 +23,7 @@ async function resolveEquipmentName(equipmentId) {
 async function handleNewDispatchForm(payload) {
   const { user, view } = payload;
   const ts = new Date();
-  let jobId = await generateUniqueJobId();
+  let jobId = await generateUniqueJobId(user?.id === "U_E2E" || process.env.FORCE_TEST_JOB_IDS === "true");
   jobId = `DSP${jobId.slice(3)}`;
 
   const orderedBy = await resolveDisplayName(user?.id, user?.username);

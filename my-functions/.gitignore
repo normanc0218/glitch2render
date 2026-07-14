@@ -64,6 +64,8 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.*.local
 
 # Firebase service account key — contains private credentials, never commit
 serviceAccount.json

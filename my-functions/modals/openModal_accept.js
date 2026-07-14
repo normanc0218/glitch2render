@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { maintenanceStaff, managerUsers } = require('../userConfig');
+const { findJobById } = require('../services/firebaseService');
 const {
   createInputBlock,
   createInputBlock_select,
@@ -26,6 +27,19 @@ function getNYTimeString() {
 const initialTime = getNYTimeString();
 const mStaffName = Object.keys(maintenanceStaff);
 const openModal_accept = async (trigger_id, jobId) => {
+  // Embed scheduledStart into private_metadata (matching openModal_update_progress's
+  // pattern) so slackActions.js can validate the plan-to-start datetime against the
+  // order date without a second RTDB round trip at submission time.
+  let meta = jobId;
+  try {
+    const job = await findJobById(jobId);
+    if (job) {
+      meta = JSON.stringify({ jobId, scheduledStart: job.scheduledStart || null });
+    }
+  } catch {
+    // fall back to plain jobId string
+  }
+
   const blocks=[]
   blocks.push(createInputBlock("remarks", "Specify the reason if you are currently occupied.", "remarks_input", "Enter your remarks here"));
   blocks.push(createTextSection("Plan to Start Date"));
@@ -36,7 +50,7 @@ const openModal_accept = async (trigger_id, jobId) => {
   const modal = {
     type: "modal",
     callback_id: "planAccept",
-    private_metadata: jobId,
+    private_metadata: meta,
     title: {
       type: "plain_text",
       text: "Accept Task"

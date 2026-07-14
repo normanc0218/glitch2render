@@ -278,26 +278,23 @@ async function displayHome(userId) {
       });
       blocks.push(divider);
 
-      // Azure SQL PM Tasks completed, pending supervisor review (visible to all supervisors)
-      const allTasksApproval = azureTasksApproval.slice(0, 10);
-      if (allTasksApproval.length > 0) {
-        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🔧 PM Tasks completed — pending review:*" } });
-        for (const t of allTasksApproval) {
+      // Azure SQL PM Tasks completed, pending review — only tasks notified to this supervisor
+      const myTasksApproval = azureTasksApproval.filter(t => t.notify_supervisor === supervisorName).slice(0, 10);
+      if (myTasksApproval.length > 0) {
+        blocks.push({ type: "section", text: { type: "mrkdwn", text: "*🔧 PM Tasks completed — pending your review:*" } });
+        for (const t of myTasksApproval) {
           const date = fmtDate(t.scheduled_start) || "N/A";
-          const isAssigned = t.notify_supervisor && t.notify_supervisor === supervisorName;
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}  •  Notified: ${t.notify_supervisor || "N/A"}${t.description ? `  •  ${t.description}` : ""}` },
-            accessory: isAssigned
-              ? { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" }
-              : { type: "button", text: { type: "plain_text", text: "View Task" }, value: `sql:${t.id}`, action_id: "view_sql_task" },
+            text: { type: "mrkdwn", text: `*${t.title}*\nScheduled: ${date}  •  📍 ${t.equipment_ids || "N/A"}\nDone by: ${t.done_by || "N/A"}${t.description ? `  •  ${t.description}` : ""}` },
+            accessory: { type: "button", text: { type: "plain_text", text: "Check and Approve" }, style: "primary", value: `sql:${t.id}`, action_id: "approve_sql_task" },
           });
         }
         blocks.push(divider);
       }
 
-      // Azure SQL Projects pending approval (show all to all supervisors)
-      const myProjects = azureProjects.slice(0, 10);
+      // Azure SQL Projects pending approval — only projects notified to this supervisor
+      const myProjects = azureProjects.filter(p => p.notify_supervisor === supervisorName).slice(0, 10);
       if (myProjects.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📋 Projects pending approval:*" } });
         for (const p of myProjects) {
@@ -334,7 +331,7 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      if (allTasksApproval.length === 0 && myProjects.length === 0 && rtdbFinished.length === 0) {
+      if (myTasksApproval.length === 0 && myProjects.length === 0 && rtdbFinished.length === 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "_No jobs waiting for approval._" } });
       }
     }
@@ -377,44 +374,42 @@ async function displayHome(userId) {
         blocks.push(divider);
       }
 
-      // RTDB Regular jobs — excludes promoted (limit 5)
+      // RTDB Regular jobs — excludes promoted, only jobs assigned to this technician (limit 5)
       const regularJobs = Object.entries(release || {})
         .map(([id, job]) => ({ ...job, id }))
         .filter(job => {
           if (promotedIds.has(job.id)) return false;
           const s = (job.status || "").toLowerCase();
-          return !["complete", "completed", "approved", "rejected", "checked", "promoted"].some(w => s.includes(w));
+          if (["complete", "completed", "approved", "rejected", "checked", "promoted"].some(w => s.includes(w))) return false;
+          const assignedNames = Array.isArray(job.assignedTo) ? job.assignedTo : [job.assignedTo];
+          return assignedNames.some(name => userConfig.maintenanceStaff[name] === userId);
         })
         .slice(0, 5);
 
       if (regularJobs.length > 0) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*Regular Jobs:*" } });
         for (const job of regularJobs) {
-          const assignedKey   = Array.isArray(job.assignedTo) ? job.assignedTo[0] : job.assignedTo;
-          const assignedMatch = userConfig.maintenanceStaff[assignedKey] === userId;
           blocks.push({
             type: "section",
             text: { type: "mrkdwn", text: `*${job.id}* — ${job.description || " "} — ${job.status || "Pending"}\n📍 ${job.equipmentName || "N/A"}  •  ${job.scheduledStart?.slice(0, 10) || ""}` },
             accessory: { type: "button", text: { type: "plain_text", text: "View" }, value: job.id, action_id: "openModal_viewDetail_home" },
           });
-          if (assignedMatch) {
-            if (job.status === "Pending") {
-              blocks.push({
-                type: "actions",
-                elements: [
-                  { type: "button", text: { type: "plain_text", text: "Accept" }, style: "primary", value: job.id, action_id: "accept_task" },
-                  { type: "button", text: { type: "plain_text", text: "Plan When?" }, value: job.id, action_id: "plan_accept" },
-                  { type: "button", text: { type: "plain_text", text: "Reject" }, style: "danger", value: job.id, action_id: "reject_task" },
-                ],
-              });
-            } else if (job.status === "Accepted") {
-              blocks.push({
-                type: "actions",
-                elements: [
-                  { type: "button", text: { type: "plain_text", text: "Update Progress" }, style: "primary", value: job.id, action_id: "update_progress" },
-                ],
-              });
-            }
+          if (job.status === "Pending") {
+            blocks.push({
+              type: "actions",
+              elements: [
+                { type: "button", text: { type: "plain_text", text: "Accept" }, style: "primary", value: job.id, action_id: "accept_task" },
+                { type: "button", text: { type: "plain_text", text: "Plan When?" }, value: job.id, action_id: "plan_accept" },
+                { type: "button", text: { type: "plain_text", text: "Reject" }, style: "danger", value: job.id, action_id: "reject_task" },
+              ],
+            });
+          } else if (job.status === "Accepted") {
+            blocks.push({
+              type: "actions",
+              elements: [
+                { type: "button", text: { type: "plain_text", text: "Update Progress" }, style: "primary", value: job.id, action_id: "update_progress" },
+              ],
+            });
           }
         }
         blocks.push(divider);

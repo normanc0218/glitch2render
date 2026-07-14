@@ -1,13 +1,13 @@
 const db = require("../db");
 
-async function generateUniqueJobId() {
+async function generateUniqueJobId(isTest = false) {
   let jobId;
   let exists = true;
 
   while (exists) {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-    jobId = `JOB-${dateStr}-${randomStr}`;
+    jobId = isTest ? `JOB-E2E-${dateStr}-${randomStr}` : `JOB-${dateStr}-${randomStr}`;
     exists = false;
 
     try {

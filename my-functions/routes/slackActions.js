@@ -188,6 +188,27 @@ module.exports = async (req, res) => {
     }
   }
 
+  // For planAccept ("Plan When?"), validate the planned start >= the order date.
+  // scheduledStart was embedded in private_metadata when the modal was opened (openModal_accept.js).
+  if (type === "view_submission" && view?.callback_id === "planAccept" && viewMeta?.scheduledStart) {
+    const vals       = view.state?.values || {};
+    const acceptDate = vals?.acceptDate?.datepickeraction?.selected_date;
+    const acceptTime = vals?.acceptTime?.timepickeraction?.selected_time;
+
+    if (acceptDate && acceptTime) {
+      const orderMs  = new Date(viewMeta.scheduledStart).getTime();
+      const acceptMs = new Date(`${acceptDate}T${acceptTime}`).getTime();
+      if (acceptMs < orderMs) {
+        return res.json({
+          response_action: "errors",
+          errors: {
+            acceptDate: `Plan date/time cannot be earlier than the order date (${viewMeta.scheduledStart.replace('T', ' ')}).`,
+          },
+        });
+      }
+    }
+  }
+
   // For submitOrder, validate before responding so we can return inline errors
   if (type === "view_submission" && view?.callback_id === "submitOrder") {
     const vals = view.state?.values || {};
