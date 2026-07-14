@@ -81,7 +81,11 @@ async function getProjectsPendingApproval() {
              p.machine_location,
              p.scheduled_start, p.scheduled_end,
              p.ordered_by, p.notify_supervisor,
-             p.done_by, p.updated_at
+             p.done_by, p.updated_at,
+             (SELECT TOP 1 pe.equipment_id    FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+             (SELECT TOP 1 e.area             FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_area,
+             (SELECT TOP 1 e.machine_line     FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_machine_line,
+             (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
       FROM Projects p
       WHERE p.status = 'Completed and waiting for approval'
       ORDER BY p.updated_at DESC
@@ -302,10 +306,12 @@ async function displayHome(userId) {
         blocks.push({ type: "section", text: { type: "mrkdwn", text: "*📋 Projects pending approval:*" } });
         for (const p of myProjects) {
           const date = fmtDate(p.scheduled_start) || "N/A";
-          const location = p.machine_location || "N/A";
+          const equipPath = p.equipment_area
+            ? [p.equipment_area, p.equipment_machine_line, p.equipment_id].filter(Boolean).join(' > ')
+            : (p.equipment_other || p.machine_location || 'N/A');
           blocks.push({
             type: "section",
-            text: { type: "mrkdwn", text: `*${p.title}*\n📍 ${location}  •  Start: ${date}  •  Done by: ${p.done_by || "N/A"}` },
+            text: { type: "mrkdwn", text: `*${p.title}*\n📍 ${equipPath}  •  Start: ${date}  •  Done by: ${p.done_by || "N/A"}` },
             accessory: { type: "button", text: { type: "plain_text", text: "Approve" }, style: "primary", value: String(p.id), action_id: "review_progress" },
           });
         }
