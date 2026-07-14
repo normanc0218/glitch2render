@@ -59,6 +59,10 @@ function buildTaskDetailBlocks(task) {
         text: `*${task.title}*\n📅 Scheduled: ${scheduled}  •  📍 ${task.equipment_ids || "N/A"}\nAssigned to: ${task.technician_name || "N/A"}`,
       },
     },
+    {
+      type: "context",
+      elements: [{ type: "mrkdwn", text: `Task ID: \`${task.id}\`` }],
+    },
     { type: "divider" },
     {
       type: "section",

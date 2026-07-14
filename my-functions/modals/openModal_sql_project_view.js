@@ -14,6 +14,7 @@ async function fetchProject(projectId) {
                p.actual_start, p.actual_end,
                p.equipment_id, e.equipment_name,
                p.machine_location,
+               p.source_rtdb_job_id,
                p.description, p.done_by, p.check_date,
                p.notify_supervisor, p.message_to_supervisor,
                p.issue_picture, p.finish_picture,
@@ -53,6 +54,15 @@ function buildProjectDetailBlocks(project) {
         type: "mrkdwn",
         text: `*${project.title}*\n📍 ${location}  •  Priority: ${project.priority || "N/A"}\nAssigned: ${project.technician_name || "N/A"}`,
       },
+    },
+    {
+      type: "context",
+      elements: [
+        { type: "mrkdwn", text: `Project ID: \`${project.id}\`` },
+        ...(project.source_rtdb_job_id
+          ? [{ type: "mrkdwn", text: `Source Job: \`${project.source_rtdb_job_id}\`` }]
+          : []),
+      ],
     },
     { type: "divider" },
     {
