@@ -50,11 +50,18 @@ async function fetchAzureSqlProject(projectId) {
       .input("id", sql.UniqueIdentifier, projectId)
       .query(`
         SELECT id, title, description, status,
-               machine_location, equipment_id,
+               status_complete, status_other,
+               machine_location,
                scheduled_start, scheduled_end,
                actual_end,
-               done_by, issue_picture, finish_picture
-        FROM Projects WHERE id = @id
+               done_by, message_to_supervisor,
+               tool_clean_up, machine_reset,
+               issue_picture, finish_picture,
+               (SELECT TOP 1 pe.equipment_id    FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+               (SELECT TOP 1 e.area             FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_area,
+               (SELECT TOP 1 e.machine_line     FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_machine_line,
+               (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
+        FROM Projects p WHERE p.id = @id
       `);
     return result.recordset[0] || null;
   } catch (err) {
@@ -138,19 +145,43 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
     // ── Azure SQL project summary ──
     const project = await fetchAzureSqlProject(jobId);
     if (project) {
-      actualEndForMeta = project.actual_end || null; // Date object — JSON.stringify serializes via toISOString()
-      const location   = project.equipment_id || project.machine_location || "N/A";
+      actualEndForMeta = project.actual_end || null;
+
+      const equipPath = project.equipment_area
+        ? [project.equipment_area, project.equipment_machine_line, project.equipment_id].filter(Boolean).join(' > ')
+        : (project.equipment_other || project.machine_location || 'N/A');
+
       const startDate  = fmtDate(project.scheduled_start) || "N/A";
       const finishDate = fmtDate(project.actual_end)      || "N/A";
       const finishTime = project.actual_end ? fmtTime(project.actual_end) : "";
-      const doneBy     = project.done_by                  || "N/A";
-      blocks.push(createTextSection(
-        `*${project.title}*\n📍 ${location}  •  Start: ${startDate}  •  Finished: ${finishDate}${finishTime ? ` ${finishTime}` : ""}\nDone by: ${doneBy}${project.description ? `\n_${project.description}_` : ""}`
-      ));
+      const doneBy     = project.done_by || "N/A";
+
+      const STATUS_OTHER_LABEL = {
+        temporarily_fixed: 'Temporarily Fixed',
+        waiting_for_parts: 'Waiting for Parts',
+        follow_up_check:   'Follow Up Check',
+      };
+
+      let summaryText = `*${project.title}*\n📍 ${equipPath}  •  Start: ${startDate}  •  Finished: ${finishDate}${finishTime ? ` ${finishTime}` : ""}\nDone by: *${doneBy}*`;
+      if (project.description) summaryText += `\n_${project.description}_`;
+
+      // Completion status
+      const statusLabel = project.status_complete === 'other_situation' && project.status_other
+        ? `Other situation — ${STATUS_OTHER_LABEL[project.status_other] || project.status_other}`
+        : (project.status_complete === 'completed' ? 'Completed' : project.status || 'N/A');
+      summaryText += `\n*Completion status:* ${statusLabel}`;
+
+      blocks.push(createTextSection(summaryText));
+
+      // Extra completion details
+      const details = [];
+      if (project.tool_clean_up)       details.push(`*Tool cleanup:* ${project.tool_clean_up}`);
+      if (project.machine_reset)        details.push(`*Machine reset:* ${project.machine_reset}`);
+      if (project.message_to_supervisor) details.push(`*Message to supervisor:* ${project.message_to_supervisor}`);
+      if (details.length > 0) blocks.push(createTextSection(details.join('\n')));
 
       const issuePics  = toPhotoArray(project.issue_picture);
       const finishPics = toPhotoArray(project.finish_picture);
-
       if (issuePics.length > 0) {
         blocks.push(createTextSection("*Issue Pictures:*"));
         for (const url of issuePics.slice(0, 5)) {
