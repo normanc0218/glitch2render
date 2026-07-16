@@ -210,10 +210,35 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
     }
 
     if (job) {
-      actualEndForMeta = job.actualEnd || null; // already a plain "YYYY-MM-DDTHH:MM" string, no Date involved
-      blocks.push(createTextSection(
-        `*Start:*  ${job.actualStart?.replace('T', ' ') || "_N/A_"}    •    *End:*  ${job.actualEnd?.replace('T', ' ') || "_N/A_"}`
-      ));
+      actualEndForMeta = job.actualEnd || null;
+
+      const desc       = (job.description || job.jobDescription || '').trim();
+      const equip      = job.equipmentName || job.machineLocation || 'N/A';
+      const assignedTo = Array.isArray(job.assignedTo) ? job.assignedTo.join(', ') : (job.assignedTo || 'N/A');
+      const doneBy     = job.doneBy || assignedTo;
+
+      const STATUS_OTHER_LABEL = {
+        temporarily_fixed: 'Temporarily Fixed',
+        waiting_for_parts: 'Waiting for Parts',
+        follow_up_check:   'Follow Up Check',
+      };
+      const statusLabel = job.statusComplete === 'other_situation' && job.statusOther
+        ? `Other situation — ${STATUS_OTHER_LABEL[job.statusOther] || job.statusOther}`
+        : (job.statusComplete === 'completed' ? 'Completed' : (job.status || 'N/A'));
+
+      let summaryText = `📍 *${equip}*\n*Start:* ${job.actualStart?.replace('T', ' ') || 'N/A'}  •  *End:* ${job.actualEnd?.replace('T', ' ') || 'N/A'}\nDone by: *${doneBy}*`;
+      if (desc) summaryText += `\n_Problem: ${desc}_`;
+      summaryText += `\n*Completion status:* ${statusLabel}`;
+      blocks.push(createTextSection(summaryText));
+
+      const details = [];
+      if (job.toolCleanUp        && job.toolCleanUp        !== 'N/A') details.push(`*Tool cleanup:* ${job.toolCleanUp}`);
+      if (job.machineReset       && job.machineReset       !== 'N/A') details.push(`*Machine reset:* ${job.machineReset}`);
+      if (job.reasonDefect       && job.reasonDefect       !== 'N/A') details.push(`*Reason for defect:* ${job.reasonDefect}`);
+      if (job.otherReason        && job.otherReason        !== 'N/A') details.push(`*Other reason:* ${job.otherReason}`);
+      if (job.partsNeeded        && job.partsNeeded        !== 'N/A') details.push(`*Parts needed:* ${job.partsNeeded}`);
+      if (job.messageToSupervisor && job.messageToSupervisor !== 'N/A') details.push(`*Message to supervisor:* ${job.messageToSupervisor}`);
+      if (details.length > 0) blocks.push(createTextSection(details.join('\n')));
 
       const toArr = v => Array.isArray(v) ? v : (v ? [v] : []);
       const issuePics  = toArr(job.issuePicture);
