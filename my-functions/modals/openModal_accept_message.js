@@ -53,42 +53,33 @@ const openModal_accept_message = async (trigger_id, userId, jobId) => {
       acceptDatetime: new Date().toISOString().slice(0, 16),
     });
     invalidateReleaseCache();
-  const blocks=[]
-  blocks.push(createTextSection(`✅ Job *${jobId}* has been accepted.`));
-  await displayHome(userId); // displayHome publishes the Home tab itself — don't wrap it in another views.publish
+
+  // Open the confirmation modal FIRST — trigger_id expires in 3 seconds from the button click.
+  // displayHome can take 2–30s, so it must run after views.open, not before.
+  const blocks = [createTextSection(`✅ Job *${jobId}* has been accepted.`)];
   const modal = {
     type: "modal",
     callback_id: "accept_message",
-    title:{
-      type:"plain_text",
-      text:"You have Accept the Job~"
-    },
+    title: { type: "plain_text", text: "You have Accept the Job~" },
     private_metadata: jobId,
-    blocks
+    blocks,
   };
 
   try {
     const response = await axios.post(
       'https://slack.com/api/views.open',
-      {
-        trigger_id: trigger_id,
-        view: modal
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`
-        }
-      }
+      { trigger_id, view: modal },
+      { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
     );
-
     if (!response.data.ok) {
       console.error("Slack API error:", response.data);
     }
-
   } catch (err) {
     console.error("Modal open error:", err.response?.data || err.message);
   }
+
+  // Refresh home after the modal is already open — fire-and-forget so it doesn't block anything.
+  displayHome(userId).catch(err => console.error("displayHome failed after accept:", err.message));
 };
 
 module.exports =  openModal_accept_message ;
