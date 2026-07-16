@@ -35,11 +35,11 @@ if (require.main === module) {
   app.listen(port, () => console.log(`🚀 Local server running on port ${port}`));
 }
 
-// Firebase Functions- 添加 minInstances 保持热启动
 exports.slackHandler = onRequest(
   {
     memory: "512MiB",
     timeoutSeconds: 60,
+    minInstances: 1,
   },
   app
 );

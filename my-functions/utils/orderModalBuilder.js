@@ -97,7 +97,7 @@ function buildCascadeBlocks({ area = null, areaLabel = null, machineLine = null,
         element: {
           type: "plain_text_input",
           action_id: "otherLocation",
-          placeholder: { type: "plain_text", text: "e.g. Production floor, Warehouse" },
+          placeholder: { type: "plain_text", text: "e.g. Production floor, Red Cage" },
         },
       },
       {
@@ -107,7 +107,7 @@ function buildCascadeBlocks({ area = null, areaLabel = null, machineLine = null,
         element: {
           type: "plain_text_input",
           action_id: "otherEquipment",
-          placeholder: { type: "plain_text", text: "e.g. Hyster #3" },
+          placeholder: { type: "plain_text", text: "e.g. Hand Washroom" },
         },
       }
     );

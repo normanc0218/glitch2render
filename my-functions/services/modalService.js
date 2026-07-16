@@ -532,7 +532,7 @@ async function displayHome(userId) {
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
     console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
   } catch (error) {
-    console.error("❌ Error publishing Home Tab:", error.message);
+    console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
     if (error.data?.response_metadata?.messages) {
       console.error("Slack validation errors:", JSON.stringify(error.data.response_metadata.messages, null, 2));
     }

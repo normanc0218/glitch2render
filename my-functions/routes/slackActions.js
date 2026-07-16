@@ -244,9 +244,9 @@ module.exports = async (req, res) => {
     // === 1️⃣ block actions (按钮点击) ===
     if (type === "block_actions" && actions && actions[0]) {
       const action = actions[0];
-      const jobId = action?.value;
+      const jobId = action?.value ?? null;  // buttons; selects use action.selected_option.value
       const viewId = view?.id||[];
-      console.log("[block_actions] action_id=%s jobId=%s user=%s", action.action_id, jobId, user?.id);
+      console.log("[block_actions] action_id=%s jobId=%s selected=%s user=%s", action.action_id, jobId, action?.selected_option?.value ?? null, user?.id);
 
       switch (action.action_id) {
         //Submit Order
@@ -649,6 +649,12 @@ module.exports = async (req, res) => {
       }
     }
   } catch (error) {
-    console.error("❌ Error processing Slack action:", error);
+    console.error("❌ Error processing Slack action for user", user?.id, error.message, error.stack);
+    try {
+      await slackClient.chat.postMessage({
+        channel: user.id,
+        text: `⚠️ Something went wrong processing your request. Please try again or contact admin.\n\`${error.message}\``,
+      });
+    } catch (_) {}
   }
 };

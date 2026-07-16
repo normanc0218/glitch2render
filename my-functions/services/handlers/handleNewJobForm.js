@@ -74,7 +74,7 @@ async function handleNewJobForm(payload) {
     RegularJobCreateSchema.parse(data);
   } catch (err) {
     console.error("[handleNewJobForm] schema validation failed — job NOT saved:", err.issues ?? err.message);
-    return;
+    throw new Error("Your job submission could not be saved due to a validation error. Please contact admin.");
   }
 
   // 保存任务
