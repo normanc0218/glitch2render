@@ -37,6 +37,13 @@ async function getRelease() {
   return _releaseCache;
 }
 
+// Call after any write to jobs/Release/Regular so the next displayHome() call
+// (e.g. right after Accept/Reject/Plan-When/Update Progress) doesn't serve up
+// to RELEASE_TTL_MS of stale status from this cache.
+function invalidateReleaseCache() {
+  _releaseCache = null;
+}
+
 let _usersCache    = null;
 let _usersFetchedAt = 0;
 const USERS_TTL_MS  = 60 * 1000; // 60 s — RTDB users node changes rarely
@@ -538,4 +545,4 @@ async function displayHome(userId) {
   }
 }
 
-module.exports = { displayHome };
+module.exports = { displayHome, invalidateReleaseCache };

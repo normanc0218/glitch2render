@@ -41,8 +41,6 @@ async function handleNewProjectForm(payload) {
   // 保存任务
   await saveJob(`jobs/Release/Project`,data);
   await displayHome(user.id)
-  // 通知频道
-  await notifyNewOrder(data, jobId);
 }
 
 module.exports = handleNewProjectForm ;

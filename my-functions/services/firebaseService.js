@@ -1,6 +1,7 @@
 // services/firebaseService.js
 const db = require("../db");
 const axios = require("axios");
+const { invalidateReleaseCache } = require("./modalService");
 
 /**
  * ✅ 从路径获取全部数据
@@ -16,6 +17,7 @@ async function getAll(path) {
 async function saveJob(basePath, data) {
   const { jobId, ...payload } = data;
   await db.ref(`${basePath}/${jobId}`).set(payload);
+  invalidateReleaseCache();
 }
 
 async function saveJobSmart(jobId, data, notify=false, msg= '') {
@@ -37,6 +39,7 @@ async function saveJobSmart(jobId, data, notify=false, msg= '') {
     : `jobs/Release/Regular/${jobId}`;
 
   await db.ref(targetPath).update(data);
+  invalidateReleaseCache();
   console.log(`✅ Job saved to ${targetPath}`);
 
   if (notify === true) {

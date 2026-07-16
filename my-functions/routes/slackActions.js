@@ -12,7 +12,6 @@ const db = require("../db");
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 const { buildOrderModalView } = require("../utils/orderModalBuilder");
 const { buildDispatchModalView } = require("../modals/openModal_dispatch");
-const { buildTrainingModalView } = require("../modals/openModal_submit_training");
 const {
   openModal,
   openModal_accept,
@@ -260,8 +259,7 @@ module.exports = async (req, res) => {
           const selected = action.selected_option;
           const state = { area: selected?.value, areaLabel: selected?.text?.text };
           const callbackId = view?.callback_id;
-          const updatedView = callbackId === "dispatch"       ? buildDispatchModalView(state)
-                            : callbackId === "trainingRecord" ? buildTrainingModalView(state)
+          const updatedView = callbackId === "dispatch" ? buildDispatchModalView(state)
                             : buildOrderModalView(state);
           await slackClient.views.update({ view_id: viewId, view: updatedView });
           break;
@@ -276,8 +274,7 @@ module.exports = async (req, res) => {
             machineLine: lineOpt?.value, machineLineLabel: lineOpt?.text?.text,
           };
           const callbackId = view?.callback_id;
-          const updatedView = callbackId === "dispatch"       ? buildDispatchModalView(state)
-                            : callbackId === "trainingRecord" ? buildTrainingModalView(state)
+          const updatedView = callbackId === "dispatch" ? buildDispatchModalView(state)
                             : buildOrderModalView(state);
           await slackClient.views.update({ view_id: viewId, view: updatedView });
           break;

@@ -1,9 +1,6 @@
 const axios = require('axios');
 const db = require("../db");
-const { displayHome } = require("../services/modalService");
-const { WebClient } = require("@slack/web-api");
-const token = process.env.SLACK_BOT_TOKEN;
-const client = new WebClient(token);
+const { displayHome, invalidateReleaseCache } = require("../services/modalService");
 const { maintenanceStaff, managerUsers } = require('../userConfig');
 const {
   createInputBlock,
@@ -55,15 +52,10 @@ const openModal_accept_message = async (trigger_id, userId, jobId) => {
       status: "Accepted",
       acceptDatetime: new Date().toISOString().slice(0, 16),
     });
+    invalidateReleaseCache();
   const blocks=[]
   blocks.push(createTextSection(`✅ Job *${jobId}* has been accepted.`));
-  await client.views.publish({
-    user_id: userId,
-    view: {
-      type: "home",
-      blocks: displayHome(userId) // 你自己生成 Home Tab block 的函数
-    }
-  });
+  await displayHome(userId); // displayHome publishes the Home tab itself — don't wrap it in another views.publish
   const modal = {
     type: "modal",
     callback_id: "accept_message",
