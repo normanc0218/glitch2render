@@ -102,8 +102,11 @@ async function handleReview(payload) {
           updated_at   = GETDATE()
         WHERE id = @id
       `);
+    const t0sql = Date.now();
     await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
+    console.log(`[review/sql] disableApproveButton done: ${Date.now() - t0sql}ms`);
     await displayHome(user.id);
+    console.log(`[review/sql] displayHome done: ${Date.now() - t0sql}ms`);
 
     // Refresh the technician's App Home so they see the approved status immediately
     const techRes = await pool.request()
@@ -140,8 +143,11 @@ async function handleReview(payload) {
   console.log("[handleReview] running saveJobSmart for RTDB jobId=%s checkBy=%s", jobId, checkBy);
   const msg = `✅ Job *${jobId}* was *Reviewed* by <@${user.id}>`;
   await saveJobSmart(jobId, data, true, msg);
+  const t0rtdb = Date.now();
   await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
+  console.log(`[review/rtdb] disableApproveButton done: ${Date.now() - t0rtdb}ms`);
   await displayHome(user.id);
+  console.log(`[review/rtdb] displayHome done: ${Date.now() - t0rtdb}ms`);
 
   // Refresh the technician's App Home so they see the approved status immediately
   const techSlackId = doneby ? userConfig.maintenanceStaff[doneby] : null;
