@@ -28,34 +28,32 @@ function getNYTimeString() {
 const initialTime = getNYTimeString();
 const mStaffName = Object.keys(maintenanceStaff);
 const openModal_accept_message = async (trigger_id, userId, jobId) => {
-  // 并行读三条精准路径，找 jobId 在哪个子类
-    const [rSnap, dSnap, pSnap] = await Promise.all([
-      db.ref(`jobs/Release/Regular/${jobId}`).once("value"),
-      db.ref(`jobs/Release/Daily/${jobId}`).once("value"),
-      db.ref(`jobs/Release/Project/${jobId}`).once("value"),
-    ]);
+  const t0 = Date.now();
+  console.log(`[accept] start jobId=${jobId} user=${userId}`);
 
-    const found = [
-      { snap: rSnap, category: "Regular" },
-      { snap: dSnap, category: "Daily" },
-      { snap: pSnap, category: "Project" },
-    ].find(({ snap }) => snap.exists());
+  const [rSnap, dSnap, pSnap] = await Promise.all([
+    db.ref(`jobs/Release/Regular/${jobId}`).once("value"),
+    db.ref(`jobs/Release/Daily/${jobId}`).once("value"),
+    db.ref(`jobs/Release/Project/${jobId}`).once("value"),
+  ]);
 
-    if (!found) {
-      console.error(`❌ Job ${jobId} not found in any branch.`);
-      return;
-    }
+  const found = [
+    { snap: rSnap, category: "Regular" },
+    { snap: dSnap, category: "Daily" },
+    { snap: pSnap, category: "Project" },
+  ].find(({ snap }) => snap.exists());
 
-    console.log(`✅ Found job ${jobId} in branch ${found.category}`);
-    const jobRef = db.ref(`jobs/Release/${found.category}/${jobId}`);
-    await jobRef.update({
-      status: "Accepted",
-      acceptDatetime: new Date().toISOString().slice(0, 16),
-    });
-    invalidateReleaseCache();
+  if (!found) {
+    console.error(`❌ Job ${jobId} not found in any branch.`);
+    return;
+  }
 
-  // Open the confirmation modal FIRST — trigger_id expires in 3 seconds from the button click.
-  // displayHome can take 2–30s, so it must run after views.open, not before.
+  const jobRef = db.ref(`jobs/Release/${found.category}/${jobId}`);
+  await jobRef.update({ status: "Accepted", acceptDatetime: new Date().toISOString().slice(0, 16) });
+  invalidateReleaseCache();
+  console.log(`[accept] RTDB write done: ${Date.now() - t0}ms`);
+
+  // Open modal FIRST — trigger_id expires 3s from the button click
   const blocks = [createTextSection(`✅ Job *${jobId}* has been accepted.`)];
   const modal = {
     type: "modal",
@@ -65,6 +63,7 @@ const openModal_accept_message = async (trigger_id, userId, jobId) => {
     blocks,
   };
 
+  console.log(`[accept] views.open start: ${Date.now() - t0}ms`);
   try {
     const response = await axios.post(
       'https://slack.com/api/views.open',
@@ -72,14 +71,18 @@ const openModal_accept_message = async (trigger_id, userId, jobId) => {
       { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}` } }
     );
     if (!response.data.ok) {
-      console.error("Slack API error:", response.data);
+      console.error(`[accept] views.open failed: ${Date.now() - t0}ms`, response.data);
+    } else {
+      console.log(`[accept] views.open done: ${Date.now() - t0}ms ✅`);
     }
   } catch (err) {
-    console.error("Modal open error:", err.response?.data || err.message);
+    console.error(`[accept] views.open error: ${Date.now() - t0}ms`, err.response?.data || err.message);
   }
 
-  // Refresh home after the modal is already open — fire-and-forget so it doesn't block anything.
-  displayHome(userId).catch(err => console.error("displayHome failed after accept:", err.message));
+  // displayHome fire-and-forget — runs in background after modal is already open
+  displayHome(userId)
+    .then(() => console.log(`[accept] displayHome done: ${Date.now() - t0}ms`))
+    .catch(err => console.error(`[accept] displayHome failed: ${Date.now() - t0}ms`, err.message));
 };
 
 module.exports =  openModal_accept_message ;
