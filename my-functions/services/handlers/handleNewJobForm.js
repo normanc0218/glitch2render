@@ -79,7 +79,9 @@ async function handleNewJobForm(payload) {
 
   // 保存任务
   await saveJob(`jobs/Release/Regular`,data);
-  await displayHome(user.id)
+  const t0 = Date.now();
+  await displayHome(user.id);
+  console.log(`[submitOrder] displayHome done: ${Date.now() - t0}ms`);
 
   // Refresh the assigned technician(s)' Home tab so the new job shows up
   // immediately, instead of waiting for them to navigate away and back.
