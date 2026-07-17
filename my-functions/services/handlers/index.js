@@ -6,7 +6,7 @@ const handleUpdateProgress= require('./handleUpdateProgress');
 const handlePlanAcceptForm= require('./handlePlanAcceptForm');
 const handleRejectForm= require('./handleRejectForm');
 const handleReview= require('./handleReview');
-const handleNewTrainRecord= require('./handleNewTrainRecord');
+const handleNewTrainRecord = require('./handleNewTrainRecord');
 module.exports = {
   handleNewJobForm,
   handleNewDispatchForm,
@@ -15,5 +15,5 @@ module.exports = {
   handlePlanAcceptForm,
   handleRejectForm,
   handleReview,
-  handleNewTrainRecord
+  handleNewTrainRecord,
 };

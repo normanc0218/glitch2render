@@ -1,4 +1,5 @@
 // services/handlers/handleNewJobForm.js
+const { WebClient } = require("@slack/web-api");
 const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
@@ -7,6 +8,8 @@ const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const { RegularJobCreateSchema } = require("../../schemas/regularJob");
 const userConfig = require("../slackUserService");
+
+const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -43,6 +46,19 @@ async function handleNewJobForm(payload) {
   const resolvedArea          = isOther ? (otherLocation || null) : selectedArea;
   const resolvedMachineLine   = isOther ? null : (view.state.values?.machineLine?.machineLine?.selected_option?.value || null);
 
+  const assignedOpt      = view.state.values?.assignedTo?.pickedGuy?.selected_option || null;
+  const isOfflineTech    = assignedOpt?.value?.startsWith("offline:") ?? false;
+  const assignedName     = assignedOpt
+    ? (isOfflineTech ? assignedOpt.value.slice(8) : assignedOpt.text.text)
+    : null;
+  const offlineTechNames = isOfflineTech && assignedName ? [assignedName] : [];
+
+  // When assigned to an offline tech, record which supervisor submitted the order
+  // so the supervisor home can show this job in the "needs record fill-in" section.
+  const supervisorName = isOfflineTech
+    ? (Object.keys(userConfig.Supervisors).find(n => userConfig.Supervisors[n] === user.id) || null)
+    : null;
+
   const data = {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
@@ -53,10 +69,8 @@ async function handleNewJobForm(payload) {
     equipmentName: resolvedEquipmentName,
     reporter: view.state.values?.reporter?.reporter?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
-    assignedTo:
-      view.state.values?.assignedTo?.pickedGuy?.selected_options?.map(
-        (opt) => opt.text.text 
-      ) || [],
+    assignedTo: assignedName ? [assignedName] : [],
+    ...(supervisorName ? { notifySupervisor: supervisorName } : {}),
     issuePicture:
       view.state.values?.issuePicture?.file_input_action_id_1?.files?.map(
         (file) => file.url_private
@@ -83,14 +97,46 @@ async function handleNewJobForm(payload) {
   await displayHome(user.id);
   console.log(`[submitOrder] displayHome done: ${Date.now() - t0}ms`);
 
-  // Refresh the assigned technician(s)' Home tab so the new job shows up
-  // immediately, instead of waiting for them to navigate away and back.
+  // Refresh the assigned technician's Home tab so the new job shows up immediately.
   for (const name of data.assignedTo || []) {
     const techSlackId = userConfig.maintenanceStaff[name];
     if (techSlackId && techSlackId !== user.id) {
       displayHome(techSlackId).catch(err =>
         console.error("Failed to refresh assigned technician's home:", err.message)
       );
+    }
+  }
+
+  // DM the supervisor to fill in the record for any offline techs they assigned.
+  if (offlineTechNames.length > 0) {
+    const nameList = offlineTechNames.join(", ");
+    const plural = offlineTechNames.length > 1;
+    try {
+      await slackClient.chat.postMessage({
+        channel: user.id,
+        text: `Job ${jobId} created. ${nameList} ${plural ? "don't" : "doesn't"} have Slack — please fill in their completion record.`,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `✅ Job *${jobId}* has been created.\n⚠️ You need to fill in the job details for *${nameList}* since ${plural ? "they don't" : `${nameList} doesn't`} have access to Slack.`,
+            },
+          },
+          {
+            type: "actions",
+            elements: offlineTechNames.map(name => ({
+              type: "button",
+              text: { type: "plain_text", text: `Fill Record for ${name}`, emoji: true },
+              style: "primary",
+              action_id: "fill_offline_record",
+              value: JSON.stringify({ jobId, techName: name }),
+            })),
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("[handleNewJobForm] failed to send offline-tech DM:", err.message);
     }
   }
 }

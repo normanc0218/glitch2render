@@ -41,14 +41,17 @@ async function fetchRegularJobs(tab) {
 async function fetchProjects(tab) {
   const pool = await getPool();
   const isFinished = tab === 'finished';
+  // Projects has no equipment_id column of its own — equipment is linked via
+  // the ProjectEquipment junction table (same pattern as Tasks/TaskEquipment),
+  // with equipment_other covering "not in the equipment list" projects.
   const r = await pool.request().query(`
     SELECT TOP 50 p.id, p.title, p.status,
            p.scheduled_start, p.scheduled_end,
-           p.equipment_id,
-           e.equipment_name,
-           tech.name AS technician_name
+           tech.name AS technician_name,
+           (SELECT TOP 1 pe.equipment_id    FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+           (SELECT TOP 1 e.equipment_name   FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_name,
+           (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
     FROM Projects p
-    LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
     LEFT JOIN Technicians tech ON p.technician_id = tech.id
     WHERE p.status ${isFinished
       ? `IN ('Checked by Supervisor', 'Completed', 'Cancelled')`
@@ -103,7 +106,7 @@ function buildJobBlock(type, job) {
   } else if (type === 'Project') {
     const s = (job.status || "").toLowerCase();
     const emoji = s.includes("checked") || s.includes("completed") ? "✅" : "🏗️";
-    const location = job.equipment_name || job.equipment_id || "N/A";
+    const location = job.equipment_name || job.equipment_id || job.equipment_other || "N/A";
     const start = fmtDate(job.scheduled_start) || "N/A";
     const end = fmtDate(job.scheduled_end) || "N/A";
     return {

@@ -201,7 +201,11 @@ function buildRtdbBlocks(job) {
       `*Rejected:* ${job.rejectDatetime?.replace('T', ' ') || "N/A"}\n` +
       `*Rejected By:* ${job.assignedTo || "N/A"}  •  *Reason:* ${job.rejectReason || "N/A"}`
     ), createDivider());
-  } else if (job.status !== "Pending") {
+  } else if (job.status !== "Pending" && job.status !== "Dispatched") {
+    // "Dispatched" jobs (jobs/Dispatch) never go through the tech
+    // accept/work/done flow — they're either assigned out (creating a new
+    // Regular job elsewhere) or reviewed as dismissed/deferred/promoted from
+    // the web app. Accepted/Done By/etc are always N/A noise for them.
     blocks.push(createTextSection(
       `*Accepted:* ${job.acceptDatetime?.replace('T', ' ') || "N/A"}\n` +
       `*Remarks:* ${job.remarks || "None"}`

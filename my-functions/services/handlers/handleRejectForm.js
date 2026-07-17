@@ -1,13 +1,12 @@
-// services/handlers/handleNewJobForm.js
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
-/**
- * ✅ 处理新任务表单提交
- */
+const db = require("../../db");
+const userConfig = require("../slackUserService");
+
 async function handleRejectForm(payload) {
   const { user, view } = payload;
   const ts = new Date();
-  const jobId = view.private_metadata;  
+  const jobId = view.private_metadata;
   const data = {
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     rejectReason: view.state.values?.rejectReason?.reason_input?.value || "N/A",
@@ -15,12 +14,19 @@ async function handleRejectForm(payload) {
     status: "Rejected",
   };
 
-  // 4️⃣ 保存
   await saveJobSmart(jobId, data);
   console.log(user);
-  await displayHome(user.id)
-  // 通知频道
-  // await notifyNewOrder(data, jobId);
+  await displayHome(user.id);
+
+  // Refresh the supervisor's home so the job disappears from their pending queue
+  try {
+    const jobSnap = await db.ref(`jobs/Release/Regular/${jobId}`).once("value");
+    const notifySupervisor = jobSnap.val()?.notifySupervisor;
+    const supervisorSlackId = notifySupervisor ? userConfig.Supervisors[notifySupervisor] : null;
+    if (supervisorSlackId && supervisorSlackId !== user.id) {
+      displayHome(supervisorSlackId).catch(err => console.error("Failed to refresh supervisor home after reject:", err.message));
+    }
+  } catch {}
 }
 
-module.exports = handleRejectForm ;
+module.exports = handleRejectForm;

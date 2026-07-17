@@ -1,85 +1,120 @@
-// modals/open_manage_dispatch_modal.js
+// modals/openModal_view_dispatch.js
 const axios = require("axios");
 const qs = require("qs");
-const db = require("../db");
-const { getPool } = require("../db-sql");
+const { getDispatchCache, fmtDate, PAGE_SIZE, RECENT_MONTHS } = require("../services/dispatchService");
 
-async function getPromotedDispatchIds() {
-  try {
-    const pool = await getPool();
-    const r = await pool.request().query(
-      `SELECT source_rtdb_job_id FROM Projects WHERE source_rtdb_job_id IS NOT NULL`
-    );
-    return new Set(r.recordset.map(row => row.source_rtdb_job_id));
-  } catch { return new Set(); }
+function projectStatusEmoji(status) {
+  const s = (status || "").toLowerCase();
+  if (s.includes("checked")) return "✅";
+  if (s.includes("completed")) return "🟡";
+  return "🏗️";
+}
+
+/** One-line summary of a dispatch's current JobReviews status. */
+function reviewStatusLine(review) {
+  if (!review) return "🆕 Not yet reviewed";
+  if (review.decision === "promoted") {
+    if (!review.promoted_project_id) return "🧹 Clear";
+    const proj = review.project_title ? `*${review.project_title}*` : `Project ${review.promoted_project_id.slice(0, 8)}`;
+    const statusTxt = review.project_status ? `${projectStatusEmoji(review.project_status)} ${review.project_status}` : "(project not found)";
+    return `🧹 Clear → ${proj} — ${statusTxt}`;
+  }
+  if (review.decision === "dismissed") {
+    return `🚫 Dismissed${review.reason ? `: ${review.reason}` : ""}`;
+  }
+  if (review.decision === "deferred") {
+    return `⏸ Deferred until ${fmtDate(review.deferred_until) || "N/A"}${review.reason ? ` — ${review.reason}` : ""}`;
+  }
+  return "🆕 Not yet reviewed";
 }
 
 /**
- * 📦 打开 Manage Dispatch Modal
- * 从 Firebase 读取所有派工任务并显示在 Slack Modal
+ * 📦 Build the "View Dispatch" modal for one page.
+ * Recent (last RECENT_MONTHS) jobs come first, then older ones once the
+ * recent page(s) are exhausted — a divider marks where "older" begins.
+ * Shows every dispatch with its current JobReviews status; nothing is
+ * filtered out.
  */
-const openModal_view_dispatch  = async (trigger_id) => {
-  try {
-    // 1️⃣ 从 Firebase 获取派工任务 + 已提升到项目的ID
-    const [snapshot, promotedIds] = await Promise.all([
-      db.ref("jobs/Dispatch").once("value"),
-      getPromotedDispatchIds(),
-    ]);
-    const dispatchJobs = snapshot.val() || {};
+function buildDispatchListView(cache, page) {
+  const list = [...cache.recent, ...cache.older];
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  // A delete can shrink the list out from under an already-open page (e.g.
+  // deleting the last item on the last page) — clamp instead of showing a
+  // page that no longer exists.
+  page = Math.min(Math.max(0, page), totalPages - 1);
+  const pageItems = list.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const recentCount = cache.recent.length;
 
-    // 2️⃣ 排除已在 Web 端 Job Review Panel 中提升为项目的派工，按日期排序
-    const jobList = Object.entries(dispatchJobs)
-      .filter(([jobId]) => !promotedIds.has(jobId))
-      .sort((a, b) => new Date(b[1].dispatchDatetime || 0) - new Date(a[1].dispatchDatetime || 0))
-      .slice(0, 20); // 只取前20条
+  const blocks = [];
 
-    // 3️⃣ 生成 Slack blocks
-    const blocks = [];
+  if (list.length === 0) {
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: "_No Dispatch Jobs found._" },
+    });
+  } else {
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: `*📦 Dispatch Job List* — ${list.length} job${list.length !== 1 ? "s" : ""}  •  Page ${page + 1}/${totalPages}` },
+    });
+    blocks.push({ type: "divider" });
 
-    if (jobList.length === 0) {
-      blocks.push({
-        type: "section",
-        text: { type: "mrkdwn", text: "_No Dispatch Jobs found._" },
-      });
-    } else {
-      blocks.push({
-        type: "section",
-        text: { type: "mrkdwn", text: "*📦 Dispatch Job List (Recent 20)*" },
-      });
-      blocks.push({ type: "divider" });
+    pageItems.forEach((job, i) => {
+      const idx = page * PAGE_SIZE + i;
+      if (idx === recentCount && recentCount > 0 && cache.older.length > 0) {
+        blocks.push({ type: "context", elements: [{ type: "mrkdwn", text: `— _older than ${RECENT_MONTHS} months_ —` }] });
+      }
 
-      for (const [jobId, job] of jobList) {
-        const emoji =
-          job.status?.toLowerCase().includes("complete") ||
-          job.status?.toLowerCase().includes("approved")
-            ? "✅"
-            : "🕓";
+      const emoji =
+        job.status?.toLowerCase().includes("complete") ||
+        job.status?.toLowerCase().includes("approved")
+          ? "✅"
+          : "🕓";
 
-        blocks.push({
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `${emoji} *${job.description || "Untitled Job"}*\n📍 ${
-              job.equipmentName || "N/A"
-            }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
-              job.dispatchDatetime?.slice(0, 10) || "N/A"
-            }\n⚙️ Status: ${job.status || "Pending"}`,
-          },
-          accessory: {
+      // Cleared dispatches link on to the Project they became; everything
+      // else still opens the raw dispatch job detail.
+      const detailAccessory = (job.review?.decision === "promoted" && job.review.promoted_project_id)
+        ? {
+            type: "button",
+            text: { type: "plain_text", text: "View Project" },
+            style: "primary",
+            value: job.review.promoted_project_id,
+            action_id: "view_sql_project_detail",
+          }
+        : {
             type: "button",
             text: { type: "plain_text", text: "View Detail" },
             style: "primary",
-            value: jobId, // 把 jobId 传给详情 modal
+            value: job.id,
             action_id: "openModal_viewDetail",
-          },
-        },{
+          };
+
+      const sectionBlock = {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `${emoji} *${job.description || "Untitled Job"}*\n📍 ${
+            job.equipmentName || "N/A"
+          }\n🧑 ${job.assignedTo || "Unassigned"} • 🗓 ${
+            job.dispatchDatetime?.slice(0, 10) || "N/A"
+          }\n⚙️ Dispatch status: ${job.status || "Pending"}\n${reviewStatusLine(job.review)}`,
+        },
+        accessory: detailAccessory,
+      };
+      blocks.push(sectionBlock);
+
+      // Once an admin has acted on a dispatch (cleared/dismissed/deferred),
+      // deleting the RTDB record could orphan that review — only offer
+      // Delete on dispatches nobody has touched yet.
+      if (!job.review) {
+        blocks.push({
           type: "actions",
           elements: [
             {
               type: "button",
               text: { type: "plain_text", text: "Delete" },
               style: "danger",
-              value: jobId,
+              value: job.id,
               action_id: "delete_dispatch",
               confirm: {
                 title: { type: "plain_text", text: "Confirm delete" },
@@ -90,36 +125,100 @@ const openModal_view_dispatch  = async (trigger_id) => {
             },
           ],
         });
-
-        blocks.push({ type: "divider" });
       }
+
+      blocks.push({ type: "divider" });
+    });
+
+    const navElements = [];
+    if (page > 0) {
+      navElements.push({
+        type: "button",
+        text: { type: "plain_text", text: "◀ Prev" },
+        action_id: "view_dispatch_page",
+        value: String(page - 1),
+      });
+    }
+    if (page < totalPages - 1) {
+      navElements.push({
+        type: "button",
+        text: { type: "plain_text", text: "Load More ▶" },
+        action_id: "view_dispatch_page",
+        value: String(page + 1),
+      });
+    }
+    if (navElements.length > 0) blocks.push({ type: "actions", elements: navElements });
+  }
+
+  return {
+    type: "modal",
+    callback_id: "viewDispatch",
+    title: { type: "plain_text", text: "📦 View Dispatch Jobs" },
+    close: { type: "plain_text", text: "Close" },
+    private_metadata: String(page),
+    blocks,
+  };
+}
+
+/**
+ * 📦 打开 View Dispatch Modal — opens a loading placeholder immediately
+ * (Slack needs a response within 3s of trigger_id), then fills it in once
+ * the (cached, fetch-on-open) dispatch list is ready.
+ */
+const openModal_view_dispatch = async (trigger_id) => {
+  try {
+    const loadingResult = await axios.post(
+      "https://slack.com/api/views.open",
+      qs.stringify({
+        token: process.env.SLACK_BOT_TOKEN,
+        trigger_id,
+        view: JSON.stringify({
+          type: "modal",
+          callback_id: "viewDispatch",
+          title: { type: "plain_text", text: "📦 View Dispatch Jobs" },
+          close: { type: "plain_text", text: "Close" },
+          blocks: [{ type: "section", text: { type: "mrkdwn", text: "⏳ Loading dispatch jobs..." } }],
+        }),
+      })
+    );
+
+    const view_id = loadingResult.data.view?.id;
+    if (!view_id) {
+      console.error("❌ View Dispatch: no view_id from loading modal", loadingResult.data);
+      return;
     }
 
-    // 4️⃣ 构建 Slack Modal
-    const modal = {
-      type: "modal",
-      callback_id: "viewDispatch",
-      title: { type: "plain_text", text: "📦 View Dispatch Jobs" },
-      close: { type: "plain_text", text: "Close" },
-      blocks,
-    };
-
-    // 5️⃣ 打开 Slack Modal
-    const args = {
-      token: process.env.SLACK_BOT_TOKEN,
-      trigger_id,
-      view: JSON.stringify(modal),
-    };
-
-    const result = await axios.post("https://slack.com/api/views.open", qs.stringify(args));
-    if (!result.data.ok) {
-      console.error("❌ Slack API Error:", result.data);
-    } else {
-      console.log("✅ Manage Dispatch modal opened successfully");
-    }
+    const cache = await getDispatchCache();
+    const result = await axios.post(
+      "https://slack.com/api/views.update",
+      qs.stringify({
+        token: process.env.SLACK_BOT_TOKEN,
+        view_id,
+        view: JSON.stringify(buildDispatchListView(cache, 0)),
+      })
+    );
+    if (!result.data.ok) console.error("❌ Slack API Error:", result.data);
+    else console.log("✅ View Dispatch modal opened successfully");
   } catch (err) {
-    console.error("❌ Failed to open Manage Dispatch modal:", err);
+    console.error("❌ Failed to open View Dispatch modal:", err);
   }
 };
 
-module.exports = openModal_view_dispatch;
+/** Load More / Prev — pages through the already-cached list, no re-fetch. */
+async function updateDispatchPage(view_id, page) {
+  try {
+    const cache = await getDispatchCache();
+    await axios.post(
+      "https://slack.com/api/views.update",
+      qs.stringify({
+        token: process.env.SLACK_BOT_TOKEN,
+        view_id,
+        view: JSON.stringify(buildDispatchListView(cache, page)),
+      })
+    );
+  } catch (err) {
+    console.error("❌ Failed to update View Dispatch page:", err);
+  }
+}
+
+module.exports = { openModal_view_dispatch, updateDispatchPage };

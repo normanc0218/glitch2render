@@ -3,6 +3,7 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { invalidateDispatchCache } = require("../dispatchService");
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -64,6 +65,7 @@ async function handleNewDispatchForm(payload) {
 
   // 保存任务
   await saveJob(`jobs/Dispatch`,data);
+  invalidateDispatchCache();
   // // 通知频道
   // await notifyNewOrder(data, jobId);
 }

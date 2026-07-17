@@ -5,6 +5,7 @@ const db = require("../../db");
 const { displayHome } = require("../modalService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const userConfig = require("../slackUserService");
+const { invalidateDispatchCache } = require("../dispatchService");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -16,6 +17,7 @@ async function handleAssignDispatchForm(payload) {
   const oldId = metadata.jobId;
   const scheduleRef = db.ref(`jobs/Dispatch/${oldId}`);
   await scheduleRef.remove();
+  invalidateDispatchCache();
   //generate new Id
   const jobId = await generateUniqueJobId(user?.id === "U_E2E" || process.env.FORCE_TEST_JOB_IDS === "true");
   

@@ -1,7 +1,6 @@
 const {
   createInputBlock,
   createMultiInputBlock,
-  createInputBlock_multistatic,
   createInputBlock_pic,
   createInputBlock_date,
   createInputBlock_time,
@@ -27,24 +26,68 @@ function getNYTime() {
 /**
  * Build the Submit Order modal view.
  * @param {object} state
- * @param {string|null} state.area         - Selected area value
- * @param {string|null} state.areaLabel    - Display text for selected area
- * @param {string|null} state.machineLine  - Selected machine line value
- * @param {string|null} state.machineLineLabel - Display text for selected machine line
+ * @param {string|null} state.area
+ * @param {string|null} state.areaLabel
+ * @param {string|null} state.machineLine
+ * @param {string|null} state.machineLineLabel
+ * @param {string|null} state.equipmentId      - Preserved on tech-select rebuild
+ * @param {string|null} state.equipmentLabel
+ * @param {string|null} state.selectedTechValue - Preserved on cascade rebuild
+ * @param {string|null} state.selectedTechLabel
+ * @param {string|null} state.offlineWarning    - Tech name if an offline tech is selected
  */
-function buildOrderModalView({ area = null, areaLabel = null, machineLine = null, machineLineLabel = null } = {}) {
-  const staffOptions = Object.entries(userService.maintenanceStaff).map(([name, value]) => ({
-    text: { type: "plain_text", text: name, emoji: true },
-    value,
-  }));
+function buildOrderModalView({
+  area = null, areaLabel = null,
+  machineLine = null, machineLineLabel = null,
+  equipmentId = null, equipmentLabel = null,
+  selectedTechValue = null, selectedTechLabel = null,
+  offlineWarning = null,
+} = {}) {
+  const staffOptions = [
+    ...Object.entries(userService.maintenanceStaff).map(([name, value]) => ({
+      text: { type: "plain_text", text: name, emoji: true },
+      value,
+    })),
+    ...(userService.offlineTechs || []).map(name => ({
+      text: { type: "plain_text", text: `${name} (Non-slack User)`, emoji: true },
+      value: `offline:${name}`,
+    })),
+  ];
 
-  const blocks = buildCascadeBlocks({ area, areaLabel, machineLine, machineLineLabel });
+  const blocks = buildCascadeBlocks({ area, areaLabel, machineLine, machineLineLabel, equipmentId, equipmentLabel });
+
+  // ── Assigned technician (single select, dispatches on change) ──
+  blocks.push({
+    type: "input",
+    block_id: "assignedTo",
+    dispatch_action: true,
+    label: { type: "plain_text", text: "Assign the job to" },
+    element: {
+      type: "static_select",
+      action_id: "pickedGuy",
+      placeholder: { type: "plain_text", text: "Select the person", emoji: true },
+      options: staffOptions,
+      ...(selectedTechValue
+        ? { initial_option: { text: { type: "plain_text", text: selectedTechLabel || selectedTechValue, emoji: true }, value: selectedTechValue } }
+        : {}),
+    },
+  });
+
+  // Offline tech warning — shown immediately after selection via dispatch_action
+  if (offlineWarning) {
+    blocks.push({
+      type: "context",
+      elements: [{
+        type: "mrkdwn",
+        text: `⚠️ *${offlineWarning}* doesn't have access to Slack. After submitting, you'll be prompted to fill in their completion record on their behalf.`,
+      }],
+    });
+  }
 
   // ── Rest of form fields ──
   blocks.push(
     createInputBlock("reporter", "Who found the issue?", "reporter", "Name of the finder"),
     createMultiInputBlock("description", "Description of the issue", "issue", "What is the issue?"),
-    createInputBlock_multistatic("assignedTo", "Assign the job to", "pickedGuy", "Select the person", staffOptions),
     createInputBlock_select({
       block_id: "priority",
       label: "Priority",
@@ -69,9 +112,14 @@ function buildOrderModalView({ area = null, areaLabel = null, machineLine = null
 
 /**
  * Returns only the cascade blocks (area → machine line → equipment).
- * Used by any modal that needs the same location picker.
+ * equipmentId/equipmentLabel are passed through on tech-select rebuilds to
+ * preserve the selection; on area/machineLine changes they are intentionally omitted.
  */
-function buildCascadeBlocks({ area = null, areaLabel = null, machineLine = null, machineLineLabel = null } = {}) {
+function buildCascadeBlocks({
+  area = null, areaLabel = null,
+  machineLine = null, machineLineLabel = null,
+  equipmentId = null, equipmentLabel = null,
+} = {}) {
   const blocks = [];
 
   blocks.push({
@@ -150,6 +198,7 @@ function buildCascadeBlocks({ area = null, areaLabel = null, machineLine = null,
           action_id: "equipmentId",
           placeholder: { type: "plain_text", text: "Search equipment..." },
           min_query_length: 0,
+          ...(equipmentId ? { initial_option: { text: { type: "plain_text", text: equipmentLabel || equipmentId }, value: equipmentId } } : {}),
         },
       });
     }

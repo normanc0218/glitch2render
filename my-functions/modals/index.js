@@ -11,7 +11,7 @@ const openModal_view_detail = require('./openModal_view_detail');
 const openModal_view_detail_home = require('./openModal_view_detail_home');
 const openModal = require('./openModal');
 const openModal_manage_dispatch = require('./openModal_manage_dispatch');
-const openModal_view_dispatch = require('./openModal_view_dispatch');
+const { openModal_view_dispatch, updateDispatchPage } = require('./openModal_view_dispatch');
 const openModal_dispatch = require('./openModal_dispatch');
 const openModal_submit_training = require('./openModal_submit_training');
 const { openModal_unfinished, updateUnfinishedPage } = require('./openModal_unfinished');
@@ -21,6 +21,7 @@ const { pushModal_sql_task_view } = require('./openModal_sql_task_view');
 const openModal_sql_project_view = require('./openModal_sql_project_view');
 const { pushModal_sql_project_view } = require('./openModal_sql_project_view');
 const { openJobList, updateJobList } = require('./openModal_jobList');
+const openModal_offline_record = require('./openModal_offline_record');
 
 module.exports = {
   openModal_accept,
@@ -34,6 +35,7 @@ module.exports = {
   openModal_view_detail,
   openModal_view_detail_home,
   openModal_view_dispatch,
+  updateDispatchPage,
   openModal,
   openModal_manage_dispatch,
   openModal_dispatch,
@@ -48,4 +50,5 @@ module.exports = {
   pushModal_sql_project_view,
   openJobList,
   updateJobList,
+  openModal_offline_record,
 };

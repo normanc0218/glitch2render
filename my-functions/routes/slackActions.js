@@ -32,9 +32,11 @@ const {
   openModal_finished,
   updateFinishedPage,
   openModal_view_dispatch,
+  updateDispatchPage,
   openModal_sql_task_view,
   openJobList,
   updateJobList,
+  openModal_offline_record,
   pushModal_sql_task_view,
   pushModal_sql_project_view,
 } = require("../modals");
@@ -48,12 +50,13 @@ const {
   handlePlanAcceptForm,
   handleRejectForm,
   handleReview,
-  handleNewTrainRecord
+  handleNewTrainRecord,
 } = require("../services/handlers");
 const { threadNotify } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
 const { getPool, sql } = require("../db-sql");
 const { TaskReviewSchema } = require("../schemas/sqlTask");
+const { invalidateDispatchCache } = require("../services/dispatchService");
 
 // ✅ 导出为一个标准 Express handler
 module.exports = async (req, res) => {
@@ -208,6 +211,36 @@ module.exports = async (req, res) => {
     }
   }
 
+  // For offlineRecord: actual start must be >= order date; actual end must be > actual start
+  if (type === "view_submission" && view?.callback_id === "offlineRecord") {
+    const vals      = view.state?.values || {};
+    const startDate = vals?.actualStartDate?.datepickeraction?.selected_date;
+    const startTime = vals?.actualStartTime?.timepickeraction?.selected_time;
+    const endDate   = vals?.actualEndDate?.datepickeraction?.selected_date;
+    const endTime   = vals?.actualEndTime?.timepickeraction?.selected_time;
+    const errors    = {};
+
+    if (startDate && startTime && endDate && endTime) {
+      const startMs = new Date(`${startDate}T${startTime}`).getTime();
+      const endMs   = new Date(`${endDate}T${endTime}`).getTime();
+      if (endMs <= startMs) {
+        errors["actualEndDate"] = `End date/time must be later than actual start (${startDate} ${startTime.slice(0, 5)}).`;
+      }
+    }
+
+    if (startDate && startTime && viewMeta?.scheduledStart) {
+      const orderMs = new Date(viewMeta.scheduledStart).getTime();
+      const startMs = new Date(`${startDate}T${startTime}`).getTime();
+      if (startMs < orderMs) {
+        errors["actualStartDate"] = `Actual start cannot be earlier than the order date/time (${viewMeta.scheduledStart.replace('T', ' ')}).`;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.json({ response_action: "errors", errors });
+    }
+  }
+
   // For submitOrder, validate before responding so we can return inline errors
   if (type === "view_submission" && view?.callback_id === "submitOrder") {
     const vals = view.state?.values || {};
@@ -257,7 +290,14 @@ module.exports = async (req, res) => {
         // Cascading area selection → enable Machine Line
         case "area": {
           const selected = action.selected_option;
-          const state = { area: selected?.value, areaLabel: selected?.text?.text };
+          const techOpt  = view?.state?.values?.assignedTo?.pickedGuy?.selected_option;
+          const isOfflineTech = techOpt?.value?.startsWith("offline:");
+          const state = {
+            area: selected?.value, areaLabel: selected?.text?.text,
+            selectedTechValue: techOpt?.value,
+            selectedTechLabel: techOpt?.text?.text,
+            offlineWarning: isOfflineTech ? techOpt.value.slice(8) : null,
+          };
           const callbackId = view?.callback_id;
           const updatedView = callbackId === "dispatch" ? buildDispatchModalView(state)
                             : buildOrderModalView(state);
@@ -267,16 +307,40 @@ module.exports = async (req, res) => {
 
         // Cascading machine line selection → enable Equipment
         case "machineLine": {
-          const areaOpt = view?.state?.values?.area?.area?.selected_option;
-          const lineOpt = action.selected_option;
+          const areaOpt  = view?.state?.values?.area?.area?.selected_option;
+          const lineOpt  = action.selected_option;
+          const techOpt  = view?.state?.values?.assignedTo?.pickedGuy?.selected_option;
+          const isOfflineTech = techOpt?.value?.startsWith("offline:");
           const state = {
             area: areaOpt?.value, areaLabel: areaOpt?.text?.text,
             machineLine: lineOpt?.value, machineLineLabel: lineOpt?.text?.text,
+            selectedTechValue: techOpt?.value,
+            selectedTechLabel: techOpt?.text?.text,
+            offlineWarning: isOfflineTech ? techOpt.value.slice(8) : null,
           };
           const callbackId = view?.callback_id;
           const updatedView = callbackId === "dispatch" ? buildDispatchModalView(state)
                             : buildOrderModalView(state);
           await slackClient.views.update({ view_id: viewId, view: updatedView });
+          break;
+        }
+
+        // Technician selection → show offline warning if applicable
+        case "pickedGuy": {
+          const selected  = action.selected_option;
+          const isOffline = selected?.value?.startsWith("offline:");
+          const areaOpt   = view?.state?.values?.area?.area?.selected_option;
+          const lineOpt   = view?.state?.values?.machineLine?.machineLine?.selected_option;
+          const equipOpt  = view?.state?.values?.equipmentId?.equipmentId?.selected_option;
+          const state = {
+            area: areaOpt?.value, areaLabel: areaOpt?.text?.text,
+            machineLine: lineOpt?.value, machineLineLabel: lineOpt?.text?.text,
+            equipmentId: equipOpt?.value, equipmentLabel: equipOpt?.text?.text,
+            selectedTechValue: selected?.value,
+            selectedTechLabel: selected?.text?.text,
+            offlineWarning: isOffline ? selected.value.slice(8) : null,
+          };
+          await slackClient.views.update({ view_id: viewId, view: buildOrderModalView(state) });
           break;
         }
         // Assign Dispatch
@@ -291,10 +355,19 @@ module.exports = async (req, res) => {
         case "openModal_view_dispatch":
           await openModal_view_dispatch(trigger_id);
           break;
+        case "view_dispatch_page":
+          await updateDispatchPage(viewId, parseInt(action.value, 10));
+          break;
         //Dispatch job by a supervisor
         case "openModal_dispatch":
           await openModal_dispatch(trigger_id);
-          break;  
+          break;
+        case "fill_offline_record": {
+          let meta;
+          try { meta = JSON.parse(action.value); } catch { meta = {}; }
+          await openModal_offline_record(trigger_id, meta.jobId, meta.techName);
+          break;
+        }
         //Dispatch job by a supervisor
         case "openModal_submit_training":
           await openModal_submit_training(trigger_id);
@@ -361,6 +434,13 @@ module.exports = async (req, res) => {
             // 删除数据库中的对应记录
             const dispatchRef = db.ref(`jobs/Dispatch/${jobId}`);
             await dispatchRef.remove();
+            invalidateDispatchCache();
+            // Refresh the modal the delete was clicked from so the removed
+            // job disappears immediately instead of waiting for a reopen.
+            if (view?.callback_id === "viewDispatch") {
+              const page = parseInt(view.private_metadata, 10) || 0;
+              await updateDispatchPage(viewId, page);
+            }
             break;
           }
         // 审核
@@ -444,6 +524,18 @@ module.exports = async (req, res) => {
           break;
         }
 
+        case "offline_complete_job": {
+          const { buildOfflineRecordModal } = require("../modals/openModal_offline_record");
+          const selected = action.selected_option?.value;
+          const showOther = selected === "other_situation";
+          await slackClient.views.update({
+            view_id: view.id,
+            hash: view.hash,
+            view: buildOfflineRecordModal(view.private_metadata, showOther, selected, null),
+          });
+          break;
+        }
+
         case "update_daily_job":
           await openModal_daily_update(trigger_id, jobId);
           break;
@@ -502,6 +594,60 @@ module.exports = async (req, res) => {
         case "submitOrder":
           await handleNewJobForm(payload);
           break;
+        case "offlineRecord": {
+          const { user: recUser, view: recView } = payload;
+          let recMeta;
+          try { recMeta = JSON.parse(recView.private_metadata); } catch { recMeta = {}; }
+          const { jobId: recJobId, techName: recTechName } = recMeta;
+          const recVals = recView.state.values;
+          const recStartDate = recVals?.actualStartDate?.datepickeraction?.selected_date || null;
+          const recStartTime = recVals?.actualStartTime?.timepickeraction?.selected_time || null;
+          const recEndDate   = recVals?.actualEndDate?.datepickeraction?.selected_date   || null;
+          const recEndTime   = recVals?.actualEndTime?.timepickeraction?.selected_time   || null;
+          const recActualStart = recStartDate && recStartTime ? `${recStartDate}T${recStartTime.slice(0, 5)}` : null;
+          const recActualEnd   = recEndDate   && recEndTime   ? `${recEndDate}T${recEndTime.slice(0, 5)}`     : null;
+          const recToolCleanUp    = recVals?.toolCleanUp?.toolCleanUp?.selected_option?.value           || "Yes";
+          const recMachineReset   = recVals?.machineReset?.machineReset?.selected_option?.value         || "Yes";
+          const recReasonDefect   = recVals?.reason_defect_block?.reason_defect?.selected_option?.value || null;
+          const recNotes          = recVals?.completionNotes?.completionNotes?.value                    || null;
+          const recCheckDetail    = recVals?.checkDetail?.checkDetail?.value                            || null;
+          const recWhoCleanUp     = recVals?.whoCleanUp?.whoCleanUp?.value                              || null;
+          const recPhotos         = (recVals?.finishPicture?.file_input_action_id_1?.files || []).map(f => f.url_private);
+          const recCheckDate      = recVals?.checkDate?.datepickeraction?.selected_date || null;
+          const recCheckTime      = recVals?.checkTime?.timepickeraction?.selected_time || null;
+          const recCheckDatetime  = recCheckDate && recCheckTime
+            ? `${recCheckDate}T${recCheckTime.slice(0, 5)}`
+            : new Date().toISOString().slice(0, 16);
+          const recOrderedBy      = await (require("../utils/resolveDisplayName"))(recUser?.id, recUser?.username);
+          const recStatusComplete = recVals?.offline_complete_job?.offline_complete_job?.selected_option?.value || "completed";
+          const recStatusOther    = recVals?.offline_other_status?.offline_other_status?.selected_option?.value || null;
+
+          await db.ref(`jobs/Release/Regular/${recJobId}`).update({
+            doneBy:              recTechName,
+            actualStart:         recActualStart,
+            actualEnd:           recActualEnd,
+            toolCleanUp:         recToolCleanUp,
+            machineReset:        recMachineReset,
+            reasonDefect:        recReasonDefect,
+            messageToSupervisor: recNotes,
+            finishPicture:       recPhotos,
+            statusComplete:      recStatusComplete,
+            statusOther:         recStatusOther || null,
+            checkBy:             recOrderedBy,
+            checkDatetime:       recCheckDatetime,
+            toolCheck:           recToolCleanUp,
+            cleanCheck:          recMachineReset,
+            whoCleanUp:          recWhoCleanUp,
+            checkDetail:         recCheckDetail,
+            offlineSubmission:   true,
+            status:              "Checked by Supervisor",
+          });
+          console.log(`[offlineRecord] job=${recJobId} tech=${recTechName} by=${recOrderedBy}`);
+          const { displayHome: _dh, invalidateReleaseCache: _inv } = require("../services/modalService");
+          _inv();
+          await _dh(recUser.id);
+          break;
+        }
         case "dispatch":
           await handleNewDispatchForm(payload);
           break;
@@ -618,6 +764,19 @@ module.exports = async (req, res) => {
           }
 
           await displayHome(user.id);
+
+          // Refresh the technician's home so they see the approved status
+          try {
+            const techRes = await pool.request()
+              .input("id", sql.UniqueIdentifier, taskId)
+              .query("SELECT tech.name FROM Tasks t JOIN Technicians tech ON t.technician_id = tech.id WHERE t.id = @id");
+            const techName = techRes.recordset[0]?.name;
+            const { maintenanceStaff: mStaff } = require("../services/slackUserService");
+            const techSlackId = techName ? mStaff[techName] : null;
+            if (techSlackId && techSlackId !== user.id) {
+              displayHome(techSlackId).catch(err => console.error("Failed to refresh technician home after task approval:", err.message));
+            }
+          } catch {}
           break;
         }
 
@@ -641,6 +800,19 @@ module.exports = async (req, res) => {
               WHERE id = @id
             `);
           await displayHome(user.id);
+
+          // Refresh the technician's home so they see the approved status
+          try {
+            const techRes = await pool.request()
+              .input("id", sql.UniqueIdentifier, taskId)
+              .query("SELECT tech.name FROM Tasks t JOIN Technicians tech ON t.technician_id = tech.id WHERE t.id = @id");
+            const techName = techRes.recordset[0]?.name;
+            const { maintenanceStaff: mStaff } = require("../services/slackUserService");
+            const techSlackId = techName ? mStaff[techName] : null;
+            if (techSlackId && techSlackId !== user.id) {
+              displayHome(techSlackId).catch(err => console.error("Failed to refresh technician home after task check:", err.message));
+            }
+          } catch {}
           break;
         }
         case "trainingRecord":
