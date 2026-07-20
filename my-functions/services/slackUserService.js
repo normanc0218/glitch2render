@@ -18,10 +18,11 @@ async function refreshIfStale() {
     ]);
     const m = {}, s = {}, mg = {}, t = {};
     for (const r of slackRes.recordset) {
-      if (r.role === "maintenance") m[r.name]  = r.slack_id;
-      else if (r.role === "supervisor") s[r.name]  = r.slack_id;
-      else if (r.role === "manager")    mg[r.name] = r.slack_id;
-      else if (r.role === "trainer")    t[r.name]  = r.slack_id;
+      const roles = (r.role || '').split(',').map(x => x.trim());
+      if (roles.includes("maintenance")) m[r.name]  = r.slack_id;
+      if (roles.includes("supervisor"))  s[r.name]  = r.slack_id;
+      if (roles.includes("manager"))     mg[r.name] = r.slack_id;
+      if (roles.includes("trainer"))     t[r.name]  = r.slack_id;
     }
     _maintenanceStaff = m;
     _Supervisors      = s;

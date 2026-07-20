@@ -24,6 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 // app.use("/slack/events", verifySlackSignature);
 // app.use("/slack/actions", verifySlackSignature);
 
+// Health check — used by GCP uptime monitoring
+app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
+
 // ✅ Slack 路由
 app.post("/slack/events", verifySlackSignature, slackEvents);
 app.post("/slack/actions", verifySlackSignature, slackActions);
