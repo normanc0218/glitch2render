@@ -56,4 +56,4 @@ jobs:
           } > my-functions/.env
 
       - name: Deploy to Firebase
-        run: firebase deploy --only functions:slack-app --project maintenance-form-602d9
+        run: firebase deploy --only functions:slack-app --project maintenance-form-602d9 --force
