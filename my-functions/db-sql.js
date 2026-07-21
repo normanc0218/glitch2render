@@ -13,6 +13,11 @@ async function getPool() {
   if (!poolPromise) {
     const config = sql.ConnectionPool.parseConnectionString(buildConnectionString());
     config.options.useUTC = false;
+    config.pool = {
+      max: 10,
+      min: 1,
+      idleTimeoutMillis: 300000,
+    };
     poolPromise = sql.connect(config).then(p => {
       p.on('error', err => {
         console.error('SQL pool error:', err.message);
