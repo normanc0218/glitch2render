@@ -1,4 +1,5 @@
 const { getPool, sql } = require("../db-sql");
+const { findDynBlock } = require("../utils/blockReader");
 
 const EQUIPMENT_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -42,7 +43,7 @@ async function getOptions(action_id, query, viewState) {
 
   if (action_id === "equipmentId") {
     const selectedArea = viewState?.area?.area?.selected_option?.value;
-    const selectedLine = viewState?.machineLine?.machineLine?.selected_option?.value;
+    const selectedLine = findDynBlock(viewState, 'machineLine')?.value;
     const cacheKey = equipCacheKey(selectedArea, selectedLine);
     if (_equipCache[cacheKey] && Date.now() - _equipFetchedAt[cacheKey] < EQUIPMENT_TTL_MS) {
       return _equipCache[cacheKey];

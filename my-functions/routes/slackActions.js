@@ -253,10 +253,13 @@ module.exports = async (req, res) => {
       if (!vals?.otherLocation?.otherLocation?.value)  errors["otherLocation"]  = "Please enter the location.";
       if (!vals?.otherEquipment?.otherEquipment?.value) errors["otherEquipment"] = "Please enter the equipment name.";
     } else {
-      const machineLine = vals?.machineLine?.machineLine?.selected_option?.value;
-      const equipmentId = vals?.equipmentId?.equipmentId?.selected_option?.value;
-      if (!machineLine) errors["machineLine"] = "Please select a machine line.";
-      if (!equipmentId) errors["equipmentId"] = "Please select an equipment.";
+      const { findDynBlock } = require("../utils/blockReader");
+      const machineLineOpt = findDynBlock(vals, 'machineLine');
+      const equipmentOpt   = findDynBlock(vals, 'equipmentId');
+      const machineLine    = machineLineOpt?.value;
+      const equipmentId    = equipmentOpt?.value;
+      if (!machineLine) errors[`machineLine_${area}`]      = "Please select a machine line.";
+      if (!equipmentId) errors[`equipmentId_${machineLine || ''}`] = "Please select an equipment.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -330,8 +333,9 @@ module.exports = async (req, res) => {
           const selected  = action.selected_option;
           const isOffline = selected?.value?.startsWith("offline:");
           const areaOpt   = view?.state?.values?.area?.area?.selected_option;
-          const lineOpt   = view?.state?.values?.machineLine?.machineLine?.selected_option;
-          const equipOpt  = view?.state?.values?.equipmentId?.equipmentId?.selected_option;
+          const { findDynBlock } = require("../utils/blockReader");
+          const lineOpt   = findDynBlock(view?.state?.values, 'machineLine');
+          const equipOpt  = findDynBlock(view?.state?.values, 'equipmentId');
           const state = {
             area: areaOpt?.value, areaLabel: areaOpt?.text?.text,
             machineLine: lineOpt?.value, machineLineLabel: lineOpt?.text?.text,

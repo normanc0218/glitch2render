@@ -169,7 +169,7 @@ function buildCascadeBlocks({
     } else {
       blocks.push({
         type: "input",
-        block_id: "machineLine",
+        block_id: `machineLine_${area}`,
         dispatch_action: true,
         label: { type: "plain_text", text: "Machine Line" },
         element: {
@@ -191,7 +191,7 @@ function buildCascadeBlocks({
     } else {
       blocks.push({
         type: "input",
-        block_id: "equipmentId",
+        block_id: `equipmentId_${machineLine}`,
         label: { type: "plain_text", text: "Equipment" },
         element: {
           type: "external_select",

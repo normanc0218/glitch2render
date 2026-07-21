@@ -8,6 +8,7 @@ const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const { RegularJobCreateSchema } = require("../../schemas/regularJob");
 const userConfig = require("../slackUserService");
+const { findDynBlock } = require("../../utils/blockReader");
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
@@ -33,7 +34,7 @@ async function handleNewJobForm(payload) {
   const jobId = await generateUniqueJobId(user?.id === "U_E2E" || process.env.FORCE_TEST_JOB_IDS === "true");
 
   const orderedBy = await resolveDisplayName(user?.id, user?.username);
-  const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value || null;
+  const selectedEquipmentId = findDynBlock(view.state.values, 'equipmentId')?.value || null;
   const selectedArea        = view.state.values?.area?.area?.selected_option?.value || null;
   const isOther             = selectedArea === "__other__";
   const otherLocation       = view.state.values?.otherLocation?.otherLocation?.value || null;
@@ -44,7 +45,7 @@ async function handleNewJobForm(payload) {
     ? await resolveEquipmentName(selectedEquipmentId)
     : (otherEquipment || "N/A");
   const resolvedArea          = isOther ? (otherLocation || null) : selectedArea;
-  const resolvedMachineLine   = isOther ? null : (view.state.values?.machineLine?.machineLine?.selected_option?.value || null);
+  const resolvedMachineLine   = isOther ? null : (findDynBlock(view.state.values, 'machineLine')?.value || null);
 
   const assignedOpt      = view.state.values?.assignedTo?.pickedGuy?.selected_option || null;
   const isOfflineTech    = assignedOpt?.value?.startsWith("offline:") ?? false;
