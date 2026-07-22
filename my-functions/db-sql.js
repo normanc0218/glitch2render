@@ -15,7 +15,7 @@ async function getPool() {
     config.options.useUTC = false;
     config.pool = {
       max: 10,
-      min: 1,
+      min: 0,
       idleTimeoutMillis: 300000,
     };
     poolPromise = sql.connect(config).then(p => {
