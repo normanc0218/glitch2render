@@ -1,6 +1,8 @@
 // my-functions/routes/slackEvents.js
 const { displayHome } = require("../services/modalService");
 
+const recentHomeOpens = new Map(); // userId → timestamp, debounce duplicate app_home_opened
+
 const slackEvents = async (req, res) => {
   console.log("🔥 /slack/events reached");
   const { type, challenge, event } = req.body;
@@ -21,6 +23,13 @@ const slackEvents = async (req, res) => {
     // 🔹 异步处理事件（避免超时）
     try {
       if (event?.type === "app_home_opened") {
+        const now = Date.now();
+        const last = recentHomeOpens.get(event.user) || 0;
+        if (now - last < 2000) {
+          console.log(`⏭️ Skipping duplicate app_home_opened for ${event.user} (${now - last}ms since last)`);
+          return;
+        }
+        recentHomeOpens.set(event.user, now);
         console.log(`👤 App home opened by user: ${event.user}`);
         await displayHome(event.user);
       } else {
