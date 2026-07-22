@@ -45,6 +45,7 @@ async function sendSupervisorNotification(supervisorName, taskId, taskTitle, don
 async function handleSqlTaskUpdate(taskId, vals, user) {
   const description     = vals?.supervisor_message?.supervisor_message?.value || null;
   const notifySupervisor = vals?.supervisor_notify?.supervisor_notify?.selected_option?.value || null;
+  console.log(`[handleSqlTaskUpdate] taskId=${taskId} notifySupervisor=${notifySupervisor}`);
   const startDate = vals?.startDate?.datepickeraction?.selected_date || null;
   const startTime = vals?.startTime?.timepickeraction?.selected_time || null;
   const endDate   = vals?.endDate?.datepickeraction?.selected_date || null;
