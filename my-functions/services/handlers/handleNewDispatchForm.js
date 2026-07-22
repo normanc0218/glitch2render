@@ -4,6 +4,7 @@ const { saveJob } = require("../firebaseService");
 const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const { invalidateDispatchCache } = require("../dispatchService");
+const { findDynBlock } = require("../../utils/blockReader");
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -28,7 +29,7 @@ async function handleNewDispatchForm(payload) {
   jobId = `DSP${jobId.slice(3)}`;
 
   const orderedBy = await resolveDisplayName(user?.id, user?.username);
-  const selectedEquipmentId = view.state.values?.equipmentId?.equipmentId?.selected_option?.value || null;
+  const selectedEquipmentId = findDynBlock(view.state.values, 'equipmentId')?.value || null;
   const selectedArea        = view.state.values?.area?.area?.selected_option?.value || null;
   const isOther             = selectedArea === "__other__";
   const otherLocation       = view.state.values?.otherLocation?.otherLocation?.value || null;
@@ -39,7 +40,7 @@ async function handleNewDispatchForm(payload) {
     ? await resolveEquipmentName(selectedEquipmentId)
     : (otherEquipment || "N/A");
   const resolvedArea          = isOther ? (otherLocation || null) : selectedArea;
-  const resolvedMachineLine   = isOther ? null : (view.state.values?.machineLine?.machineLine?.selected_option?.value || null);
+  const resolvedMachineLine   = isOther ? null : (findDynBlock(view.state.values, 'machineLine')?.value || null);
 
   const data = {
     jobId,
