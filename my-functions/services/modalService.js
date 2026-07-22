@@ -1,8 +1,13 @@
+const { WebClient } = require("@slack/web-api");
 const userConfig = require("./slackUserService");
 const { invalidateReleaseCache } = require("./homeQueries");
 const { buildSupervisorHome } = require("./supervisorHome");
 const { buildMaintenanceHome } = require("./maintenanceHome");
 const { buildOtherHome } = require("./otherHome");
+
+const client = new WebClient(process.env.SLACK_BOT_TOKEN);
+const blocksCache = new Map(); // userId → { json, ts }
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — force re-publish even if blocks look the same
 
 function getUserRoles(userId) {
   const roles = [];
@@ -24,15 +29,27 @@ async function displayHome(userId) {
     const roles = getUserRoles(userId);
     console.log(`Rendering Home for ${userId}, roles: ${roles.join(", ")}`);
 
+    let blocks;
     if (roles.includes("supervisor")) {
       const supervisorName = Object.keys(userConfig.Supervisors).find(n => userConfig.Supervisors[n] === userId) || null;
-      await buildSupervisorHome(userId, supervisorName, startTime);
+      blocks = await buildSupervisorHome(userId, supervisorName);
     } else if (roles.includes("maintenance")) {
       const techNames = Object.entries(userConfig.maintenanceStaff).filter(([, id]) => id === userId).map(([name]) => name);
-      await buildMaintenanceHome(userId, techNames, startTime);
+      blocks = await buildMaintenanceHome(userId, techNames);
     } else {
-      await buildOtherHome(userId, roles, startTime);
+      blocks = await buildOtherHome(userId, roles);
     }
+
+    const json = JSON.stringify(blocks);
+    const cached = blocksCache.get(userId);
+    const stale = !cached || (Date.now() - cached.ts > CACHE_TTL);
+    if (!stale && json === cached.json) {
+      console.log(`⏭️ Blocks unchanged for ${userId}, skipping publish`);
+      return;
+    }
+    blocksCache.set(userId, { json, ts: Date.now() });
+    await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
+    console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
     if (error.data?.response_metadata?.messages) {

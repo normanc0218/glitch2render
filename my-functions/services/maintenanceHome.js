@@ -1,4 +1,3 @@
-const { WebClient } = require("@slack/web-api");
 const userConfig = require("./slackUserService");
 const {
   getRelease, getTasksForTechnician, getProjectsForTechnician,
@@ -8,7 +7,7 @@ const { DIV, fmtDate, fmtTime, greetingHeader, browseButtonBlocks, calendarBlock
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
-async function buildMaintenanceHome(userId, techNames, startTime) {
+async function buildMaintenanceHome(userId, techNames) {
   const dbStart = Date.now();
   const [release, azureTasks, techProjects, upcomingTasks, promotedIds, slackUserRow] = await Promise.all([
     getRelease(),
@@ -112,8 +111,7 @@ async function buildMaintenanceHome(userId, techNames, startTime) {
   blocks.push(...calendarBlocks(release, upcomingTasks));
 
   console.log(`🏗️ View built: ${Date.now() - buildStart}ms`);
-  await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
-  console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
+  return blocks;
 }
 
 module.exports = { buildMaintenanceHome };
