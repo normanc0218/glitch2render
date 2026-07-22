@@ -5,7 +5,6 @@ const {
 } = require("./homeQueries");
 const { DIV, fmtDate, fmtTime, greetingHeader, browseButtonBlocks, calendarBlocks } = require("./homeBlocks");
 
-const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 async function buildMaintenanceHome(userId, techNames) {
   const dbStart = Date.now();
