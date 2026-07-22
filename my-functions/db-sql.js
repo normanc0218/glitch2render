@@ -24,6 +24,10 @@ async function getPool() {
         poolPromise = null;
       });
       return p;
+    }).catch(err => {
+      console.error('SQL initial connect failed — will retry next request:', err.message);
+      poolPromise = null;
+      throw err;
     });
   }
   return poolPromise;
