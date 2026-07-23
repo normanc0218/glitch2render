@@ -7,7 +7,7 @@ const { buildOtherHome } = require("./otherHome");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const blocksCache = new Map(); // userId → { json, ts }
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes — force re-publish even if blocks look the same
+const CACHE_TTL = 30 * 1000; // 30 seconds — short enough to retry if client missed the push
 
 function getUserRoles(userId) {
   const roles = [];
@@ -47,8 +47,8 @@ async function displayHome(userId) {
       console.log(`⏭️ Blocks unchanged for ${userId}, skipping publish`);
       return;
     }
-    blocksCache.set(userId, { json, ts: Date.now() });
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
+    blocksCache.set(userId, { json, ts: Date.now() });
     console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
