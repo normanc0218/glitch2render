@@ -49,6 +49,7 @@ async function displayHome(userId) {
     } else {
       blocks = await buildOtherHome(userId, roles);
     }
+    console.log(`🏗️ Blocks built: ${Date.now() - startTime}ms`);
 
     const json = JSON.stringify(blocks);
     const cached = blocksCache.get(userId);
