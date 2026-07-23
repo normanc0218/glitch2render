@@ -13,9 +13,11 @@ async function getPool() {
   if (!poolPromise) {
     const config = sql.ConnectionPool.parseConnectionString(buildConnectionString());
     config.options.useUTC = false;
+    config.options.keepAlive = true;
+    config.options.keepAliveInitialDelay = 30000;
     config.pool = {
       max: 10,
-      min: 0,
+      min: 1,
       idleTimeoutMillis: 300000,
     };
     poolPromise = sql.connect(config).then(p => {
