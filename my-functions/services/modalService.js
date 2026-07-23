@@ -58,17 +58,6 @@ async function displayHome(userId) {
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
     console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
 
-    // Auto-retry at T+2s, T+5s, T+10s — validates whether blank screen is a WebSocket timing
-    // issue (server-fixable) or a client rendering issue (not fixable server-side).
-    const retryBlocks = blocks;
-    for (const delay of [2000, 5000, 10000]) {
-      setTimeout(async () => {
-        try {
-          await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks: retryBlocks } });
-          console.log(`🔄 Auto-retry published for ${userId} (T+${delay / 1000}s)`);
-        } catch { /* ignore */ }
-      }, delay);
-    }
   } catch (error) {
     console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
     if (error.data?.response_metadata?.messages) {
