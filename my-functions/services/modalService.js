@@ -8,6 +8,7 @@ const { buildOtherHome } = require("./otherHome");
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 const blocksCache = new Map(); // userId → { json, ts }
 const CACHE_TTL = 30 * 1000; // 30 seconds — short enough to retry if client missed the push
+const processingHome = new Set(); // userId — prevents concurrent displayHome for same user
 
 function getUserRoles(userId) {
   const roles = [];
@@ -20,6 +21,11 @@ function getUserRoles(userId) {
 }
 
 async function displayHome(userId) {
+  if (processingHome.has(userId)) {
+    console.log(`⏭️ Skipping displayHome for ${userId} — already in progress`);
+    return;
+  }
+  processingHome.add(userId);
   const startTime = Date.now();
   try {
     const poolStart = Date.now();
@@ -55,6 +61,8 @@ async function displayHome(userId) {
     if (error.data?.response_metadata?.messages) {
       console.error("Slack validation errors:", JSON.stringify(error.data.response_metadata.messages, null, 2));
     }
+  } finally {
+    processingHome.delete(userId);
   }
 }
 
