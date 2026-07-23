@@ -25,7 +25,7 @@ const slackEvents = async (req, res) => {
       if (event?.type === "app_home_opened") {
         const now = Date.now();
         const last = recentHomeOpens.get(event.user) || 0;
-        if (now - last < 2000) {
+        if (now - last < 500) {
           console.log(`⏭️ Skipping duplicate app_home_opened for ${event.user} (${now - last}ms since last)`);
           return;
         }
