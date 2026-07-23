@@ -6,9 +6,8 @@ const { buildMaintenanceHome } = require("./maintenanceHome");
 const { buildOtherHome } = require("./otherHome");
 
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
-const blocksCache = new Map(); // userId → { json, ts }
-const CACHE_TTL = 30 * 1000; // 30 seconds — short enough to retry if client missed the push
 const processingHome = new Set(); // userId — prevents concurrent displayHome for same user
+const pendingHome = new Set();    // userId — queued to run after current finishes
 
 function getUserRoles(userId) {
   const roles = [];
@@ -22,7 +21,8 @@ function getUserRoles(userId) {
 
 async function displayHome(userId) {
   if (processingHome.has(userId)) {
-    console.log(`⏭️ Skipping displayHome for ${userId} — already in progress`);
+    pendingHome.add(userId);
+    console.log(`⏳ Queued displayHome for ${userId} — will run after current finishes`);
     return;
   }
   processingHome.add(userId);
@@ -30,6 +30,10 @@ async function displayHome(userId) {
   const safetyTimer = setTimeout(() => {
     console.error(`⏰ displayHome safety timeout — releasing lock for ${userId} after 30s`);
     processingHome.delete(userId);
+    if (pendingHome.has(userId)) {
+      pendingHome.delete(userId);
+      displayHome(userId).catch(console.error);
+    }
   }, 30000);
   try {
     const poolStart = Date.now();
@@ -51,15 +55,7 @@ async function displayHome(userId) {
     }
     console.log(`🏗️ Blocks built: ${Date.now() - startTime}ms`);
 
-    const json = JSON.stringify(blocks);
-    const cached = blocksCache.get(userId);
-    const stale = !cached || (Date.now() - cached.ts > CACHE_TTL);
-    if (!stale && json === cached.json) {
-      console.log(`⏭️ Blocks unchanged for ${userId}, skipping publish`);
-      return;
-    }
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
-    blocksCache.set(userId, { json, ts: Date.now() });
     console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
@@ -69,6 +65,10 @@ async function displayHome(userId) {
   } finally {
     clearTimeout(safetyTimer);
     processingHome.delete(userId);
+    if (pendingHome.has(userId)) {
+      pendingHome.delete(userId);
+      displayHome(userId).catch(console.error);
+    }
   }
 }
 
