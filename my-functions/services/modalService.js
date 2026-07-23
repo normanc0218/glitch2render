@@ -57,6 +57,16 @@ async function displayHome(userId) {
 
     await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks } });
     console.log(`✅ Home published for ${userId} | Total: ${Date.now() - startTime}ms`);
+
+    // Auto-retry after 2s — if client missed the first WebSocket push (e.g. old Slack on iPhone 8),
+    // the blank screen self-heals without the user needing to switch tabs.
+    const retryBlocks = blocks;
+    setTimeout(async () => {
+      try {
+        await client.views.publish({ user_id: userId, view: { type: "home", callback_id: "home_view", blocks: retryBlocks } });
+        console.log(`🔄 Auto-retry published for ${userId}`);
+      } catch { /* ignore */ }
+    }, 2000);
   } catch (error) {
     console.error("❌ Error publishing Home Tab for", userId, error.message, error.stack);
     if (error.data?.response_metadata?.messages) {
