@@ -27,6 +27,10 @@ async function displayHome(userId) {
   }
   processingHome.add(userId);
   const startTime = Date.now();
+  const safetyTimer = setTimeout(() => {
+    console.error(`⏰ displayHome safety timeout — releasing lock for ${userId} after 30s`);
+    processingHome.delete(userId);
+  }, 30000);
   try {
     const poolStart = Date.now();
     await userConfig.refreshIfStale();
@@ -62,6 +66,7 @@ async function displayHome(userId) {
       console.error("Slack validation errors:", JSON.stringify(error.data.response_metadata.messages, null, 2));
     }
   } finally {
+    clearTimeout(safetyTimer);
     processingHome.delete(userId);
   }
 }
