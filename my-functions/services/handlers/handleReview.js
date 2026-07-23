@@ -1,6 +1,7 @@
 const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
+const { invalidateSqlCache } = require("../homeQueries");
 const { getPool, sql } = require("../../db-sql");
 const userConfig = require("../slackUserService");
 const db = require("../../db");
@@ -102,6 +103,7 @@ async function handleReview(payload) {
           updated_at   = GETDATE()
         WHERE id = @id
       `);
+    invalidateSqlCache();
     const t0sql = Date.now();
     await disableApproveButton(reviewChannel, reviewMsgTs, checkBy);
     console.log(`[review/sql] disableApproveButton done: ${Date.now() - t0sql}ms`);

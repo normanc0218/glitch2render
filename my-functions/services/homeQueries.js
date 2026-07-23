@@ -1,6 +1,9 @@
 const db = require("../db");
 const { getPool, sql } = require("../db-sql");
 
+const SQL_TTL_MS       = 2 * 60 * 1000; // 2 minutes
+const SLACK_USER_TTL_MS = 5 * 60 * 1000; // 5 minutes (user config rarely changes)
+
 // ── RTDB caches ──────────────────────────────────────────────────────────────
 
 let _releaseCache     = null;
@@ -15,8 +18,6 @@ async function getRelease() {
   return _releaseCache;
 }
 
-// Call after any write to jobs/Release/Regular so the next displayHome() call
-// doesn't serve stale status from this cache.
 function invalidateReleaseCache() {
   _releaseCache = null;
 }
@@ -33,21 +34,48 @@ async function getUsers() {
   return _usersCache;
 }
 
+// ── SQL global caches (no key) ────────────────────────────────────────────────
+
+let _promotedIdsCache      = null; let _promotedIdsFetchedAt      = 0;
+let _projectsPendingCache  = null; let _projectsPendingFetchedAt  = 0;
+let _tasksPendingCache     = null; let _tasksPendingFetchedAt     = 0;
+let _upcomingTasksCache    = null; let _upcomingTasksFetchedAt    = 0;
+
+// ── SQL per-key caches ────────────────────────────────────────────────────────
+
+const _techTasksCache    = new Map(); // techKey → { data, ts }
+const _techProjectsCache = new Map(); // techKey → { data, ts }
+const _slackUserCache    = new Map(); // userId  → { data, ts }
+
+// Clear all SQL caches — call from any handler that writes to Tasks or Projects
+function invalidateSqlCache() {
+  _promotedIdsCache     = null;
+  _projectsPendingCache = null;
+  _tasksPendingCache    = null;
+  _upcomingTasksCache   = null;
+  _techTasksCache.clear();
+  _techProjectsCache.clear();
+}
+
 // ── Azure SQL helpers ────────────────────────────────────────────────────────
 
 async function getPromotedRtdbJobIds() {
+  if (_promotedIdsCache && Date.now() - _promotedIdsFetchedAt < SQL_TTL_MS) return _promotedIdsCache;
   try {
     const pool = await getPool();
     const result = await pool.request().query(
       `SELECT source_rtdb_job_id FROM Projects WHERE source_rtdb_job_id IS NOT NULL`
     );
-    return new Set(result.recordset.map(r => r.source_rtdb_job_id));
+    _promotedIdsCache     = new Set(result.recordset.map(r => r.source_rtdb_job_id));
+    _promotedIdsFetchedAt = Date.now();
+    return _promotedIdsCache;
   } catch {
     return new Set();
   }
 }
 
 async function getProjectsPendingApproval() {
+  if (_projectsPendingCache && Date.now() - _projectsPendingFetchedAt < SQL_TTL_MS) return _projectsPendingCache;
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
@@ -64,7 +92,9 @@ async function getProjectsPendingApproval() {
       WHERE p.status = 'Completed and waiting for approval'
       ORDER BY p.updated_at DESC
     `);
-    return result.recordset;
+    _projectsPendingCache     = result.recordset;
+    _projectsPendingFetchedAt = Date.now();
+    return _projectsPendingCache;
   } catch (err) {
     console.error("Azure SQL projects fetch error:", err.message);
     return [];
@@ -72,9 +102,12 @@ async function getProjectsPendingApproval() {
 }
 
 async function getTasksForTechnician(techNames) {
+  const names  = Array.isArray(techNames) ? techNames : [techNames];
+  if (names.length === 0) return [];
+  const key    = names.slice().sort().join(",");
+  const cached = _techTasksCache.get(key);
+  if (cached && Date.now() - cached.ts < SQL_TTL_MS) return cached.data;
   try {
-    const names = Array.isArray(techNames) ? techNames : [techNames];
-    if (names.length === 0) return [];
     const pool = await getPool();
     const req  = pool.request();
     const placeholders = names.map((n, i) => {
@@ -100,6 +133,7 @@ async function getTasksForTechnician(techNames) {
                t.status, t.priority, t.description, tech.name
       ORDER BY t.scheduled_start ASC
     `);
+    _techTasksCache.set(key, { data: result.recordset, ts: Date.now() });
     return result.recordset;
   } catch (err) {
     console.error("Azure SQL tasks fetch error:", err.message);
@@ -108,6 +142,7 @@ async function getTasksForTechnician(techNames) {
 }
 
 async function getTasksPendingApproval() {
+  if (_tasksPendingCache && Date.now() - _tasksPendingFetchedAt < SQL_TTL_MS) return _tasksPendingCache;
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
@@ -124,7 +159,9 @@ async function getTasksPendingApproval() {
                t.done_by, t.notify_supervisor, t.description, t.updated_at, tech.name
       ORDER BY t.updated_at DESC
     `);
-    return result.recordset;
+    _tasksPendingCache     = result.recordset;
+    _tasksPendingFetchedAt = Date.now();
+    return _tasksPendingCache;
   } catch (err) {
     console.error("Azure SQL tasks pending approval error:", err.message);
     return [];
@@ -132,9 +169,12 @@ async function getTasksPendingApproval() {
 }
 
 async function getProjectsForTechnician(techNames) {
+  const names  = Array.isArray(techNames) ? techNames : [techNames];
+  if (names.length === 0) return [];
+  const key    = names.slice().sort().join(",");
+  const cached = _techProjectsCache.get(key);
+  if (cached && Date.now() - cached.ts < SQL_TTL_MS) return cached.data;
   try {
-    const names = Array.isArray(techNames) ? techNames : [techNames];
-    if (names.length === 0) return [];
     const pool = await getPool();
     const req  = pool.request();
     const placeholders = names.map((n, i) => {
@@ -157,6 +197,7 @@ async function getProjectsForTechnician(techNames) {
         AND p.status NOT IN ('Completed and waiting for approval','Checked by Supervisor','Cancelled','Completed')
       ORDER BY p.scheduled_start ASC
     `);
+    _techProjectsCache.set(key, { data: result.recordset, ts: Date.now() });
     return result.recordset;
   } catch (err) {
     console.error("Azure SQL projects for technician error:", err.message);
@@ -165,6 +206,7 @@ async function getProjectsForTechnician(techNames) {
 }
 
 async function getUpcomingTasks() {
+  if (_upcomingTasksCache && Date.now() - _upcomingTasksFetchedAt < SQL_TTL_MS) return _upcomingTasksCache;
   try {
     const pool = await getPool();
     const result = await pool.request().query(`
@@ -181,7 +223,9 @@ async function getUpcomingTasks() {
       GROUP BY t.id, t.title, t.scheduled_start, t.status, tech.name
       ORDER BY t.scheduled_start ASC
     `);
-    return result.recordset;
+    _upcomingTasksCache     = result.recordset;
+    _upcomingTasksFetchedAt = Date.now();
+    return _upcomingTasksCache;
   } catch (err) {
     console.error("Azure SQL upcoming tasks fetch error:", err.message);
     return [];
@@ -189,12 +233,16 @@ async function getUpcomingTasks() {
 }
 
 async function getSlackUserRow(userId) {
+  const cached = _slackUserCache.get(userId);
+  if (cached && Date.now() - cached.ts < SLACK_USER_TTL_MS) return cached.data;
   try {
     const pool = await getPool();
     const r = await pool.request()
       .input("slackId", sql.NVarChar, userId)
       .query("SELECT TOP 1 name, role FROM SlackUsers WHERE slack_id = @slackId AND active = 1");
-    return r.recordset[0] || null;
+    const data = r.recordset[0] || null;
+    _slackUserCache.set(userId, { data, ts: Date.now() });
+    return data;
   } catch { return null; }
 }
 
@@ -203,4 +251,5 @@ module.exports = {
   getPromotedRtdbJobIds, getProjectsPendingApproval,
   getTasksForTechnician, getTasksPendingApproval,
   getProjectsForTechnician, getUpcomingTasks, getSlackUserRow,
+  invalidateSqlCache,
 };

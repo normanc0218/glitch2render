@@ -1,6 +1,7 @@
 const { WebClient } = require("@slack/web-api");
 const { saveJobSmart } = require("../firebaseService");
 const { displayHome } = require("../modalService");
+const { invalidateSqlCache } = require("../homeQueries");
 const { getPool, sql } = require("../../db-sql");
 const userConfig = require("../slackUserService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
@@ -242,12 +243,14 @@ async function handleUpdateProgress(payload) {
   if (jobId.startsWith("sql:")) {
     const taskId = jobId.slice(4);
     await handleSqlTaskUpdate(taskId, vals, user);
+    invalidateSqlCache();
     await displayHome(user.id);
     return;
   }
 
   if (UUID_RE.test(jobId)) {
     await handleProjectUpdate(jobId, vals, user);
+    invalidateSqlCache();
     await displayHome(user.id);
     return;
   }
