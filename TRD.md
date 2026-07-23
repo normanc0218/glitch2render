@@ -281,6 +281,8 @@ Two distinct types of blank screen:
 
 **Hardware chain:** iPhone 8 → max iOS 16 → max old Slack version (new Slack requires iOS 17+) → missing WebSocket reconnect re-fetch behaviour. Not fixable from the server.
 
+> **Note on Bug #2:** Originally assessed as HIGH based on schema documentation. Verified on device 2026-07-23 — modal opens correctly. Columns exist as legacy fields (always NULL). Downgraded to LOW data-accuracy issue.
+
 | Stage | Blank rate |
 |-------|-----------|
 | Before any fixes | 1/2 (alternating) |
@@ -298,9 +300,9 @@ Two distinct types of blank screen:
 **File:** `routes/slackActions.js` · `case "notify"`  
 `jobData` is assigned without `let`/`const`/`var` — implicit global in sloppy mode. If `JSON.parse` throws, `jobData` is undefined and the next line throws a TypeError. Additionally, `JSON.stringify(jobData.messageTs)` wraps the timestamp in extra quotes (e.g. `'"1234.5678"'`), which Slack rejects as an invalid `thread_ts`. The first argument to `threadNotify` is the entire serialised job JSON, potentially exceeding Slack's 3000-char button value limit.
 
-#### #2 — `buildJobDetailBlocks` selects non-existent columns from Projects
+#### #2 — `buildJobDetailBlocks` reads equipment from wrong column on Projects *(downgraded from HIGH — verified 2026-07-23)*
 **File:** `utils/buildJobDetailBlocks.js` · lines 112–124  
-`fetchSqlProject` selects `p.equipment_id` and `p.assigned_to` from `Projects`. Neither column exists in production — equipment lives in `ProjectEquipment` and there is no `assigned_to` column. Query throws a SQL error, `buildJobDetailBlocks` returns `null`, and the "View Details" button silently opens nothing for any SQL project.
+`fetchSqlProject` selects `p.equipment_id` and `p.assigned_to` directly from `Projects`. These columns exist in production (legacy) but are always NULL — actual equipment data lives in `ProjectEquipment`. The modal opens without error but the equipment field always shows N/A. Should query `ProjectEquipment` instead for accurate display.
 
 ---
 
