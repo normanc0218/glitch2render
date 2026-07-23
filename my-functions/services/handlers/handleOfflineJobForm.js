@@ -1,8 +1,11 @@
+const { WebClient } = require("@slack/web-api");
 const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+
+const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 async function resolveEquipmentName(equipmentId) {
   if (!equipmentId) return null;
@@ -21,6 +24,9 @@ async function handleOfflineJobForm(payload) {
   const { user, view } = payload;
   const ts   = new Date();
   const vals = view.state.values;
+  let viewMeta = {};
+  try { viewMeta = JSON.parse(view.private_metadata); } catch {}
+  const { channel, messageTs } = viewMeta;
 
   const jobId    = await generateUniqueJobId();
   const orderedBy = await resolveDisplayName(user?.id, user?.username);
@@ -105,6 +111,23 @@ async function handleOfflineJobForm(payload) {
 
   await saveJob("jobs/Release/Regular", data);
   console.log(`[offlineJob] saved ${jobId} for tech=${assignedTechName} by supervisor=${orderedBy}`);
+
+  if (channel && messageTs) {
+    try {
+      await slackClient.chat.update({
+        channel,
+        ts: messageTs,
+        text: `✅ Fill record for ${assignedTechName} (Job ${jobId}) submitted.`,
+        blocks: [{
+          type: "section",
+          text: { type: "mrkdwn", text: `✅ Fill record for *${assignedTechName}* (Job *${jobId}*) has been submitted.` },
+        }],
+      });
+    } catch (err) {
+      console.error('[offlineJob] failed to update original message:', err.message);
+    }
+  }
+
   await displayHome(user.id);
 }
 

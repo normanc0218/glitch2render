@@ -369,7 +369,9 @@ module.exports = async (req, res) => {
         case "fill_offline_record": {
           let meta;
           try { meta = JSON.parse(action.value); } catch { meta = {}; }
-          await openModal_offline_record(trigger_id, meta.jobId, meta.techName);
+          const channel = payload.channel?.id || null;
+          const messageTs = payload.message?.ts || null;
+          await openModal_offline_record(trigger_id, meta.jobId, meta.techName, channel, messageTs);
           break;
         }
         //Dispatch job by a supervisor

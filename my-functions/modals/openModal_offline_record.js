@@ -163,7 +163,7 @@ function buildOfflineRecordModal(meta, showOtherOptions = false, selectedStatus 
   };
 }
 
-async function openModal_offline_record(trigger_id, jobId, techName) {
+async function openModal_offline_record(trigger_id, jobId, techName, channel, messageTs) {
   const p = getNYParts();
   const today = `${p.year}-${p.month}-${p.day}`;
   const now   = `${p.hour.padStart(2, "0")}:${p.minute}`;
@@ -193,6 +193,8 @@ async function openModal_offline_record(trigger_id, jobId, techName) {
     scheduledStart: job.scheduledStart || null,
     contextLines,
     issueImageBlocks,
+    channel:   channel   || null,
+    messageTs: messageTs || null,
   };
 
   await client.views.open({
