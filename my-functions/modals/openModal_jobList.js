@@ -221,17 +221,22 @@ async function openJobList(trigger_id, type) {
     await client.views.update({ view_id, view: buildJobListView(type, 'unfinished', 0, jobs) });
   } catch (err) {
     console.error(`openJobList(${type}) fetch error:`, err.message);
-    await client.views.update({
-      view_id,
-      view: {
-        type: "modal",
-        callback_id: "job_list_modal",
-        title: { type: "plain_text", text: TYPE_TITLES[type] },
-        close: { type: "plain_text", text: "Close" },
-        private_metadata: JSON.stringify({ type, tab: 'unfinished', page: 0 }),
-        blocks: [{ type: "section", text: { type: "mrkdwn", text: "❌ Failed to load jobs. Please try again." } }],
-      },
-    });
+    try {
+      await client.views.update({
+        view_id,
+        view: {
+          type: "modal",
+          callback_id: "job_list_modal",
+          title: { type: "plain_text", text: TYPE_TITLES[type] },
+          close: { type: "plain_text", text: "Close" },
+          private_metadata: JSON.stringify({ type, tab: 'unfinished', page: 0 }),
+          blocks: [{ type: "section", text: { type: "mrkdwn", text: "❌ Failed to load jobs. Please try again." } }],
+        },
+      });
+    } catch (err2) {
+      // Modal was likely already closed/replaced by the user — nothing to update, don't crash the action handler.
+      console.error(`openJobList(${type}) failed to show error state (view probably gone):`, err2.message);
+    }
   }
 }
 
