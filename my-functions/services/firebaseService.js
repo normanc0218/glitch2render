@@ -43,9 +43,10 @@ async function saveJobSmart(jobId, data, notify=false, msg= '') {
   console.log(`✅ Job saved to ${targetPath}`);
 
   if (notify === true) {
-    const entrySnapshot = await db.ref(targetPath).once("value");
-    const entryData = entrySnapshot.val() || {};
-    await threadNotify(jobId, msg, entryData.messageTs);
+    // messageTs is set at job creation and never touched by this update, so the
+    // pre-write snapshot already has it — no need to read the record back.
+    const messageTs = found?.snap.val()?.messageTs;
+    await threadNotify(jobId, msg, messageTs);
   }
 }
 

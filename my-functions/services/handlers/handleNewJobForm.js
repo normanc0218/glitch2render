@@ -4,26 +4,13 @@ const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { notifyNewOrder } = require("../../utils/notifyChannel");
 const { displayHome } = require("../modalService");
-const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { resolveEquipmentName } = require("../equipmentService");
 const { RegularJobCreateSchema } = require("../../schemas/regularJob");
 const userConfig = require("../slackUserService");
 const { findDynBlock } = require("../../utils/blockReader");
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
-
-async function resolveEquipmentName(equipmentId) {
-  if (!equipmentId) return null;
-  try {
-    const pool = await getPool();
-    const r = await pool.request()
-      .input("id", sql.NVarChar, equipmentId)
-      .query("SELECT equipment_name FROM Equipment WHERE equipment_id = @id");
-    return r.recordset[0]?.equipment_name || equipmentId;
-  } catch {
-    return equipmentId;
-  }
-}
 
 /**
  * ✅ 处理新任务表单提交

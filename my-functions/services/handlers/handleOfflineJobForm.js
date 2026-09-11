@@ -2,23 +2,10 @@ const { WebClient } = require("@slack/web-api");
 const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
 const { displayHome } = require("../modalService");
-const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { resolveEquipmentName } = require("../equipmentService");
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
-
-async function resolveEquipmentName(equipmentId) {
-  if (!equipmentId) return null;
-  try {
-    const pool = await getPool();
-    const r = await pool.request()
-      .input("id", sql.NVarChar, equipmentId)
-      .query("SELECT equipment_name FROM Equipment WHERE equipment_id = @id");
-    return r.recordset[0]?.equipment_name || equipmentId;
-  } catch {
-    return equipmentId;
-  }
-}
 
 async function handleOfflineJobForm(payload) {
   const { user, view } = payload;

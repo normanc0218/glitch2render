@@ -1,23 +1,10 @@
 // services/handlers/handleNewJobForm.js
 const generateUniqueJobId = require("../../utils/generateUniqueJobId");
 const { saveJob } = require("../firebaseService");
-const { getPool, sql } = require("../../db-sql");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
+const { resolveEquipmentName } = require("../equipmentService");
 const { invalidateDispatchCache } = require("../dispatchService");
 const { findDynBlock } = require("../../utils/blockReader");
-
-async function resolveEquipmentName(equipmentId) {
-  if (!equipmentId) return null;
-  try {
-    const pool = await getPool();
-    const r = await pool.request()
-      .input("id", sql.NVarChar, equipmentId)
-      .query("SELECT equipment_name FROM Equipment WHERE equipment_id = @id");
-    return r.recordset[0]?.equipment_name || equipmentId;
-  } catch {
-    return equipmentId;
-  }
-}
 
 /**
  * ✅ 处理新任务表单提交
