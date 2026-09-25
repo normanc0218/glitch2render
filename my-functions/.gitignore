@@ -66,6 +66,8 @@ node_modules/
 .env
 .env.local
 .env.*.local
+# Per-project deploy env (e.g. .env.maintenance-form-602d9) — holds prod secrets
+.env.*
 
 # Firebase service account key — contains private credentials, never commit
 serviceAccount.json
