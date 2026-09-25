@@ -1,10 +1,7 @@
 require("dotenv").config();
-// Must run before any route/modal module constructs a WebClient
-require("./utils/slackApiTiming").install();
 const express = require("express");
 const bodyParser = require("body-parser");
 const verifySlackSignature  = require("./utils/verifySlackSignature");
-const { timed } = require("./utils/requestTiming");
 
 // 路由模块
 const slackEvents = require("./routes/slackEvents");
@@ -31,9 +28,9 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
 
 // ✅ Slack 路由
-app.post("/slack/events", verifySlackSignature, timed("events", slackEvents));
-app.post("/slack/actions", verifySlackSignature, timed("actions", slackActions));
-app.post("/slack/options", verifySlackSignature, timed("options", slackOptions));
+app.post("/slack/events", verifySlackSignature, slackEvents);
+app.post("/slack/actions", verifySlackSignature, slackActions);
+app.post("/slack/options", verifySlackSignature, slackOptions);
 
 // --- 本地运行 + Google Cloud Functions 兼容 ---
 if (require.main === module) {
