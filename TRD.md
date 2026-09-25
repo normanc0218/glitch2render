@@ -15,6 +15,7 @@
    - 3.3 [App Home](#33-app-home)
    - 3.4 [Job Lifecycle](#34-job-lifecycle)
    - 3.5 [Validation Schemas](#35-validation-schemas)
+   - 3.6 [Latency Logging](#36-latency-logging)
 4. [Debug Journal: App Home Blank Screen](#4-debug-journal-app-home-blank-screen)
 5. [Bug Report](#5-bug-report)
 
@@ -190,6 +191,31 @@ Schemas use `.parse()` (throws on failure), caught by the top-level try/catch in
 | `TaskReviewSchema` | `schemas/sqlTask.js` | `UPDATE Tasks` on approval |
 | `ProjectCompletionSchema` | `schemas/sqlProject.js` | `UPDATE Projects` on completion |
 | `ProjectReviewSchema` | `schemas/sqlProject.js` | `UPDATE Projects` on approval |
+
+---
+
+### 3.6 Latency Logging
+
+Two structured JSON log events, written to stdout and parsed by Cloud Logging (`severity` is honoured):
+
+| Event | Source | Fields |
+|-------|--------|--------|
+| `slack_request` | `utils/requestTiming.js` (wraps each route in `index.js`) | `route`, `type`, `key` (action_id / callback_id / event type / command), `userId`, `status`, `ackMs`, `totalMs`, `lagMs`, `retryNum`, `retryReason`, `error` |
+| `slack_api` | `utils/slackApiTiming.js` (patches `WebClient.prototype.apiCall` + axios interceptors for `slack.com/api/*`) | `method`, `ms`, `ok`, `error` |
+
+- `ackMs` = time to HTTP response (Slack limit 3000ms); `totalMs` includes post-ack work (views.open/publish).
+- `retryNum` present ⇒ Slack re-sent the request because an earlier ack was late.
+- `slack_api` with `error: "expired_trigger_id"` ⇒ user clicked but the modal never opened.
+- `severity: WARNING` on: retry, ack > 2500ms, handler error, or any failed Slack API call.
+- `slackApiTiming.install()` must run before any module constructs a `WebClient` (it is the first require in `index.js`).
+
+Useful Logs Explorer queries:
+```
+jsonPayload.event="slack_request" AND severity>=WARNING
+jsonPayload.event="slack_api" AND jsonPayload.ok=false
+jsonPayload.event="slack_request" AND jsonPayload.key="accept_message"
+```
+For p50/p95 per action, create a distribution log-based metric on `jsonPayload.totalMs` (and `jsonPayload.ackMs`) with label `jsonPayload.key`.
 
 ---
 
