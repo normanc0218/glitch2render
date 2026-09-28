@@ -34,10 +34,14 @@ const RegularJobSchema = z.object({
   status:        RegularJobStatusSchema,
   scheduledStart: z.string(),           // 'YYYY-MM-DDTHH:mm'
   orderedBy:     z.string(),
-  area:          z.string().nullable(), // location / sub-area (replaces old machineLocation)
-  machineLine:   z.string().nullable(), // machine line within the area
-  equipmentId:   z.string().nullable(),
-  equipmentName: z.string().nullable(),
+  // .optional() alongside .nullable(): Firebase RTDB cannot store an explicit
+  // null distinct from an absent key (writing null always deletes the key,
+  // via set() or update(), nested or not) — so any record with "no value"
+  // here reads back with the key missing entirely, not present-with-null.
+  area:          z.string().nullable().optional(), // location / sub-area (replaces old machineLocation)
+  machineLine:   z.string().nullable().optional(), // machine line within the area
+  equipmentId:   z.string().nullable().optional(),
+  equipmentName: z.string().nullable().optional(),
   description:   z.string().nullish(),
   reporter:      z.string().nullish(),
   assignedTo:    z.array(z.string()),   // always array; never a bare string
