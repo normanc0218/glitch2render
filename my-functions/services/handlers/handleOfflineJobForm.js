@@ -4,6 +4,7 @@ const { saveJob } = require("../firebaseService");
 const { displayHome } = require("../modalService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const { resolveEquipmentName } = require("../equipmentService");
+const { RegularJobSchema } = require("../../schemas/regularJob");
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
@@ -49,8 +50,11 @@ async function handleOfflineJobForm(payload) {
 
   const toolCleanUp      = vals?.toolCleanUp?.toolCleanUp?.selected_option?.value || "Yes";
   const machineReset     = vals?.machineReset?.machineReset?.selected_option?.value || "Yes";
-  const completionNotes  = vals?.completionNotes?.completionNotes?.value || null;
-  const notifySupervisor = vals?.notifySupervisor?.notifySupervisor?.selected_option?.value || null;
+  // undefined (not null) — messageToSupervisor/checkDetail/notifySupervisor are
+  // z.string().optional() in RegularJobSchema, not .nullable(), so an absent
+  // value must omit the key rather than write null.
+  const completionNotes  = vals?.completionNotes?.completionNotes?.value || undefined;
+  const notifySupervisor = vals?.notifySupervisor?.notifySupervisor?.selected_option?.value || undefined;
   const finishPicture    = (vals?.finishPicture?.file_input_action_id_1?.files || []).map(f => f.url_private);
 
   const nowStr = ts.toLocaleString("en-US", { timeZone: "America/New_York" });
@@ -75,7 +79,7 @@ async function handleOfflineJobForm(payload) {
     priority:     "medium",
 
     // Completion (filled by supervisor on behalf of technician)
-    doneBy:              assignedTechName,
+    doneBy:              assignedTechName || undefined, // z.string().optional(), not nullable
     actualStart,
     actualEnd,
     toolCleanUp,
@@ -95,6 +99,15 @@ async function handleOfflineJobForm(payload) {
     offlineSubmission: true,
     status: "Checked by Supervisor",
   };
+
+  // Validate shape before writing — catches field-name/type drift between
+  // this handler and the schema shared with the web app's reader.
+  try {
+    RegularJobSchema.parse(data);
+  } catch (err) {
+    console.error("[handleOfflineJobForm] schema validation failed — job NOT saved:", err.issues ?? err.message);
+    throw new Error("This offline record could not be saved due to a validation error. Please contact admin.");
+  }
 
   await saveJob("jobs/Release/Regular", data);
   console.log(`[offlineJob] saved ${jobId} for tech=${assignedTechName} by supervisor=${orderedBy}`);
