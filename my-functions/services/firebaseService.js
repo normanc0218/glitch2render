@@ -12,11 +12,27 @@ async function getAll(path) {
 }
 
 /**
+ * Firebase's RTDB client throws synchronously ("contains undefined in
+ * property ...") if any value in a set()/update() payload is undefined —
+ * unlike JSON.stringify, it will not just drop the key. Handlers build these
+ * payloads with `field: x || undefined` to omit optional-but-not-nullable
+ * schema fields when there's no value, so every write path must strip
+ * undefined-valued keys first.
+ */
+function stripUndefined(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
+/**
  * ✅ 更新或新建一条记录（jobId 作为父层 key）
  */
 async function saveJob(basePath, data) {
   const { jobId, ...payload } = data;
-  await db.ref(`${basePath}/${jobId}`).set(payload);
+  await db.ref(`${basePath}/${jobId}`).set(stripUndefined(payload));
   invalidateReleaseCache();
 }
 
@@ -38,7 +54,7 @@ async function saveJobSmart(jobId, data, notify=false, msg= '') {
     ? `jobs/Release/${found.category}/${jobId}`
     : `jobs/Release/Regular/${jobId}`;
 
-  await db.ref(targetPath).update(data);
+  await db.ref(targetPath).update(stripUndefined(data));
   invalidateReleaseCache();
   console.log(`✅ Job saved to ${targetPath}`);
 
@@ -215,4 +231,5 @@ module.exports = {
   saveJob,
   saveJobSmart,
   findJobById,
+  stripUndefined,
 };

@@ -52,7 +52,7 @@ const {
   handleReview,
   handleNewTrainRecord,
 } = require("../services/handlers");
-const { threadNotify } = require("../services/firebaseService")
+const { threadNotify, stripUndefined } = require("../services/firebaseService")
 const { maintenanceStaff} = require("../userConfig");
 const { getPool, sql } = require("../db-sql");
 const { TaskReviewSchema } = require("../schemas/sqlTask");
@@ -615,9 +615,12 @@ module.exports = async (req, res) => {
           const recToolCleanUp    = recVals?.toolCleanUp?.toolCleanUp?.selected_option?.value           || "Yes";
           const recMachineReset   = recVals?.machineReset?.machineReset?.selected_option?.value         || "Yes";
           const recReasonDefect   = recVals?.reason_defect_block?.reason_defect?.selected_option?.value || null;
-          const recNotes          = recVals?.completionNotes?.completionNotes?.value                    || null;
-          const recCheckDetail    = recVals?.checkDetail?.checkDetail?.value                            || null;
-          const recWhoCleanUp     = recVals?.whoCleanUp?.whoCleanUp?.value                              || null;
+          // undefined (not null) — messageToSupervisor/checkDetail/whoCleanUp
+          // are z.string().optional() in RegularJobSchema, not .nullable(),
+          // so an absent value must omit the key rather than write null.
+          const recNotes          = recVals?.completionNotes?.completionNotes?.value                    || undefined;
+          const recCheckDetail    = recVals?.checkDetail?.checkDetail?.value                            || undefined;
+          const recWhoCleanUp     = recVals?.whoCleanUp?.whoCleanUp?.value                              || undefined;
           const recPhotos         = (recVals?.finishPicture?.file_input_action_id_1?.files || []).map(f => f.url_private);
           const recCheckDate      = recVals?.checkDate?.datepickeraction?.selected_date || null;
           const recCheckTime      = recVals?.checkTime?.timepickeraction?.selected_time || null;
@@ -628,7 +631,7 @@ module.exports = async (req, res) => {
           const recStatusComplete = recVals?.offline_complete_job?.offline_complete_job?.selected_option?.value || "completed";
           const recStatusOther    = recVals?.offline_other_status?.offline_other_status?.selected_option?.value || null;
 
-          await db.ref(`jobs/Release/Regular/${recJobId}`).update({
+          await db.ref(`jobs/Release/Regular/${recJobId}`).update(stripUndefined({
             doneBy:              recTechName,
             actualStart:         recActualStart,
             actualEnd:           recActualEnd,
@@ -647,7 +650,7 @@ module.exports = async (req, res) => {
             checkDetail:         recCheckDetail,
             offlineSubmission:   true,
             status:              "Checked by Supervisor",
-          });
+          }));
           console.log(`[offlineRecord] job=${recJobId} tech=${recTechName} by=${recOrderedBy}`);
           const { displayHome: _dh, invalidateReleaseCache: _inv } = require("../services/modalService");
           _inv();

@@ -6,6 +6,7 @@ const { displayHome } = require("../modalService");
 const resolveDisplayName = require("../../utils/resolveDisplayName");
 const userConfig = require("../slackUserService");
 const { invalidateDispatchCache } = require("../dispatchService");
+const { RegularJobSchema } = require("../../schemas/regularJob");
 /**
  * ✅ 处理新任务表单提交
  */
@@ -26,6 +27,13 @@ async function handleAssignDispatchForm(payload) {
     jobId,
     timestamp: ts.toLocaleString("en-US", { timeZone: "America/New_York" }),
     orderedBy,
+    // This modal only has a single machineLocation field, not the
+    // area/machineLine/equipmentId cascade handleNewJobForm.js uses — these
+    // are required (nullable) keys in RegularJobSchema, so they must be
+    // explicitly null rather than omitted.
+    area:          null,
+    machineLine:   null,
+    equipmentId:   null,
     equipmentName: view.state.values?.machineLocation?.machineLocation?.selected_option?.value || "N/A",
     description: view.state.values?.description?.issue?.value,
     assignedTo:
@@ -41,6 +49,15 @@ async function handleAssignDispatchForm(payload) {
   // 通知频道
   const messageTs = await notifyNewOrder(data, jobId);
   data.messageTs = messageTs;
+  // Validate shape before writing — catches field-name/type drift between
+  // this handler and the schema shared with the web app's reader.
+  try {
+    RegularJobSchema.parse(data);
+  } catch (err) {
+    console.error("[handleAssignDispatchForm] schema validation failed — job NOT saved:", err.issues ?? err.message);
+    throw new Error("This dispatch job could not be promoted due to a validation error. Please contact admin.");
+  }
+
   // 保存任务
   await saveJob(`jobs/Release/Regular`,data);
   await displayHome(user.id);
