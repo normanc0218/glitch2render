@@ -1,6 +1,6 @@
 'use strict'
 /**
- * Zod schema for Azure SQL Tasks write operations.
+ * Zod schema for Cloud SQL Tasks write operations.
  *
  * Source of truth for Tasks status strings (all lowercase) and
  * the fields each bot handler writes to the Tasks table.

@@ -62,7 +62,7 @@ async function handleReview(payload) {
   const checkTime   = vals?.checkTime?.timepickeraction?.selected_time       || null;
 
   if (UUID_RE.test(jobId)) {
-    // ── Azure SQL project approval ──
+    // ── Cloud SQL project approval ──
     const checkDatetime = checkDate && checkTime ? `${checkDate}T${checkTime}:00` : null;
     const pool = await getPool();
     const checkBy = await resolveCheckBy(pool, user?.id, user?.username || null);

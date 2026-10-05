@@ -142,7 +142,7 @@ const openModal_supervisor_approval = async (trigger_id, jobId, msgTs = null, ch
       blocks.push({ type: "divider" });
     }
   } else if (isAzureProject) {
-    // ── Azure SQL project summary ──
+    // ── Cloud SQL project summary ──
     const project = await fetchAzureSqlProject(jobId);
     if (project) {
       actualEndForMeta = project.actual_end || null;

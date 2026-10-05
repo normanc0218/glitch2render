@@ -23,7 +23,7 @@
 
 ## 1. Overview
 
-A Firebase Cloud Function (Node.js 20) running the maintenance team's Slack bot. Handles job creation, technician assignment, progress updates, and supervisor approval — bridging Slack interactions with Firebase RTDB (release/dispatch/train jobs) and Azure SQL (PM tasks and projects).
+A Firebase Cloud Function (Node.js 20) running the maintenance team's Slack bot. Handles job creation, technician assignment, progress updates, and supervisor approval — bridging Slack interactions with Firebase RTDB (release/dispatch/train jobs) and GCP Cloud SQL / Postgres (PM tasks and projects).
 
 ---
 
@@ -35,7 +35,7 @@ A Firebase Cloud Function (Node.js 20) running the maintenance team's Slack bot.
 | HTTP framework | Express 5 | Single app, 4 routes |
 | Slack SDK | `@slack/web-api` + raw axios | Mixed — older modals use axios directly |
 | RTDB | Firebase Admin SDK | Jobs, dispatch, training records |
-| SQL | mssql + tedious | Azure SQL Basic DTU, single pool with keepalive |
+| SQL | pg + Cloud SQL Connector | GCP Cloud SQL (Postgres 17), mssql-compatible shim in `db-sql-postgres.js` |
 | Validation | Zod | 3 schemas guard all SQL writes |
 | Auth | Slack request signature (HMAC-SHA256) | Every route except `/health` |
 
@@ -51,7 +51,7 @@ A Firebase Cloud Function (Node.js 20) running the maintenance team's Slack bot.
 |---------------|---------|---------|
 | `POST /slack/events` | `routes/slackEvents.js` | URL verification + `app_home_opened` |
 | `POST /slack/actions` | `routes/slackActions.js` | All button clicks (`block_actions`) and modal submissions (`view_submission`) |
-| `POST /slack/options` | `routes/slackOptions.js` | Cascading dropdowns: Area → Machine Line → Equipment (queries Azure SQL) |
+| `POST /slack/options` | `routes/slackOptions.js` | Cascading dropdowns: Area → Machine Line → Equipment (queries Cloud SQL) |
 | `GET /health` | inline | Uptime check — returns `{ status: "ok" }` |
 
 All action routing in `slackActions.js` is a large `switch(action_id)` for `block_actions` and a separate `switch(callback_id)` for `view_submission`.
@@ -64,7 +64,7 @@ Two independent backends, never abstracted behind a shared interface.
 
 **Firebase RTDB** (`db.js`)
 
-The web app (`interact_schedule`) reads `jobs/Release` live via `useRealtimeJobs()`. `jobs/Release/Daily` is intentionally not read by the web app — it duplicates PM Tasks already in Azure SQL.
+The web app (`interact_schedule`) reads `jobs/Release` live via `useRealtimeJobs()`. `jobs/Release/Daily` is intentionally not read by the web app — it duplicates PM Tasks already in Cloud SQL.
 
 | Path | Contents |
 |------|---------|
@@ -75,9 +75,9 @@ The web app (`interact_schedule`) reads `jobs/Release` live via `useRealtimeJobs
 | `jobs/Train` | Training records |
 | `users` | User profile data (cached 60s) |
 
-**Azure SQL** (`db-sql.js`)
+**Cloud SQL (Postgres)** (`db-sql.js` → `db-sql-postgres.js`)
 
-Pool configured with keepalive (`keepAlive: true`, `keepAliveInitialDelay: 30s`) to prevent ECONNRESET after idle periods.
+`pg` pool (max 10) connected through the Cloud SQL Connector (`INSTANCE_CONNECTION_NAME`). Call sites keep the mssql-style `request().input().query()` API; the shim rewrites `@params` and the handful of T-SQL constructs used here. Azure SQL was decommissioned in 2026-10.
 
 | Table | Used by bot for |
 |-------|----------------|

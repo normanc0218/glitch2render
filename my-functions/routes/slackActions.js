@@ -98,8 +98,8 @@ module.exports = async (req, res) => {
 
       if (!isNaN(actualEndMs) && checkMs < actualEndMs) {
         if (UUID_RE_REVIEW.test(viewJobId)) {
-          // SQL Project — actualEnd round-tripped through JSON as an ISO string (from the
-          // mssql Date object). Format using local getters, matching useUTC:false convention.
+          // SQL Project — actualEnd round-tripped through JSON as a naive datetime string.
+          // Format using local getters, matching the naive-local-time convention.
           const d = new Date(viewMeta.actualEnd);
           const endStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
           return res.json({

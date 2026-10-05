@@ -57,7 +57,7 @@ function invalidateSqlCache() {
   _techProjectsCache.clear();
 }
 
-// ── Azure SQL helpers ────────────────────────────────────────────────────────
+// ── Cloud SQL helpers ────────────────────────────────────────────────────────
 
 async function getPromotedRtdbJobIds() {
   if (_promotedIdsCache && Date.now() - _promotedIdsFetchedAt < SQL_TTL_MS) return _promotedIdsCache;
@@ -96,7 +96,7 @@ async function getProjectsPendingApproval() {
     _projectsPendingFetchedAt = Date.now();
     return _projectsPendingCache;
   } catch (err) {
-    console.error("Azure SQL projects fetch error:", err.message);
+    console.error("Cloud SQL projects fetch error:", err.message);
     return [];
   }
 }
@@ -136,7 +136,7 @@ async function getTasksForTechnician(techNames) {
     _techTasksCache.set(key, { data: result.recordset, ts: Date.now() });
     return result.recordset;
   } catch (err) {
-    console.error("Azure SQL tasks fetch error:", err.message);
+    console.error("Cloud SQL tasks fetch error:", err.message);
     return [];
   }
 }
@@ -163,7 +163,7 @@ async function getTasksPendingApproval() {
     _tasksPendingFetchedAt = Date.now();
     return _tasksPendingCache;
   } catch (err) {
-    console.error("Azure SQL tasks pending approval error:", err.message);
+    console.error("Cloud SQL tasks pending approval error:", err.message);
     return [];
   }
 }
@@ -200,7 +200,7 @@ async function getProjectsForTechnician(techNames) {
     _techProjectsCache.set(key, { data: result.recordset, ts: Date.now() });
     return result.recordset;
   } catch (err) {
-    console.error("Azure SQL projects for technician error:", err.message);
+    console.error("Cloud SQL projects for technician error:", err.message);
     return [];
   }
 }
@@ -227,7 +227,7 @@ async function getUpcomingTasks() {
     _upcomingTasksFetchedAt = Date.now();
     return _upcomingTasksCache;
   } catch (err) {
-    console.error("Azure SQL upcoming tasks fetch error:", err.message);
+    console.error("Cloud SQL upcoming tasks fetch error:", err.message);
     return [];
   }
 }

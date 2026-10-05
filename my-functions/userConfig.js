@@ -1,4 +1,4 @@
-// All user data comes from the SlackUsers table in Azure SQL via slackUserService.
+// All user data comes from the SlackUsers table in Cloud SQL (Postgres) via slackUserService.
 // This file exists only for backward compatibility with modules that require('../userConfig').
 const svc = require("./services/slackUserService");
 

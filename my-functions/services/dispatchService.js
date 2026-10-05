@@ -3,7 +3,7 @@
 //
 // Dispatch jobs live in RTDB (`jobs/Dispatch`) for their whole life — nothing
 // deletes them just because they were reviewed. The web app's Job Review
-// Panel records what happened to each one in Azure SQL's JobReviews table
+// Panel records what happened to each one in Cloud SQL's JobReviews table
 // (firestore_job_id → RTDB job id), and if it was promoted, JobReviews.
 // promoted_project_id points at the resulting Projects row. This module joins
 // the two so the Slack list shows every dispatch's *current* status —

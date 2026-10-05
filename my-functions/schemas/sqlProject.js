@@ -1,6 +1,6 @@
 'use strict'
 /**
- * Zod schema for Azure SQL Projects write operations.
+ * Zod schema for Cloud SQL Projects write operations.
  *
  * Source of truth for Projects status strings (Title Case) and
  * the fields each bot handler writes to the Projects table.

@@ -13,10 +13,12 @@ const REQUIRED = [
   'SLACK_BOT_TOKEN',
   'SLACK_SIGNING_SECRET',
   'SLACK_NOTIFICATION_CHANNEL_ID',
-  'DATABASE_URL',
-  'SQL_CONNECTION_STRING',
-  'SQL_USERNAME',
-  'SQL_PASSWORD',
+  'DATABASE_URL', // Firebase RTDB URL -- unrelated to Cloud SQL
+  // GCP Cloud SQL (Postgres) -- see db-sql-postgres.js
+  'INSTANCE_CONNECTION_NAME',
+  'PG_USER',
+  'PG_PASSWORD',
+  'PG_DATABASE',
 ];
 
 const dir = path.resolve(__dirname, '..');

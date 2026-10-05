@@ -5,7 +5,7 @@
  * Task statuses are ALL LOWERCASE; Project statuses are Title Case. This is a
  * historical design difference between the two tables, not a bug. The Slack bot
  * and web app have shipped against these exact string literals for a long time.
- * Changing either side requires a coordinated data migration in Azure SQL plus
+ * Changing either side requires a coordinated data migration in Cloud SQL plus
  * matching changes across two repos. The original reason for the divergence is
  * not documented — treat as intentional technical debt until a cross-repo plan
  * exists. Do not "fix" the casing unilaterally.

@@ -108,25 +108,27 @@ async function fetchSqlProject(projectId) {
     .input("id", sql.UniqueIdentifier, projectId)
     .query(`
       SELECT p.id, p.title, p.description, p.status, p.priority,
-             p.machine_location, p.equipment_id,
+             p.machine_location,
              p.scheduled_start, p.scheduled_end,
-             p.ordered_by, p.assigned_to,
+             p.ordered_by,
              p.done_by, p.notify_supervisor, p.message_to_supervisor,
              p.actual_end,
              p.check_by, p.check_date, p.check_detail,
              p.issue_picture, p.finish_picture,
              tech.name AS technician_name,
-             e.equipment_name
+             -- Projects has no equipment_id column; equipment is linked via ProjectEquipment
+             (SELECT TOP 1 pe.equipment_id    FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_id,
+             (SELECT TOP 1 e.equipment_name   FROM ProjectEquipment pe JOIN Equipment e ON e.equipment_id = pe.equipment_id WHERE pe.project_id = p.id AND pe.equipment_id IS NOT NULL) AS equipment_name,
+             (SELECT TOP 1 pe.equipment_other FROM ProjectEquipment pe WHERE pe.project_id = p.id AND pe.equipment_other IS NOT NULL) AS equipment_other
       FROM Projects p
       LEFT JOIN Technicians tech ON tech.id = p.technician_id
-      LEFT JOIN Equipment e ON e.equipment_id = p.equipment_id
       WHERE p.id = @id
     `);
   return result.recordset[0] || null;
 }
 
 function buildSqlProjectBlocks(p) {
-  const location = p.equipment_name || p.equipment_id || p.machine_location || "N/A";
+  const location = p.equipment_name || p.equipment_id || p.equipment_other || p.machine_location || "N/A";
   const blocks = [
     createTextSection(`*Project:* ${p.title}`),
     createTextSection(
@@ -135,7 +137,7 @@ function buildSqlProjectBlocks(p) {
     ),
     createTextSection(
       `*Start Date:* ${fmtDate(p.scheduled_start) || "N/A"}  •  *Due:* ${fmtDate(p.scheduled_end) || "N/A"}\n` +
-      `*Ordered By:* ${p.ordered_by || "N/A"}  •  *Assigned To:* ${p.assigned_to || "N/A"}`
+      `*Ordered By:* ${p.ordered_by || "N/A"}  •  *Assigned To:* ${p.technician_name || "N/A"}`
     ),
   ];
   if (p.description) blocks.push(createTextSection(`*Description:* ${p.description}`));

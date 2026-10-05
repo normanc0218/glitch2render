@@ -1,38 +1,6 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '.env.local') });
-const sql = require('mssql');
 
-let poolPromise = null;
-
-function buildConnectionString() {
-  const base = (process.env.SQL_CONNECTION_STRING || '').trimEnd();
-  const sep  = base.endsWith(';') ? '' : ';';
-  return `${base}${sep}User ID=${process.env.SQL_USERNAME || ''};Password=${process.env.SQL_PASSWORD || ''};`;
-}
-
-async function getPool() {
-  if (!poolPromise) {
-    const config = sql.ConnectionPool.parseConnectionString(buildConnectionString());
-    config.options.useUTC = false;
-    config.options.keepAlive = true;
-    config.options.keepAliveInitialDelay = 30000;
-    config.pool = {
-      max: 10,
-      min: 1,
-      idleTimeoutMillis: 300000,
-    };
-    poolPromise = sql.connect(config).then(p => {
-      p.on('error', err => {
-        console.error('SQL pool error — resetting for full reconnect:', err.message);
-        poolPromise = null;
-      });
-      return p;
-    }).catch(err => {
-      console.error('SQL initial connect failed — will retry next request:', err.message);
-      poolPromise = null;
-      throw err;
-    });
-  }
-  return poolPromise;
-}
-
-module.exports = { getPool, sql };
+// GCP Cloud SQL (Postgres) is the only SQL backend. db-sql-postgres.js keeps
+// the mssql-style { getPool, sql } API so the ~40 call sites in routes/,
+// services/, modals/ and utils/ stay unchanged.
+module.exports = require('./db-sql-postgres');
