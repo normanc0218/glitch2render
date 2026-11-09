@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "jobs": {
+      "Release": {
+        "Regular": {
+          ".read": "auth != null && (auth.token.email.endsWith('@rizopia.com') || auth.token.email.endsWith('@rizopia.ca'))",
+          "$jobId": {
+            ".write": "auth != null && (auth.token.email.endsWith('@rizopia.com') || auth.token.email.endsWith('@rizopia.ca'))"
+          }
+        },
+        "Project": {
+          ".read": "auth != null && (auth.token.email.endsWith('@rizopia.com') || auth.token.email.endsWith('@rizopia.ca'))"
+        }
+      },
+      "Train": {
+        ".read": "auth != null && (auth.token.email.endsWith('@rizopia.com') || auth.token.email.endsWith('@rizopia.ca'))"
+      },
+      "Dispatch": {
+        ".read": "auth != null && (auth.token.email.endsWith('@rizopia.com') || auth.token.email.endsWith('@rizopia.ca'))"
+      }
+    }
+  }
+}
